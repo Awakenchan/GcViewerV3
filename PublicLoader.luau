@@ -62,7 +62,8 @@ downloadFile(entry,localPath)end end end local Assets={}function Assets.Download
 ()assertExploitFunctions()walk(Constants.ASSETS_DIR_NAME,ASSET_PATH)end return
 Assets end function __DARKLUA_BUNDLE_MODULES.d()local v=__DARKLUA_BUNDLE_MODULES
 .cache.d if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.d=v end
-return v.c end end do local __modImpl=function()local FunctionLibrary={}
+return v.c end end do local __modImpl=function()local FunctionLibrary={}local
+RunService=Services.RunService local LocalPlayer=PlayerRefs.LocalPlayer
 FunctionLibrary.SafeString=function(Object)local Metatable=getrawmetatable(
 Object)local IsTable=typeof(Object)=='table'or typeof(Object)=='userdata'local
 __tostring=Metatable and rawget(Metatable,'__tostring')if not IsTable or type(
@@ -73,32 +74,32 @@ source,line,name,numparams,vargs=debug.info(func,'slna')return{source=source,
 line=line,name=name,numparams=numparams,vargs=vargs}end FunctionLibrary.Kick=
 function(Reason)local newkick=clonefunction(PlayerRefs.LocalPlayer.kick)newkick(
 PlayerRefs.LocalPlayer,Reason)end FunctionLibrary.GetDeviceType=function()local
-uis=cloneref and cloneref(game:GetService('UserInputService'))or game:
-GetService('UserInputService')if uis.TouchEnabled and not uis.KeyboardEnabled
-then return'Mobile'elseif uis.KeyboardEnabled and uis.MouseEnabled then return
-'PC'end return'Unknown'end FunctionLibrary.GetSize=function()local Device=
-FunctionLibrary.GetDeviceType()if Device=='Mobile'then return 250,250 end return
-450,450 end FunctionLibrary.GetWindowSize=function()return FunctionLibrary.
-GetSize()end FunctionLibrary.Colors=function()return{default=Color3.new(1,1,1),
-black=Color3.new(0,0,0),gray=Color3.new(0.6,0.6,0.6),darkgray=Color3.new(0.3,0.3
-,0.3),red=Color3.new(1,0.2,0.2),lightred=Color3.new(1,0.5,0.5),orange=Color3.
-new(1,0.6,0.2),coral=Color3.new(1,0.4,0.3),green=Color3.new(0.2,0.8,0.2),
-lightgreen=Color3.new(0.4,1,0.4),mint=Color3.new(0.4,1,0.8),blue=Color3.new(0.3,
-0.6,1),lightblue=Color3.new(0.5,0.8,1),cyan=Color3.new(0.2,1,1),teal=Color3.new(
-0,0.8,0.8),purple=Color3.new(0.6,0.2,0.8),violet=Color3.new(0.8,0.4,1),pink=
-Color3.new(1,0.2,1),yellow=Color3.new(1,1,0.3),gold=Color3.new(1,0.84,0),cream=
-Color3.new(1,1,0.8)}end FunctionLibrary.Filters=function()return{showNil=true,
-showUnknown=true,showLocal=true,showModule=true,showServer=true,showCore=true,
-showActor=true,showCamera=true,showCommand=true,showChat=true,showPlugin=true,
-showBuilder=true,showCorePackage=true,searchQuery='',tagQuery=''}end
-FunctionLibrary.UpdateLabelVisibility=function(filters,ScriptLabels)local q=
-string.lower(filters.searchQuery or'')local tq=string.lower(filters.tagQuery or
-'')local keyMap={LocalScript='showLocal',ModuleScript='showModule',ServerScript=
-'showServer',CoreScript='showCore',Actor='showActor',CameraScript='showCamera',
-CommandScript='showCommand',ChatScript='showChat',PluginScript='showPlugin',
-ScriptBuilder='showBuilder',CorePackage='showCorePackage',Unknown='showUnknown',
-['nil']='showNil',ActorScript='showActorScript'}for _,e in next,ScriptLabels do
-local text=string.lower(e.label and e.label.Text or'')local scriptType=e.type or
+uis=cloneref and cloneref(Services.UserInputService)or Services.UserInputService
+if uis.TouchEnabled and not uis.KeyboardEnabled then return'Mobile'elseif uis.
+KeyboardEnabled and uis.MouseEnabled then return'PC'end return'Unknown'end
+FunctionLibrary.GetSize=function()local Device=FunctionLibrary.GetDeviceType()if
+Device=='Mobile'then return 250,250 end return 450,450 end FunctionLibrary.
+GetWindowSize=function()return FunctionLibrary.GetSize()end FunctionLibrary.
+Colors=function()return{default=Color3.new(1,1,1),black=Color3.new(0,0,0),gray=
+Color3.new(0.6,0.6,0.6),darkgray=Color3.new(0.3,0.3,0.3),red=Color3.new(1,0.2,
+0.2),lightred=Color3.new(1,0.5,0.5),orange=Color3.new(1,0.6,0.2),coral=Color3.
+new(1,0.4,0.3),green=Color3.new(0.2,0.8,0.2),lightgreen=Color3.new(0.4,1,0.4),
+mint=Color3.new(0.4,1,0.8),blue=Color3.new(0.3,0.6,1),lightblue=Color3.new(0.5,
+0.8,1),cyan=Color3.new(0.2,1,1),teal=Color3.new(0,0.8,0.8),purple=Color3.new(0.6
+,0.2,0.8),violet=Color3.new(0.8,0.4,1),pink=Color3.new(1,0.2,1),yellow=Color3.
+new(1,1,0.3),gold=Color3.new(1,0.84,0),cream=Color3.new(1,1,0.8)}end
+FunctionLibrary.Filters=function()return{showNil=true,showUnknown=true,showLocal
+=true,showModule=true,showServer=true,showCore=true,showActor=true,showCamera=
+true,showCommand=true,showChat=true,showPlugin=true,showBuilder=true,
+showCorePackage=true,searchQuery='',tagQuery=''}end FunctionLibrary.
+UpdateLabelVisibility=function(filters,ScriptLabels)local q=string.lower(filters
+.searchQuery or'')local tq=string.lower(filters.tagQuery or'')local keyMap={
+LocalScript='showLocal',ModuleScript='showModule',ServerScript='showServer',
+CoreScript='showCore',Actor='showActor',CameraScript='showCamera',CommandScript=
+'showCommand',ChatScript='showChat',PluginScript='showPlugin',ScriptBuilder=
+'showBuilder',CorePackage='showCorePackage',Unknown='showUnknown',['nil']=
+'showNil',ActorScript='showActorScript'}for _,e in next,ScriptLabels do local
+text=string.lower(e.label and e.label.Text or'')local scriptType=e.type or
 'Unknown'local filterKey=keyMap[scriptType]or'showUnknown'local enabled=filters[
 filterKey]~=false local match=(q=='')or string.find(text,q,1,true)~=nil local
 tagMatch=true if tq~=''and e.valueIndex then tagMatch=string.find(e.valueIndex,
@@ -126,128 +127,126 @@ payload.vargs,hash=payload.hash,constants=payload.constants,upvalues=payload.
 upvalues,valueIndex=payload.valueIndex})end end end)local COLLECTOR=
 '\r\n        local channelId = ...\r\n        local ch = get_comm_channel(channelId)\r\n        if not ch then return end\r\n\r\n        local function classify(inst)\r\n            local ok, cls = pcall(function() return inst.ClassName end)\r\n            return ok and cls or "Unknown"\r\n        end\r\n        local function fullName(inst)\r\n            local ok, n = pcall(function() return inst:GetFullName() end)\r\n            return ok and n or inst.Name\r\n        end\r\n        local function debugId(inst)\r\n            local ok, id = pcall(function() return inst:GetDebugId() end)\r\n            return ok and id or fullName(inst)\r\n        end\r\n\r\n        local function safeStr(v)\r\n            local ok, r = pcall(function() return tostring(v) end)\r\n            return ok and r or "<value>"\r\n        end\r\n\r\n        local function decode(v)\r\n            local t = typeof(v)\r\n            if t == "string" then\r\n                return string.format("%q", v)\r\n            elseif t == "number" or t == "boolean" then\r\n                return safeStr(v)\r\n            elseif t == "Instance" then\r\n                local ok, fn = pcall(function() return v:GetFullName() end)\r\n                return ok and fn or "<instance>"\r\n            elseif t == "table" then\r\n                return "<table>"\r\n            elseif t == "function" then\r\n                return "<function>"\r\n            end\r\n            return "<" .. t .. ">"\r\n        end\r\n\r\n        local function funcInfo(fn)\r\n            local ok, s, l, n, np, va = pcall(function()\r\n                return debug.info(fn, "slna")\r\n            end)\r\n            if ok then\r\n                return s, l, n, np, va\r\n            end\r\n            return nil, nil, nil, nil, nil\r\n        end\r\n\r\n        local scriptsSeen = {}\r\n        local scriptList = {}\r\n        local function consider(inst)\r\n            if typeof(inst) ~= "Instance" then return end\r\n            if not inst:IsA("LuaSourceContainer") then return end\r\n            local id = debugId(inst)\r\n            if scriptsSeen[id] then return end\r\n            scriptsSeen[id] = true\r\n            scriptList[#scriptList + 1] = { inst = inst, id = id }\r\n            ch:Fire({\r\n                kind = "script",\r\n                script = inst,\r\n                key = id,\r\n                name = inst.Name,\r\n                path = fullName(inst),\r\n                class = classify(inst),\r\n            })\r\n        end\r\n\r\n        if type(getscripts) == "function" then\r\n            local ok, scripts = pcall(getscripts)\r\n            if ok and type(scripts) == "table" then\r\n                for _, s in scripts do consider(s) end\r\n            end\r\n        end\r\n        if type(getrunningscripts) == "function" then\r\n            local ok, rs = pcall(getrunningscripts)\r\n            if ok and type(rs) == "table" then\r\n                for _, s in rs do consider(s) end\r\n            end\r\n        end\r\n        if type(getloadedmodules) == "function" then\r\n            local ok, lm = pcall(getloadedmodules)\r\n            if ok and type(lm) == "table" then\r\n                for _, s in lm do consider(s) end\r\n            end\r\n        end\r\n\r\n        local function fireFunction(scriptId, fn)\r\n            local s, l, n, np, va = funcInfo(fn)\r\n            local consts, ups = {}, {}\r\n            local okc, c = pcall(function() return debug.getconstants(fn) end)\r\n            if okc and type(c) == "table" then\r\n                for i, v in c do consts[i] = decode(v) end\r\n            end\r\n            local oku, u = pcall(function() return debug.getupvalues(fn) end)\r\n            if oku and type(u) == "table" then\r\n                for i, v in u do ups[i] = decode(v) end\r\n            end\r\n            local parts = {}\r\n            for _, v in consts do parts[#parts + 1] = v end\r\n            for _, v in ups do parts[#parts + 1] = v end\r\n            local hash\r\n            if type(getfunctionhash) == "function" then\r\n                local okh, h = pcall(getfunctionhash, fn)\r\n                if okh then hash = h end\r\n            end\r\n            ch:Fire({\r\n                kind = "function",\r\n                key = scriptId,\r\n                func = fn,\r\n                name = (n and n ~= "") and n or "(anonymous)",\r\n                line = l,\r\n                numparams = np,\r\n                vargs = va,\r\n                hash = hash,\r\n                constants = consts,\r\n                upvalues = ups,\r\n                valueIndex = string.lower(table.concat(parts, " ")),\r\n            })\r\n        end\r\n\r\n        local okGc, gc = pcall(getgc, true)\r\n        if okGc and type(gc) == "table" then\r\n            for _, obj in gc do\r\n                if type(obj) == "function"\r\n                    and (not islclosure or islclosure(obj))\r\n                    and not (isexecutorclosure and isexecutorclosure(obj))\r\n                then\r\n                    local matchedId\r\n                    local okEnv, env = pcall(getfenv, obj)\r\n                    if okEnv and type(env) == "table" then\r\n                        local s = rawget(env, "script")\r\n                        if typeof(s) == "Instance" then\r\n                            local id = debugId(s)\r\n                            if scriptsSeen[id] then\r\n                                matchedId = id\r\n                            end\r\n                        end\r\n                    end\r\n                    if not matchedId then\r\n                        local src = funcInfo(obj)\r\n                        if type(src) == "string" then\r\n                            for _, sc in scriptList do\r\n                                if string.find(src, sc.inst.Name, 1, true) then\r\n                                    matchedId = sc.id\r\n                                    break\r\n                                end\r\n                            end\r\n                        end\r\n                    end\r\n                    if matchedId then\r\n                        fireFunction(matchedId, obj)\r\n                    end\r\n                end\r\n            end\r\n        end\r\n\r\n        ch:Fire({ kind = "done" })\r\n    '
 for _,actor in actors do pcall(run_on_actor,actor,COLLECTOR,channelId)end local
-RunService=game:GetService('RunService')local start=os.clock()while pending>0
-and(os.clock()-start)<timeout do RunService.Heartbeat:Wait()end if conn then
-pcall(function()conn:Disconnect()end)end return results end FunctionLibrary.
-GetScripts=function(Reason)local RunService=game:GetService('RunService')local
-SCRIPT_CONTAINERS={'ReplicatedStorage','ReplicatedFirst','StarterPlayer',
-'StarterGui','StarterPack'}local YIELD_EVERY=2000 local LocalPlayer=(cloneref
-and cloneref(game:GetService('Players'))or game:GetService('Players')).
-LocalPlayer local IsClientContext=function(inst)if inst:IsA('LocalScript')then
-return true elseif inst:IsA('ModuleScript')then return true elseif inst:IsA(
-'Script')then return inst.RunContext==Enum.RunContext.Client end return false
-end local FullName=function(inst)local ok,name=pcall(function()return inst:
-GetFullName()end)if ok then return name end return inst.Name end local results={
-}local seen={}local processed=0 local isOtherPlayerScript=function(inst)local ok
-,plr=pcall(function()return inst:FindFirstAncestorWhichIsA('Player')end)if ok
-and plr and plr~=LocalPlayer then return true end return false end local
-consider=function(inst)if not inst:IsA('LuaSourceContainer')then return end
-local key=FunctionLibrary.ScriptKey(inst)if seen[key]then return end if not
-IsClientContext(inst)then return end if isOtherPlayerScript(inst)then return end
-seen[key]=true local context if inst:IsA('LocalScript')then context=
-'LocalScript'elseif inst:IsA('ModuleScript')then context='ModuleScript'else
-context='Script(Client)'end table.insert(results,{script=inst,path=FullName(inst
-),context=context,key=key})end local okRunning,running=pcall(getrunningscripts)
-if okRunning and running then for _,inst in running do consider(inst)processed=
-processed+1 if processed%YIELD_EVERY==0 then RunService.Heartbeat:Wait()end end
-end local okNil,nilInstances=pcall(getnilinstances)if okNil and nilInstances
-then for _,inst in nilInstances do consider(inst)processed=processed+1 if
-processed%YIELD_EVERY==0 then RunService.Heartbeat:Wait()end end end for _,
-serviceName in SCRIPT_CONTAINERS do local okService,service=pcall(function()
-return cloneref(game:GetService(serviceName))end)if not okService or not service
-then continue end local descendants=service:GetDescendants()for _,inst in
-descendants do consider(inst)processed=processed+1 if processed%YIELD_EVERY==0
-then RunService.Heartbeat:Wait()end end end if LocalPlayer then local
-localContainers={LocalPlayer:FindFirstChildOfClass('PlayerScripts'),LocalPlayer:
-FindFirstChildOfClass('PlayerGui'),LocalPlayer:FindFirstChildOfClass('Backpack')
-,LocalPlayer.Character}for _,container in localContainers do if container then
-for _,inst in container:GetDescendants()do consider(inst)processed=processed+1
-if processed%YIELD_EVERY==0 then RunService.Heartbeat:Wait()end end end end end
-return results end FunctionLibrary.CollectScriptFunctions=function(scriptRef)
-local list={}local seen={}local okGc,gc=pcall(getgc,true)if not okGc or type(gc)
-~='table'then return list,false end local scriptName=scriptRef.Name local
-fullName do local okFull,fn=pcall(function()return scriptRef:GetFullName()end)
-fullName=okFull and fn or nil end local invalidSource=(fullName==nil)or(fullName
-==scriptName)local add=function(fn)if seen[fn]then return end seen[fn]=true
-local info=FunctionLibrary.FunctionInfo(fn)table.insert(list,{func=fn,name=(info
-.name and info.name~='')and info.name or'(anonymous)',line=info.line,numparams=
-info.numparams,vargs=info.vargs})end for _,obj in gc do if type(obj)=='function'
-and(not islclosure or islclosure(obj))then local matched=false local okEnv,env=
-pcall(getfenv,obj)if okEnv and type(env)=='table'then local ok2,s=pcall(function
-()return rawget(env,'script')end)if ok2 and s==scriptRef then add(obj)matched=
-true end end if not matched and not invalidSource then local okInfo,info=pcall(
-FunctionLibrary.FunctionInfo,obj)if okInfo and info and info.source then if
-string.find(info.source,scriptName,1,true)then add(obj)end end end end end table
-.sort(list,function(a,b)return(a.line or 0)<(b.line or 0)end)return list,
-invalidSource end FunctionLibrary.CollectOrphanFunctions=function(knownFuncs)
-knownFuncs=knownFuncs or{}local list={}local seen={}local okGc,gc=pcall(getgc,
-true)if not okGc or type(gc)~='table'then return list end local envHasScript=
-function(obj)local okEnv,env=pcall(getfenv,obj)if not okEnv or type(env)~=
-'table'then return false end local ok2,s=pcall(function()return rawget(env,
-'script')end)if ok2 and typeof(s)=='Instance'and s:IsA('LuaSourceContainer')then
-return true end for _,v in env do if typeof(v)=='Instance'and v:IsA(
-'LuaSourceContainer')then return true end end return false end for _,obj in gc
-do if type(obj)=='function'and(not islclosure or islclosure(obj))and not
-knownFuncs[obj]and not seen[obj]then local isExec=false if isexecutorclosure
-then local okE,r=pcall(isexecutorclosure,obj)isExec=okE and r end if not isExec
-and not envHasScript(obj)then seen[obj]=true local info=FunctionLibrary.
-FunctionInfo(obj)table.insert(list,{func=obj,name=(info.name and info.name~='')
-and info.name or'(anonymous)',line=info.line,numparams=info.numparams,vargs=info
-.vargs,source=info.source})end end end table.sort(list,function(a,b)return(a.
-line or 0)<(b.line or 0)end)return list end return FunctionLibrary end function
-__DARKLUA_BUNDLE_MODULES.e()local v=__DARKLUA_BUNDLE_MODULES.cache.e if not v
-then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.e=v end return v.c end end
-do local __modImpl=function()local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.e()
-local a a={cache={},load=function(b)if not a.cache[b]then a.cache[b]={c=a[b]()}
-end return a.cache[b].c end}do function a.a()local b,c,d='8.0',cloneref or
-function(b)return b end,{Theme={Syntax={Text=Color3.fromRGB(204,204,204),
-Background=Color3.fromRGB(20,20,20),Selection=Color3.fromRGB(255,255,255),
-SelectionBack=Color3.fromRGB(102,161,255),Operator=Color3.fromRGB(204,204,204),
-Number=Color3.fromRGB(255,198,0),String=Color3.fromRGB(172,240,148),Comment=
-Color3.fromRGB(102,102,102),Keyword=Color3.fromRGB(248,109,124),BuiltIn=Color3.
-fromRGB(132,214,247),LocalMethod=Color3.fromRGB(253,251,172),LocalProperty=
-Color3.fromRGB(97,161,241),Nil=Color3.fromRGB(255,198,0),Bool=Color3.fromRGB(255
-,198,0),Function=Color3.fromRGB(248,109,124),Local=Color3.fromRGB(248,109,124),
-Self=Color3.fromRGB(248,109,124),FunctionName=Color3.fromRGB(253,251,172),
-Bracket=Color3.fromRGB(204,204,204)}}}local e,f=setmetatable({},{__index=
-function(e,f)local g=cloneref(game:GetService(f))return c(g)end}),{StartAndEnd={
-Enum.UserInputType.MouseButton1,Enum.UserInputType.Touch},Movement={Enum.
-UserInputType.MouseMovement,Enum.UserInputType.Touch}}local g,h,i,j=e.Players,e.
-UserInputService,e.RunService,e.TweenService local k=c(g.LocalPlayer)local l,m,n
-,o=c(cloneref(k:GetMouse())),function(l,m)for n,o in next,m do l[n]=o end return
-l end,function(l,m)local n=l.UserInputType return table.find(f[m],n)end,function
-(...)return c(Instance.new(...))end local p,q,r=function(p,q)local r=o(p)for s,t
-in next,q do r[s]=t end return r end,{},o'Frame'q.CheckMouseInGui=function(s)if
-s==nil then return false end local t,u=s.AbsolutePosition,s.AbsoluteSize return
-l.X>=t.X and l.X<t.X+u.X and l.Y>=t.Y and l.Y<t.Y+u.Y end q.Signal=(function()
-local s,t={},function(s)local t=table.find(s.Signal.Connections,s)if t then
-table.remove(s.Signal.Connections,t)end end s.Connect=function(u,v)if type(v)~=
-'function'then error'Attempt to connect a non-function'end local w={Signal=u,
-Func=v,Disconnect=t}u.Connections[#u.Connections+1]=w return w end s.Fire=
-function(u,...)for v,w in next,u.Connections do xpcall(coroutine.wrap(w.Func),
-function(x)warn(x..'\n'..debug.traceback())end,...)end end local u={__index=s,
-__tostring=function(u)return'Signal: '..FunctionLibrary.SafeString(#u.
-Connections)..' Connections'end}local v=function()local v={}v.Connections={}
-return setmetatable(v,u)end return{new=v}end)()q.CreateArrow=function(s,t,u)
-local v,w=t,p('Frame',{BackgroundTransparency=1,Name='Arrow',Size=UDim2.new(0,s,
-0,s)})if u=='up'then for x=1,t do p('Frame',{BackgroundColor3=Color3.new(
-0.8627450980392157,0.8627450980392157,0.8627450980392157),BorderSizePixel=0,
-Position=UDim2.new(0,math.floor(s/2)-(x-1),0,math.floor(s/2)+x-math.floor(v/2)-1
-),Size=UDim2.new(0,x+(x-1),0,1),Parent=w})end return w elseif u=='down'then for
-x=1,t do p('Frame',{BackgroundColor3=Color3.new(0.8627450980392157,
+start=os.clock()while pending>0 and(os.clock()-start)<timeout do RunService.
+Heartbeat:Wait()end if conn then pcall(function()conn:Disconnect()end)end return
+results end FunctionLibrary.GetScripts=function(Reason)local SCRIPT_CONTAINERS={
+'ReplicatedStorage','ReplicatedFirst','StarterPlayer','StarterGui','StarterPack'
+}local YIELD_EVERY=2000 local IsClientContext=function(inst)if inst:IsA(
+'LocalScript')then return true elseif inst:IsA('ModuleScript')then return true
+elseif inst:IsA('Script')then return inst.RunContext==Enum.RunContext.Client end
+return false end local FullName=function(inst)local ok,name=pcall(function()
+return inst:GetFullName()end)if ok then return name end return inst.Name end
+local results={}local seen={}local processed=0 local isOtherPlayerScript=
+function(inst)local ok,plr=pcall(function()return inst:
+FindFirstAncestorWhichIsA('Player')end)if ok and plr and plr~=LocalPlayer then
+return true end return false end local consider=function(inst)if not inst:IsA(
+'LuaSourceContainer')then return end local key=FunctionLibrary.ScriptKey(inst)if
+seen[key]then return end if not IsClientContext(inst)then return end if
+isOtherPlayerScript(inst)then return end seen[key]=true local context if inst:
+IsA('LocalScript')then context='LocalScript'elseif inst:IsA('ModuleScript')then
+context='ModuleScript'else context='Script(Client)'end table.insert(results,{
+script=inst,path=FullName(inst),context=context,key=key})end local okRunning,
+running=pcall(getrunningscripts)if okRunning and running then for _,inst in
+running do consider(inst)processed=processed+1 if processed%YIELD_EVERY==0 then
+RunService.Heartbeat:Wait()end end end local okNil,nilInstances=pcall(
+getnilinstances)if okNil and nilInstances then for _,inst in nilInstances do
+consider(inst)processed=processed+1 if processed%YIELD_EVERY==0 then RunService.
+Heartbeat:Wait()end end end for _,serviceName in SCRIPT_CONTAINERS do local
+okService,service=pcall(function()return cloneref(game:GetService(serviceName))
+end)if not okService or not service then continue end local descendants=service:
+GetDescendants()for _,inst in descendants do consider(inst)processed=processed+1
+if processed%YIELD_EVERY==0 then RunService.Heartbeat:Wait()end end end if
+LocalPlayer then local localContainers={LocalPlayer:FindFirstChildOfClass(
+'PlayerScripts'),LocalPlayer:FindFirstChildOfClass('PlayerGui'),LocalPlayer:
+FindFirstChildOfClass('Backpack'),LocalPlayer.Character}for _,container in
+localContainers do if container then for _,inst in container:GetDescendants()do
+consider(inst)processed=processed+1 if processed%YIELD_EVERY==0 then RunService.
+Heartbeat:Wait()end end end end end return results end FunctionLibrary.
+CollectScriptFunctions=function(scriptRef)local list={}local seen={}local okGc,
+gc=pcall(getgc,true)if not okGc or type(gc)~='table'then return list,false end
+local scriptName=scriptRef.Name local fullName do local okFull,fn=pcall(function
+()return scriptRef:GetFullName()end)fullName=okFull and fn or nil end local
+invalidSource=(fullName==nil)or(fullName==scriptName)local add=function(fn)if
+seen[fn]then return end seen[fn]=true local info=FunctionLibrary.FunctionInfo(fn
+)table.insert(list,{func=fn,name=(info.name and info.name~='')and info.name or
+'(anonymous)',line=info.line,numparams=info.numparams,vargs=info.vargs})end for
+_,obj in gc do if type(obj)=='function'and(not islclosure or islclosure(obj))
+then local matched=false local okEnv,env=pcall(getfenv,obj)if okEnv and type(env
+)=='table'then local ok2,s=pcall(function()return rawget(env,'script')end)if ok2
+and s==scriptRef then add(obj)matched=true end end if not matched and not
+invalidSource then local okInfo,info=pcall(FunctionLibrary.FunctionInfo,obj)if
+okInfo and info and info.source then if string.find(info.source,scriptName,1,
+true)then add(obj)end end end end end table.sort(list,function(a,b)return(a.line
+or 0)<(b.line or 0)end)return list,invalidSource end FunctionLibrary.
+CollectOrphanFunctions=function(knownFuncs)knownFuncs=knownFuncs or{}local list=
+{}local seen={}local okGc,gc=pcall(getgc,true)if not okGc or type(gc)~='table'
+then return list end local envHasScript=function(obj)local okEnv,env=pcall(
+getfenv,obj)if not okEnv or type(env)~='table'then return false end local ok2,s=
+pcall(function()return rawget(env,'script')end)if ok2 and typeof(s)=='Instance'
+and s:IsA('LuaSourceContainer')then return true end for _,v in env do if typeof(
+v)=='Instance'and v:IsA('LuaSourceContainer')then return true end end return
+false end for _,obj in gc do if type(obj)=='function'and(not islclosure or
+islclosure(obj))and not knownFuncs[obj]and not seen[obj]then local isExec=false
+if isexecutorclosure then local okE,r=pcall(isexecutorclosure,obj)isExec=okE and
+r end if not isExec and not envHasScript(obj)then seen[obj]=true local info=
+FunctionLibrary.FunctionInfo(obj)table.insert(list,{func=obj,name=(info.name and
+info.name~='')and info.name or'(anonymous)',line=info.line,numparams=info.
+numparams,vargs=info.vargs,source=info.source})end end end table.sort(list,
+function(a,b)return(a.line or 0)<(b.line or 0)end)return list end return
+FunctionLibrary end function __DARKLUA_BUNDLE_MODULES.e()local v=
+__DARKLUA_BUNDLE_MODULES.cache.e if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.e=v end return v.c end end do local __modImpl=
+function()local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.e()local a a={cache={},
+load=function(b)if not a.cache[b]then a.cache[b]={c=a[b]()}end return a.cache[b]
+.c end}do function a.a()local b,c,d='8.0',cloneref or function(b)return b end,{
+Theme={Syntax={Text=Color3.fromRGB(204,204,204),Background=Color3.fromRGB(20,20,
+20),Selection=Color3.fromRGB(255,255,255),SelectionBack=Color3.fromRGB(102,161,
+255),Operator=Color3.fromRGB(204,204,204),Number=Color3.fromRGB(255,198,0),
+String=Color3.fromRGB(172,240,148),Comment=Color3.fromRGB(102,102,102),Keyword=
+Color3.fromRGB(248,109,124),BuiltIn=Color3.fromRGB(132,214,247),LocalMethod=
+Color3.fromRGB(253,251,172),LocalProperty=Color3.fromRGB(97,161,241),Nil=Color3.
+fromRGB(255,198,0),Bool=Color3.fromRGB(255,198,0),Function=Color3.fromRGB(248,
+109,124),Local=Color3.fromRGB(248,109,124),Self=Color3.fromRGB(248,109,124),
+FunctionName=Color3.fromRGB(253,251,172),Bracket=Color3.fromRGB(204,204,204)}}}
+local e,f=setmetatable({},{__index=function(e,f)local g=cloneref(game:
+GetService(f))return c(g)end}),{StartAndEnd={Enum.UserInputType.MouseButton1,
+Enum.UserInputType.Touch},Movement={Enum.UserInputType.MouseMovement,Enum.
+UserInputType.Touch}}local g,h,i,j=e.Players,e.UserInputService,e.RunService,e.
+TweenService local k=c(g.LocalPlayer)local l,m,n,o=c(cloneref(k:GetMouse())),
+function(l,m)for n,o in next,m do l[n]=o end return l end,function(l,m)local n=l
+.UserInputType return table.find(f[m],n)end,function(...)return c(Instance.new(
+...))end local p,q,r=function(p,q)local r=o(p)for s,t in next,q do r[s]=t end
+return r end,{},o'Frame'q.CheckMouseInGui=function(s)if s==nil then return false
+end local t,u=s.AbsolutePosition,s.AbsoluteSize return l.X>=t.X and l.X<t.X+u.X
+and l.Y>=t.Y and l.Y<t.Y+u.Y end q.Signal=(function()local s,t={},function(s)
+local t=table.find(s.Signal.Connections,s)if t then table.remove(s.Signal.
+Connections,t)end end s.Connect=function(u,v)if type(v)~='function'then error
+'Attempt to connect a non-function'end local w={Signal=u,Func=v,Disconnect=t}u.
+Connections[#u.Connections+1]=w return w end s.Fire=function(u,...)for v,w in
+next,u.Connections do xpcall(coroutine.wrap(w.Func),function(x)warn(x..'\n'..
+debug.traceback())end,...)end end local u={__index=s,__tostring=function(u)
+return'Signal: '..FunctionLibrary.SafeString(#u.Connections)..' Connections'end}
+local v=function()local v={}v.Connections={}return setmetatable(v,u)end return{
+new=v}end)()q.CreateArrow=function(s,t,u)local v,w=t,p('Frame',{
+BackgroundTransparency=1,Name='Arrow',Size=UDim2.new(0,s,0,s)})if u=='up'then
+for x=1,t do p('Frame',{BackgroundColor3=Color3.new(0.8627450980392157,
 0.8627450980392157,0.8627450980392157),BorderSizePixel=0,Position=UDim2.new(0,
-math.floor(s/2)-(x-1),0,math.floor(s/2)-x+math.floor(v/2)+1),Size=UDim2.new(0,x+
-(x-1),0,1),Parent=w})end return w elseif u=='left'then for x=1,t do p('Frame',{
+math.floor(s/2)-(x-1),0,math.floor(s/2)+x-math.floor(v/2)-1),Size=UDim2.new(0,x+
+(x-1),0,1),Parent=w})end return w elseif u=='down'then for x=1,t do p('Frame',{
 BackgroundColor3=Color3.new(0.8627450980392157,0.8627450980392157,
-0.8627450980392157),BorderSizePixel=0,Position=UDim2.new(0,math.floor(s/2)+x-
-math.floor(v/2)-1,0,math.floor(s/2)-(x-1)),Size=UDim2.new(0,1,0,x+(x-1)),Parent=
-w})end return w elseif u=='right'then for x=1,t do p('Frame',{BackgroundColor3=
+0.8627450980392157),BorderSizePixel=0,Position=UDim2.new(0,math.floor(s/2)-(x-1)
+,0,math.floor(s/2)-x+math.floor(v/2)+1),Size=UDim2.new(0,x+(x-1),0,1),Parent=w})
+end return w elseif u=='left'then for x=1,t do p('Frame',{BackgroundColor3=
 Color3.new(0.8627450980392157,0.8627450980392157,0.8627450980392157),
-BorderSizePixel=0,Position=UDim2.new(0,math.floor(s/2)-x+math.floor(v/2)+1,0,
-math.floor(s/2)-(x-1)),Size=UDim2.new(0,1,0,x+(x-1)),Parent=w})end return w end
-error''end q.FastWait=(function(s)task.wait(s)end)q.ScrollBar=(function()local s
-,t,u,v={},q.CheckMouseInGui,q.CreateArrow,function(s)local t,u,v,w=s.TotalSpace,
-s.VisibleSpace,s.GuiElems.ScrollThumb,s.GuiElems.ScrollThumbFrame if not(s:
+BorderSizePixel=0,Position=UDim2.new(0,math.floor(s/2)+x-math.floor(v/2)-1,0,
+math.floor(s/2)-(x-1)),Size=UDim2.new(0,1,0,x+(x-1)),Parent=w})end return w
+elseif u=='right'then for x=1,t do p('Frame',{BackgroundColor3=Color3.new(
+0.8627450980392157,0.8627450980392157,0.8627450980392157),BorderSizePixel=0,
+Position=UDim2.new(0,math.floor(s/2)-x+math.floor(v/2)+1,0,math.floor(s/2)-(x-1)
+),Size=UDim2.new(0,1,0,x+(x-1)),Parent=w})end return w end error''end q.FastWait
+=(function(s)task.wait(s)end)q.ScrollBar=(function()local s,t,u,v={},q.
+CheckMouseInGui,q.CreateArrow,function(s)local t,u,v,w=s.TotalSpace,s.
+VisibleSpace,s.GuiElems.ScrollThumb,s.GuiElems.ScrollThumbFrame if not(s:
 CanScrollUp()or s:CanScrollDown())then v.Visible=false else v.Visible=true end
 if s.Horizontal then v.Size=UDim2.new(u/t,0,1,0)if v.AbsoluteSize.X<10 then v.
 Size=UDim2.new(0,10,1,0)end local x,y=w.AbsoluteSize.X,v.AbsoluteSize.X v.

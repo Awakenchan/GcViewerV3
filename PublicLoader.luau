@@ -107,23 +107,23 @@ e.label.Visible=visible end if e.separator then e.separator.Visible=visible end
 end end FunctionLibrary.ScriptKey=function(inst)local ok,id=pcall(function()
 return inst:GetDebugId()end)if ok and id and id~=''then return id end local ok2,
 full=pcall(function()return inst:GetFullName()end)return(ok2 and full)or
-tostring(inst)end FunctionLibrary.GetActorScripts=function(timeout)timeout=
-timeout or 3 local results={}local seen={}if type(getactors)~='function'or type(
-run_on_actor)~='function'or type(create_comm_channel)~='function'then return
-results end local okActors,actors=pcall(getactors)if not okActors or type(actors
-)~='table'or#actors==0 then return results end local channelId,channel=
-create_comm_channel()if not channel then return results end local pending=#
-actors local byKey={}local conn conn=channel.Event:Connect(function(payload)if
-type(payload)~='table'then return end if payload.kind=='done'then pending=
-pending-1 return end if payload.kind=='script'then local key=payload.key if key
-and not seen[key]then seen[key]=true local entry={script=payload.script,path=
-payload.path or payload.name or'ActorScript',context='Actor',name=payload.name,
-class=payload.class,key=key,functions={}}byKey[key]=entry table.insert(results,
-entry)end return end if payload.kind=='function'then local entry=byKey[payload.
-key]if entry then table.insert(entry.functions,{func=payload.func,name=payload.
-name,line=payload.line,numparams=payload.numparams,vargs=payload.vargs,hash=
-payload.hash,constants=payload.constants,upvalues=payload.upvalues,valueIndex=
-payload.valueIndex})end end end)local COLLECTOR=
+FunctionLibrary.SafeString(inst)end FunctionLibrary.GetActorScripts=function(
+timeout)timeout=timeout or 3 local results={}local seen={}if type(getactors)~=
+'function'or type(run_on_actor)~='function'or type(create_comm_channel)~=
+'function'then return results end local okActors,actors=pcall(getactors)if not
+okActors or type(actors)~='table'or#actors==0 then return results end local
+channelId,channel=create_comm_channel()if not channel then return results end
+local pending=#actors local byKey={}local conn conn=channel.Event:Connect(
+function(payload)if type(payload)~='table'then return end if payload.kind==
+'done'then pending=pending-1 return end if payload.kind=='script'then local key=
+payload.key if key and not seen[key]then seen[key]=true local entry={script=
+payload.script,path=payload.path or payload.name or'ActorScript',context='Actor'
+,name=payload.name,class=payload.class,key=key,functions={}}byKey[key]=entry
+table.insert(results,entry)end return end if payload.kind=='function'then local
+entry=byKey[payload.key]if entry then table.insert(entry.functions,{func=payload
+.func,name=payload.name,line=payload.line,numparams=payload.numparams,vargs=
+payload.vargs,hash=payload.hash,constants=payload.constants,upvalues=payload.
+upvalues,valueIndex=payload.valueIndex})end end end)local COLLECTOR=
 '\r\n        local channelId = ...\r\n        local ch = get_comm_channel(channelId)\r\n        if not ch then return end\r\n\r\n        local function classify(inst)\r\n            local ok, cls = pcall(function() return inst.ClassName end)\r\n            return ok and cls or "Unknown"\r\n        end\r\n        local function fullName(inst)\r\n            local ok, n = pcall(function() return inst:GetFullName() end)\r\n            return ok and n or inst.Name\r\n        end\r\n        local function debugId(inst)\r\n            local ok, id = pcall(function() return inst:GetDebugId() end)\r\n            return ok and id or fullName(inst)\r\n        end\r\n\r\n        local function safeStr(v)\r\n            local ok, r = pcall(function() return tostring(v) end)\r\n            return ok and r or "<value>"\r\n        end\r\n\r\n        local function decode(v)\r\n            local t = typeof(v)\r\n            if t == "string" then\r\n                return string.format("%q", v)\r\n            elseif t == "number" or t == "boolean" then\r\n                return safeStr(v)\r\n            elseif t == "Instance" then\r\n                local ok, fn = pcall(function() return v:GetFullName() end)\r\n                return ok and fn or "<instance>"\r\n            elseif t == "table" then\r\n                return "<table>"\r\n            elseif t == "function" then\r\n                return "<function>"\r\n            end\r\n            return "<" .. t .. ">"\r\n        end\r\n\r\n        local function funcInfo(fn)\r\n            local ok, s, l, n, np, va = pcall(function()\r\n                return debug.info(fn, "slna")\r\n            end)\r\n            if ok then\r\n                return s, l, n, np, va\r\n            end\r\n            return nil, nil, nil, nil, nil\r\n        end\r\n\r\n        local scriptsSeen = {}\r\n        local scriptList = {}\r\n        local function consider(inst)\r\n            if typeof(inst) ~= "Instance" then return end\r\n            if not inst:IsA("LuaSourceContainer") then return end\r\n            local id = debugId(inst)\r\n            if scriptsSeen[id] then return end\r\n            scriptsSeen[id] = true\r\n            scriptList[#scriptList + 1] = { inst = inst, id = id }\r\n            ch:Fire({\r\n                kind = "script",\r\n                script = inst,\r\n                key = id,\r\n                name = inst.Name,\r\n                path = fullName(inst),\r\n                class = classify(inst),\r\n            })\r\n        end\r\n\r\n        if type(getscripts) == "function" then\r\n            local ok, scripts = pcall(getscripts)\r\n            if ok and type(scripts) == "table" then\r\n                for _, s in scripts do consider(s) end\r\n            end\r\n        end\r\n        if type(getrunningscripts) == "function" then\r\n            local ok, rs = pcall(getrunningscripts)\r\n            if ok and type(rs) == "table" then\r\n                for _, s in rs do consider(s) end\r\n            end\r\n        end\r\n        if type(getloadedmodules) == "function" then\r\n            local ok, lm = pcall(getloadedmodules)\r\n            if ok and type(lm) == "table" then\r\n                for _, s in lm do consider(s) end\r\n            end\r\n        end\r\n\r\n        local function fireFunction(scriptId, fn)\r\n            local s, l, n, np, va = funcInfo(fn)\r\n            local consts, ups = {}, {}\r\n            local okc, c = pcall(function() return debug.getconstants(fn) end)\r\n            if okc and type(c) == "table" then\r\n                for i, v in c do consts[i] = decode(v) end\r\n            end\r\n            local oku, u = pcall(function() return debug.getupvalues(fn) end)\r\n            if oku and type(u) == "table" then\r\n                for i, v in u do ups[i] = decode(v) end\r\n            end\r\n            local parts = {}\r\n            for _, v in consts do parts[#parts + 1] = v end\r\n            for _, v in ups do parts[#parts + 1] = v end\r\n            local hash\r\n            if type(getfunctionhash) == "function" then\r\n                local okh, h = pcall(getfunctionhash, fn)\r\n                if okh then hash = h end\r\n            end\r\n            ch:Fire({\r\n                kind = "function",\r\n                key = scriptId,\r\n                func = fn,\r\n                name = (n and n ~= "") and n or "(anonymous)",\r\n                line = l,\r\n                numparams = np,\r\n                vargs = va,\r\n                hash = hash,\r\n                constants = consts,\r\n                upvalues = ups,\r\n                valueIndex = string.lower(table.concat(parts, " ")),\r\n            })\r\n        end\r\n\r\n        local okGc, gc = pcall(getgc, true)\r\n        if okGc and type(gc) == "table" then\r\n            for _, obj in gc do\r\n                if type(obj) == "function"\r\n                    and (not islclosure or islclosure(obj))\r\n                    and not (isexecutorclosure and isexecutorclosure(obj))\r\n                then\r\n                    local matchedId\r\n                    local okEnv, env = pcall(getfenv, obj)\r\n                    if okEnv and type(env) == "table" then\r\n                        local s = rawget(env, "script")\r\n                        if typeof(s) == "Instance" then\r\n                            local id = debugId(s)\r\n                            if scriptsSeen[id] then\r\n                                matchedId = id\r\n                            end\r\n                        end\r\n                    end\r\n                    if not matchedId then\r\n                        local src = funcInfo(obj)\r\n                        if type(src) == "string" then\r\n                            for _, sc in scriptList do\r\n                                if string.find(src, sc.inst.Name, 1, true) then\r\n                                    matchedId = sc.id\r\n                                    break\r\n                                end\r\n                            end\r\n                        end\r\n                    end\r\n                    if matchedId then\r\n                        fireFunction(matchedId, obj)\r\n                    end\r\n                end\r\n            end\r\n        end\r\n\r\n        ch:Fire({ kind = "done" })\r\n    '
 for _,actor in actors do pcall(run_on_actor,actor,COLLECTOR,channelId)end local
 RunService=game:GetService('RunService')local start=os.clock()while pending>0
@@ -2203,26 +2203,26 @@ if n==name and l==line then count=count+1 end end end return count==1 end)end if
 hash then add('manual getgc (hash)',(
 [[(function()
     for _, o in getgc(true) do
-        if type(o) == "function" and getfunctionhash and getfunctionhash(o) == %q then
+        if type(o) == "function" and not islclosure(0) and getfunctionhash and getfunctionhash(o) == %q then
             return o
         end
     end
 end)()]]
 ):format(hash),function()if type(getfunctionhash)~='function'then return nil end
-for _,o in getgc(true)do if type(o)=='function'then local ok,h=pcall(
-getfunctionhash,o)if ok and h==hash then return o end end end return nil end,
-function()if type(getfunctionhash)~='function'then return false end local count=
-0 for _,o in getgc(true)do if type(o)=='function'then local ok,h=pcall(
-getfunctionhash,o)if ok and h==hash then count=count+1 end end end return count
-==1 end)end return list end local verifyGrabMethods=function(target,limit)limit=
-limit or 3 local func=target.func if typeof(func)~='function'then return nil end
-local candidates=grabCandidates(target)local passed={}for _,cand in candidates
-do local ok,got=pcall(cand.runner)if ok and got==func then local unique=true if
-cand.uniqueCheck then local uok,u=pcall(cand.uniqueCheck)unique=uok and u end if
-unique then passed[#passed+1]={label=cand.label,template=cand.template}end end
-end local out={}for i=1,math.min(limit,#passed)do out[i]=passed[i]end return out
-end local formatGrabMethods=function(methods)if not methods or#methods==0 then
-return
+for _,o in getgc(true)do if type(o)=='function'and not islclosure(0)then local
+ok,h=pcall(getfunctionhash,o)if ok and h==hash then return o end end end return
+nil end,function()if type(getfunctionhash)~='function'then return false end
+local count=0 for _,o in getgc(true)do if type(o)=='function'and not islclosure(
+0)then local ok,h=pcall(getfunctionhash,o)if ok and h==hash then count=count+1
+end end end return count==1 end)end return list end local verifyGrabMethods=
+function(target,limit)limit=limit or 3 local func=target.func if typeof(func)~=
+'function'then return nil end local candidates=grabCandidates(target)local
+passed={}for _,cand in candidates do local ok,got=pcall(cand.runner)if ok and
+got==func then local unique=true if cand.uniqueCheck then local uok,u=pcall(cand
+.uniqueCheck)unique=uok and u end if unique then passed[#passed+1]={label=cand.
+label,template=cand.template}end end end local out={}for i=1,math.min(limit,#
+passed)do out[i]=passed[i]end return out end local formatGrabMethods=function(
+methods)if not methods or#methods==0 then return
 [[-- No retrieval method could be verified for this function.
 -- (line/name may be stripped, or it's not currently in the gc)]]
 end local parts={}for i,m in methods do parts[#parts+1]=(

@@ -1,32 +1,37 @@
-local __DARKLUA_BUNDLE_MODULES={cache={}}do do local __modImpl=function()
-Services={Players=cloneref(game:GetService('Players')),Workspace=cloneref(game:
-GetService('Workspace')),RunService=cloneref(game:GetService('RunService')),
-ReplicatedStorage=cloneref(game:GetService('ReplicatedStorage')),
-VirtualInputManager=cloneref(Instance.new('VirtualInputManager')),
-UserInputService=cloneref(game:GetService('UserInputService')),HttpService=
-cloneref(game:GetService('HttpService')),GuiService=cloneref(game:GetService(
-'GuiService')),CoreGui=cloneref(game:GetService('CoreGui')),SerializationService
-=cloneref(game:GetService('SerializationService')),TweenService=cloneref(game:
-GetService('TweenService')),LogService=cloneref(game:GetService('LogService')),
-ContentProvider=cloneref(game:GetService('ContentProvider')),InsertService=
-cloneref(game:GetService('InsertService')),CollectionService=cloneref(game:
-GetService('CollectionService')),Debris=cloneref(game:GetService('Debris'))}
-setmetatable(Services,{__index=function(self,name)local service if rawget(self,
-name)then return rawget(self,name)end xpcall(function()service=cloneref(game:
-GetService(name))end,function(rr)print(rr)error(rr,2)end)if service then rawset(
-self,name,service)return service end return nil end})return Services end
-function __DARKLUA_BUNDLE_MODULES.a()local v=__DARKLUA_BUNDLE_MODULES.cache.a if
-not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.a=v end return v.c
-end end do local __modImpl=function()local Services=__DARKLUA_BUNDLE_MODULES.a()
-PlayerRefs={LocalPlayer=Services.Players.LocalPlayer}setmetatable(PlayerRefs,{
-__index=function(self,v)if v=='Character'then return self.LocalPlayer.Character
-elseif v=='Head'then local char=self.Character if not char then return end
-return char:FindFirstChild('Head')elseif v=='Humanoid'then local char=self.
-Character if not char then return end return char.Humanoid elseif v=='Camera'
-then return workspace.CurrentCamera elseif v=='MouseLocation'then return
-Services.UserInputService.GetMouseLocation(Services.UserInputService)end return
-rawget(self,v)end})return PlayerRefs end function __DARKLUA_BUNDLE_MODULES.b()
-local v=__DARKLUA_BUNDLE_MODULES.cache.b if not v then v={c=__modImpl()}
+local __DARKLUA_BUNDLE_MODULES={cache={}}do do local __modImpl=function()local
+cloneref=(function()local Native=cloneref if not Native then return function(
+Object)return Object end end local Cache=setmetatable({},{__mode='v'})return
+function(Object)if not Object then return nil end local Id=Object:GetDebugId()
+local Cached=Cache[Id]if Cached then return Cached end local Cloned=Native(
+Object)Cache[Id]=Cloned return Cloned end end)()Services={Players=cloneref(game:
+GetService('Players')),Workspace=cloneref(game:GetService('Workspace')),
+RunService=cloneref(game:GetService('RunService')),ReplicatedStorage=cloneref(
+game:GetService('ReplicatedStorage')),VirtualInputManager=cloneref(Instance.new(
+'VirtualInputManager')),UserInputService=cloneref(game:GetService(
+'UserInputService')),HttpService=cloneref(game:GetService('HttpService')),
+GuiService=cloneref(game:GetService('GuiService')),CoreGui=cloneref(game:
+GetService('CoreGui')),SerializationService=cloneref(game:GetService(
+'SerializationService')),TweenService=cloneref(game:GetService('TweenService')),
+LogService=cloneref(game:GetService('LogService')),ContentProvider=cloneref(game
+:GetService('ContentProvider')),InsertService=cloneref(game:GetService(
+'InsertService')),CollectionService=cloneref(game:GetService('CollectionService'
+)),Debris=cloneref(game:GetService('Debris'))}setmetatable(Services,{__index=
+function(self,name)local service if rawget(self,name)then return rawget(self,
+name)end xpcall(function()service=cloneref(game:GetService(name))end,function(rr
+)print(rr)error(rr,2)end)if service then rawset(self,name,service)return service
+end return nil end})return Services end function __DARKLUA_BUNDLE_MODULES.a()
+local v=__DARKLUA_BUNDLE_MODULES.cache.a if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.a=v end return v.c end end do local __modImpl=
+function()local Services=__DARKLUA_BUNDLE_MODULES.a()PlayerRefs={LocalPlayer=
+Services.Players.LocalPlayer}setmetatable(PlayerRefs,{__index=function(self,v)if
+v=='Character'then return self.LocalPlayer.Character elseif v=='Head'then local
+char=self.Character if not char then return end return char:FindFirstChild(
+'Head')elseif v=='Humanoid'then local char=self.Character if not char then
+return end return char.Humanoid elseif v=='Camera'then return workspace.
+CurrentCamera elseif v=='MouseLocation'then return Services.UserInputService.
+GetMouseLocation(Services.UserInputService)end return rawget(self,v)end})return
+PlayerRefs end function __DARKLUA_BUNDLE_MODULES.b()local v=
+__DARKLUA_BUNDLE_MODULES.cache.b if not v then v={c=__modImpl()}
 __DARKLUA_BUNDLE_MODULES.cache.b=v end return v.c end end do local __modImpl=
 function()return{CONFIG_DIR='GcView@awakenkn',CONFIG_EXT='.json',
 DEFAULT_CONFIG_NAME='default',REPO_OWNER='Awakenchan',REPO_NAME='GcViewerV3',

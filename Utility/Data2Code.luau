@@ -1,6 +1,7 @@
 --!early version
 --!edited bundler version
 local Data2Code = {}
+local FunctionLibrary = {}
 FunctionLibrary.SafeString = function(Object)
     local Metatable = getrawmetatable(Object)
     local IsTable = typeof(Object) == "table" or typeof(Object) == "userdata"

@@ -2015,25 +2015,38 @@ Body=bytecode,Method='POST',Headers={['Content-Type']='text/plain'}})last_call=
 os.clock()if httpResult.StatusCode~=200 then return
 '-- Error occured while requesting the API, error:\n\n--[[\n'..tostring(
 httpResult.Body)..'\n--]]'else return httpResult.Body end end local disassemble=
-function(scriptPath)return call('/konstant/disassemble',scriptPath)end if not
-getgenv().decompile then assert(getscriptbytecode,
-'exploit does not support getscriptbytecode.')local last=0 local httpservice=
-cloneref and cloneref(game:GetService('HttpService'))or game:GetService(
-'HttpService')getgenv().decompile=function(scr)local ok,bytecode=pcall(
+function(scriptPath)return call('/konstant/disassemble',scriptPath)end local
+last=0 local httpservice=cloneref and cloneref(game:GetService('HttpService'))or
+game:GetService('HttpService')local B64=
+[[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/]]local
+B64_CHARS={}for i=1,64 do B64_CHARS[i-1]=string.sub(B64,i,i)end local
+fallbackEncode=function(data)local n=#data local out={}local outLen=0 local pad=
+({'','==','='})[n%3+1]local i=1 while i+2<=n do local b1,b2,b3=string.byte(data,
+i,i+2)local word=b1*65536+b2*256+b3 outLen=outLen+1 out[outLen]=B64_CHARS[bit32.
+rshift(word,18)]..B64_CHARS[bit32.band(bit32.rshift(word,12),63)]..B64_CHARS[
+bit32.band(bit32.rshift(word,6),63)]..B64_CHARS[bit32.band(word,63)]i=i+3 end
+local remaining=n-i+1 if remaining==1 then local b1=string.byte(data,i)local
+word=b1*65536 outLen=outLen+1 out[outLen]=B64_CHARS[bit32.rshift(word,18)]..
+B64_CHARS[bit32.band(bit32.rshift(word,12),63)]elseif remaining==2 then local b1
+,b2=string.byte(data,i,i+1)local word=b1*65536+b2*256 outLen=outLen+1 out[outLen
+]=B64_CHARS[bit32.rshift(word,18)]..B64_CHARS[bit32.band(bit32.rshift(word,12),
+63)]..B64_CHARS[bit32.band(bit32.rshift(word,6),63)]end return table.concat(out)
+..pad end getgenv().decompile=function(scr)local ok,bytecode=pcall(
 getscriptbytecode,scr)if not ok then return
-'-- failed to read script bytecode\n--[[\n'..tostring(bytecode)..'\n--]]'end
-local elapsed=os.clock()-last if elapsed<0.12 then task.wait(0.12-elapsed)end
-local encoder=base64_encode if not encoder then encoder=function(data)local b=
-[[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/]]return((data
-:gsub('.',function(x)local r,byte='',x:byte()for i=8,1,-1 do r=r..(byte%2^i-byte
-%2^(i-1)>0 and'1'or'0')end return r end)..'0000'):gsub('%d%d%d?%d?%d?%d?',
-function(x)if#x<6 then return''end local c=0 for i=1,6 do c=c+(x:sub(i,i)=='1'
-and 2^(6-i)or 0)end return b:sub(c+1,c+1)end)..({'','==','='})[#data%3+1])end
-end local res=request({Url='https://api.lua.expert/decompile',Method='POST',
-Headers={['content-type']='application/json'},Body=httpservice:JSONEncode({
-script=encoder(bytecode)})})last=os.clock()if not res or res.StatusCode~=200
-then return'-- api request error\n--[[\n'..(res and res.Body or'no response')..
-'\n--]]'end return res.Body end print('decompile set')end getgenv().disassemble=
+'-- failed to read script bytecode\n--[[\n'..tostring(bytecode)..'\n--]]'end if
+type(bytecode)~='string'or#bytecode==0 then return
+'-- no bytecode available for this script'end local elapsed=os.clock()-last if
+elapsed<0.12 then task.wait(0.12-elapsed)end local encoder=base64_encode or(
+crypt and crypt.base64encode)or(crypt and crypt.base64.encode)if not encoder
+then encoder=fallbackEncode end local encOk,encoded=pcall(encoder,bytecode)if
+not encOk or type(encoded)~='string'then return
+'-- failed to base64 encode bytecode\n--[[\n'..tostring(encoded)..'\n--]]'end
+local reqOk,res=pcall(request,{Url='https://api.lua.expert/decompile',Method=
+'POST',Headers={['content-type']='application/json'},Body=httpservice:
+JSONEncode({script=encoded})})last=os.clock()if not reqOk then return
+'-- request failed\n--[[\n'..tostring(res)..'\n--]]'end if not res or res.
+StatusCode~=200 then return'-- api request error\n--[[\n'..(res and res.Body or
+'no response')..'\n--]]'end return res.Body end getgenv().disassemble=
 disassemble local Assets=__DARKLUA_BUNDLE_MODULES.d()Assets.Download()local
 FunctionLibrary=__DARKLUA_BUNDLE_MODULES.e()local Sizex,Sizey=FunctionLibrary.
 GetSize()local isActor=getactors and#getactors()>0 or false local ReGui=
@@ -2053,69 +2066,69 @@ identifyexecutor()..' | Actor: '..FunctionLibrary.SafeString(isActor),Size=UDim2
 function __DARKLUA_BUNDLE_MODULES.g()local v=__DARKLUA_BUNDLE_MODULES.cache.g if
 not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.g=v end return v.c
 end end do local __modImpl=function()local Data2Code={}local FunctionLibrary=
-__DARKLUA_BUNDLE_MODULES.e()local INDENT='    'local SafeString=FunctionLibrary.
-SafeString local FunctionInfo=FunctionLibrary.FunctionInfo local byte=string.
-byte local sub=string.sub local format=string.format local concat=table.concat
-local _=table.insert local rep=string.rep local floor=math.floor local abs=math.
-abs local round=math.round local huge=math.huge local try=function(fn,fallback)
+__DARKLUA_BUNDLE_MODULES.e()local INDENT='    'local try=function(fn,fallback)
 local ok,res=xpcall(fn,function()return fallback end)if ok then return res end
 return fallback end local IsIdentifier=function(str)return type(str)=='string'
 and str:match('^[%a_][%w_]*$')~=nil end local ESCAPES={[34]='\\"',[92]='\\\\',[7
 ]='\\a',[8]='\\b',[9]='\\t',[10]='\\n',[11]='\\v',[12]='\\f',[13]='\\r'}local
-EscapeString=function(str)if type(str)~='string'then str=SafeString(str)end
-local n=#str local out=table.create(n+2)out[1]='"'local len=1 for i=1,n do local
-b=byte(str,i)local esc=ESCAPES[b]if esc then len=len+1 out[len]=esc elseif b>=32
-and b<=126 then len=len+1 out[len]=sub(str,i,i)else len=len+1 out[len]=format(
-'\\%03d',b)end end out[len+1]='"'return concat(out)end local FormatNumber=
-function(n)if n~=n then return'0/0'elseif n==huge then return'math.huge'elseif n
-==-huge then return'-math.huge'elseif n==floor(n)and abs(n)<1e15 then return
-format('%d',n)end return format('%.14g',n)end local ChildSegment=function(name)
-if IsIdentifier(name)then return'.'..name end return'['..EscapeString(name)..']'
-end local GetInstancePath=function(instance)if instance==game then return'game'
-end local segments={}local current=instance local guard=0 while current do guard
-=guard+1 if guard>512 then return EscapeString('<deep instance>')end if current
-==game then table.insert(segments,1,'game')return concat(segments)end local
-parent=try(function()return current.Parent end,nil)local name=try(function()
-return current.Name end,'Instance')if parent==game then local isService=pcall(
-function()return game:GetService(name)end)if isService then table.insert(
-segments,1,string.format('game:GetService(%s)',tostring(EscapeString(name))))
-else table.insert(segments,1,'game'..ChildSegment(name))end return concat(
-segments)end if not parent then local className=try(function()return current.
-ClassName end,'Instance')return EscapeString(('<unparented %s: %s>'):format(
-className,name))end table.insert(segments,1,ChildSegment(name))current=parent
-end return EscapeString('<unresolved instance>')end local IsPureArray=function(t
-)local count=0 for _ in next,t do count=count+1 end local len=rawlen(t)if count
-~=len then return false,len end for i=1,len do if rawget(t,i)==nil then return
-false,len end end return true,len end local SerializeScalar=function(value)local
-vt=try(function()return typeof(value)end,'unknown')if value==nil then return
-'nil'elseif vt=='string'then return EscapeString(value)elseif vt=='number'then
-return FormatNumber(value)elseif vt=='boolean'then return value and'true'or
-'false'elseif vt=='Instance'then return try(function()return GetInstancePath(
-value)end,'"<instance>"')elseif vt=='EnumItem'then return try(function()return
-SafeString(value)end,'"<EnumItem>"')elseif vt=='Enum'then return try(function()
-return'Enum.'..SafeString(value)end,'"<Enum>"')elseif vt=='Vector3'then return
-try(function()return('Vector3.new(%s, %s, %s)'):format(FormatNumber(value.X),
-FormatNumber(value.Y),FormatNumber(value.Z))end,'"<Vector3>"')elseif vt==
-'Vector2'then return try(function()return('Vector2.new(%s, %s)'):format(
-FormatNumber(value.X),FormatNumber(value.Y))end,'"<Vector2>"')elseif vt==
-'Color3'then return try(function()return('Color3.fromRGB(%d, %d, %d)'):format(
-round(value.R*255),round(value.G*255),round(value.B*255))end,'"<Color3>"')elseif
-vt=='CFrame'then return try(function()local comps={value:GetComponents()}for i=1
-,#comps do comps[i]=FormatNumber(comps[i])end return('CFrame.new(%s)'):format(
-concat(comps,', '))end,'"<CFrame>"')elseif vt=='UDim2'then return try(function()
-return('UDim2.new(%s, %s, %s, %s)'):format(FormatNumber(value.X.Scale),
-FormatNumber(value.X.Offset),FormatNumber(value.Y.Scale),FormatNumber(value.Y.
-Offset))end,'"<UDim2>"')elseif vt=='UDim'then return try(function()return(
+EscapeString=function(str)if type(str)~='string'then str=FunctionLibrary.
+SafeString(str)end local n=#str local out=table.create(n+2)out[1]='"'local len=1
+for i=1,n do local b=string.byte(str,i)local esc=ESCAPES[b]if esc then len=len+1
+out[len]=esc elseif b>=32 and b<=126 then len=len+1 out[len]=string.sub(str,i,i)
+else len=len+1 out[len]=string.format('\\%03d',b)end end out[len+1]='"'return
+table.concat(out)end local FormatNumber=function(n)if n~=n then return'0/0'
+elseif n==math.huge then return'math.huge'elseif n==-math.huge then return
+'-math.huge'elseif n==math.floor(n)and math.abs(n)<1e15 then return string.
+format('%d',n)end return string.format('%.14g',n)end local ChildSegment=function
+(name)if IsIdentifier(name)then return'.'..name end return'['..EscapeString(name
+)..']'end local GetInstancePath=function(instance)if instance==game then return
+'game'end local segments={}local current=instance local guard=0 while current do
+guard=guard+1 if guard>512 then return EscapeString('<deep instance>')end if
+current==game then table.insert(segments,1,'game')return table.concat(segments)
+end local parent=try(function()return current.Parent end,nil)local name=try(
+function()return current.Name end,'Instance')if parent==game then local
+isService=pcall(function()return game:GetService(name)end)if isService then
+table.insert(segments,1,string.format('game:GetService(%s)',tostring(
+EscapeString(name))))else table.insert(segments,1,'game'..ChildSegment(name))end
+return table.concat(segments)end if not parent then local className=try(function
+()return current.ClassName end,'Instance')return EscapeString((
+'<unparented %s: %s>'):format(className,name))end table.insert(segments,1,
+ChildSegment(name))current=parent end return EscapeString(
+'<unresolved instance>')end local IsPureArray=function(t)local count=0 for _ in
+t do count=count+1 end local len=rawlen(t)if count~=len then return false,len
+end for i=1,len do if rawget(t,i)==nil then return false,len end end return true
+,len end local SCALAR_HANDLERS={string=function(value)return EscapeString(value)
+end,number=function(value)return FormatNumber(value)end,boolean=function(value)
+return value and'true'or'false'end,Instance=function(value)return try(function()
+return GetInstancePath(value)end,'"<instance>"')end,EnumItem=function(value)
+return try(function()return FunctionLibrary.SafeString(value)end,'"<EnumItem>"')
+end,Enum=function(value)return try(function()return'Enum.'..FunctionLibrary.
+SafeString(value)end,'"<Enum>"')end,Vector3=function(value)return try(function()
+return('Vector3.new(%s, %s, %s)'):format(FormatNumber(value.X),FormatNumber(
+value.Y),FormatNumber(value.Z))end,'"<Vector3>"')end,Vector2=function(value)
+return try(function()return('Vector2.new(%s, %s)'):format(FormatNumber(value.X),
+FormatNumber(value.Y))end,'"<Vector2>"')end,Color3=function(value)return try(
+function()return('Color3.fromRGB(%d, %d, %d)'):format(math.round(value.R*255),
+math.round(value.G*255),math.round(value.B*255))end,'"<Color3>"')end,CFrame=
+function(value)return try(function()local comps={value:GetComponents()}for i=1,#
+comps do comps[i]=FormatNumber(comps[i])end return('CFrame.new(%s)'):format(
+table.concat(comps,', '))end,'"<CFrame>"')end,UDim2=function(value)return try(
+function()return('UDim2.new(%s, %s, %s, %s)'):format(FormatNumber(value.X.Scale)
+,FormatNumber(value.X.Offset),FormatNumber(value.Y.Scale),FormatNumber(value.Y.
+Offset))end,'"<UDim2>"')end,UDim=function(value)return try(function()return(
 'UDim.new(%s, %s)'):format(FormatNumber(value.Scale),FormatNumber(value.Offset))
-end,'"<UDim>"')elseif vt=='BrickColor'then return try(function()return(
-'BrickColor.new(%s)'):format(EscapeString(value.Name))end,'"<BrickColor>"')
-elseif vt=='RBXScriptConnection'then return'"<RBXScriptConnection>"'elseif vt==
-'RBXScriptSignal'then return'"<RBXScriptSignal>"'elseif vt=='function'then
-return'"<function>"'elseif vt=='thread'then return'"<thread>"'end local
-descriptor=try(function()return SafeString(value):gsub('[%c]',' ')end,'<'..
-SafeString(vt)..'>')return EscapeString(('<%s: %s>'):format(vt,descriptor))end
-local SerializeRoot=function(root,pretty)local normalize=function(v)if try(
-function()return typeof(v)end,'')=='function'then return try(function()return
+end,'"<UDim>"')end,BrickColor=function(value)return try(function()return(
+'BrickColor.new(%s)'):format(EscapeString(value.Name))end,'"<BrickColor>"')end,
+RBXScriptConnection=function()return'"<RBXScriptConnection>"'end,RBXScriptSignal
+=function()return'"<RBXScriptSignal>"'end,['function']=function()return
+'"<function>"'end,thread=function()return'"<thread>"'end}local SerializeScalar=
+function(value)if value==nil then return'nil'end local vt=try(function()return
+typeof(value)end,'unknown')local handler=SCALAR_HANDLERS[vt]if handler then
+return handler(value)end local descriptor=try(function()return(FunctionLibrary.
+SafeString(value):gsub('[%c]',' '))end,'<'..FunctionLibrary.SafeString(vt)..'>')
+return EscapeString(('<%s: %s>'):format(vt,descriptor))end local SerializeRoot=
+function(root,pretty)local normalize=function(v)if try(function()return typeof(v
+)end,'')=='function'then return try(function()return FunctionLibrary.
 FunctionInfo(v)end,'<function>')end return v end root=normalize(root)if typeof(
 root)~='table'then return SerializeScalar(root)end local out={}local len=0 local
 visited={}local emit=function(s)len=len+1 out[len]=s end local buildEntries=
@@ -2124,37 +2137,37 @@ return IsPureArray(t)end,false)arrayLen=arrayLen or rawlen(t)if pure then for
 idx=1,arrayLen do ecount=ecount+1 entries[ecount]={keyStr=nil,value=rawget(t,idx
 )}end return entries end local seen={}for idx=1,arrayLen do if rawget(t,idx)==
 nil then break end seen[idx]=true ecount=ecount+1 entries[ecount]={keyStr=nil,
-value=rawget(t,idx)}end local keyed={}local kcount=0 for key in next,t do if not
-seen[key]then kcount=kcount+1 keyed[kcount]=key end end pcall(function()table.
-sort(keyed,function(a,b)local ta,tb=typeof(a),typeof(b)if ta=='string'and tb==
-'string'then return a<b end return SafeString(ta)<SafeString(tb)end)end)for i=1,
-kcount do local key=keyed[i]local keyStr if type(key)=='string'and IsIdentifier(
-key)then keyStr=key else keyStr='['..SerializeScalar(normalize(key))..']'end
-ecount=ecount+1 entries[ecount]={keyStr=keyStr,value=rawget(t,key)}end return
-entries end local sep=pretty and','or', 'visited[root]=true local stack={{
-entries=buildEntries(root),i=1,indent=0,tableRef=root,sep=''}}local depth=1
-emit('{')while depth>0 do local frame=stack[depth]local entries=frame.entries
-local fi=frame.i if fi>#entries then if pretty and#entries>0 then emit('\n'..
-rep(INDENT,frame.indent))end emit('}')emit(frame.sep)visited[frame.tableRef]=nil
-stack[depth]=nil depth=depth-1 continue end local entry=entries[fi]frame.i=fi+1
-local rawValue=normalize(entry.value)local nextIndent=frame.indent+1 if pretty
-then if entry.keyStr then emit(('\n%s%s = '):format(rep(INDENT,nextIndent),entry
-.keyStr))else emit('\n'..rep(INDENT,nextIndent))end elseif entry.keyStr then
-emit(entry.keyStr..' = ')end if try(function()return typeof(rawValue)end,'')==
-'table'then if visited[rawValue]then emit('"<cyclic table>"')emit(sep)else
-visited[rawValue]=true emit('{')depth=depth+1 stack[depth]={entries=
-buildEntries(rawValue),i=1,indent=nextIndent,tableRef=rawValue,sep=sep}end else
-emit(SerializeScalar(rawValue))emit(sep)end end return concat(out)end function
-Data2Code.Convert(data,pretty)local ok,result=xpcall(function()return
-SerializeRoot(data,pretty)end,function(err)return
-'--[[ Data2Code.Convert error: '..SafeString(err)..' ]] nil'end)return result
-end return Data2Code end function __DARKLUA_BUNDLE_MODULES.h()local v=
-__DARKLUA_BUNDLE_MODULES.cache.h if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.h=v end return v.c end end do local __modImpl=
-function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.g()local ReGui=ReGuiTable.
-ReGui local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.e()local Data2Code=
-__DARKLUA_BUNDLE_MODULES.h()local Scripts=FunctionLibrary.GetScripts()local IDE=
-loadstring(game:HttpGet(
+value=rawget(t,idx)}end local keyed={}local kcount=0 for key in t do if not seen
+[key]then kcount=kcount+1 keyed[kcount]=key end end pcall(function()table.sort(
+keyed,function(a,b)local ta,tb=typeof(a),typeof(b)if ta=='string'and tb==
+'string'then return a<b end return FunctionLibrary.SafeString(ta)<
+FunctionLibrary.SafeString(tb)end)end)for i=1,kcount do local key=keyed[i]local
+keyStr if type(key)=='string'and IsIdentifier(key)then keyStr=key else keyStr=
+'['..SerializeScalar(normalize(key))..']'end ecount=ecount+1 entries[ecount]={
+keyStr=keyStr,value=rawget(t,key)}end return entries end local sep=pretty and','
+or', 'visited[root]=true local stack={{entries=buildEntries(root),i=1,indent=0,
+tableRef=root,sep=''}}local depth=1 emit('{')while depth>0 do local frame=stack[
+depth]local entries=frame.entries local fi=frame.i if fi>#entries then if pretty
+and#entries>0 then emit('\n'..string.rep(INDENT,frame.indent))end emit('}')emit(
+frame.sep)visited[frame.tableRef]=nil stack[depth]=nil depth=depth-1 continue
+end local entry=entries[fi]frame.i=fi+1 local rawValue=normalize(entry.value)
+local nextIndent=frame.indent+1 if pretty then if entry.keyStr then emit((
+'\n%s%s = '):format(string.rep(INDENT,nextIndent),entry.keyStr))else emit('\n'..
+string.rep(INDENT,nextIndent))end elseif entry.keyStr then emit(entry.keyStr..
+' = ')end if try(function()return typeof(rawValue)end,'')=='table'then if
+visited[rawValue]then emit('"<cyclic table>"')emit(sep)else visited[rawValue]=
+true emit('{')depth=depth+1 stack[depth]={entries=buildEntries(rawValue),i=1,
+indent=nextIndent,tableRef=rawValue,sep=sep}end else emit(SerializeScalar(
+rawValue))emit(sep)end end return table.concat(out)end function Data2Code.
+Convert(data,pretty)local ok,result=xpcall(function()return SerializeRoot(data,
+pretty)end,function(err)return'--[[ Data2Code.Convert error: '..FunctionLibrary.
+SafeString(err)..' ]] nil'end)return result end return Data2Code end function
+__DARKLUA_BUNDLE_MODULES.h()local v=__DARKLUA_BUNDLE_MODULES.cache.h if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.h=v end return v.c end end
+do local __modImpl=function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.g()local
+ReGui=ReGuiTable.ReGui local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.e()local
+Data2Code=__DARKLUA_BUNDLE_MODULES.h()local Scripts=FunctionLibrary.GetScripts()
+local IDE=loadstring(game:HttpGet(
 [[https://raw.githubusercontent.com/Awakenchan/Dear-ReGui/refs/heads/main/lib/ide.lua]]
 ))()local COLORS=FunctionLibrary.Colors()local SafeString=FunctionLibrary.
 SafeString local CoreGui=cloneref and cloneref(game:GetService('CoreGui'))or
@@ -2348,18 +2361,28 @@ parentClass,tabName,getter,scriptRef,saveDir,displayText)local tab=window:
 CreateTab({Name=tabName})local Editor=IDE.CodeFrame.new({Editable=false,FontSize
 =13,Colors=SyntaxColors,FontFace=TextFont})ReGui:ApplyFlags({Object=Editor.Gui,
 WindowClass=parentClass,Class={Fill=true,Parent=tab:GetObject(),
-BackgroundTransparency=1}})local statusLabel local row=tab:Row()row:Button({Text
-=tabName,Callback=function()Editor:ClearText()local ok,result=pcall(getter,
-scriptRef)Editor:AppendText(ok and SafeString(result)or('-- '..tabName..
-' failed'))end})row:Button({Text='Copy',Callback=function()copyToClipboard(
-Editor:GetText())end})row:Button({Text='Save',Callback=function()local content=
-Editor:GetText()if not content or content==''then local ok,result=pcall(getter,
-scriptRef)content=ok and SafeString(result)or('-- '..tabName..' failed')end
-local ok,pathOrErr=saveToFile(saveDir,scriptRef,displayText,content)if
-statusLabel then statusLabel.Text=ok and('Saved: '..pathOrErr)or('Save failed: '
-..pathOrErr)statusLabel.TextColor3=ok and COLORS.green or COLORS.red end end})
-row:Expand()statusLabel=tab:Label({Text='',TextColor3=COLORS.gray,TextXAlignment
-=Enum.TextXAlignment.Left})tab:Separator()return tab end local
+BackgroundTransparency=1}})local statusLabel local cachedContent local busy=
+false local setStatus=function(text,color)if statusLabel then statusLabel.Text=
+text statusLabel.TextColor3=color or COLORS.gray end end local showContent=
+function(content)setStatus('Rendering...',COLORS.gray)task.wait()local ok,err=
+pcall(function()Editor:SetText(content)end)if ok then setStatus('',COLORS.gray)
+else setStatus('Render failed (file too large for editor): '..tostring(err),
+COLORS.red)end end local produce=function(after)if busy then return end if
+cachedContent then after(cachedContent)return end busy=true setStatus(
+'Working on '..tabName..'...',COLORS.gray)task.spawn(function()task.wait()local
+ok,result=pcall(getter,scriptRef)cachedContent=ok and SafeString(result)or('-- '
+..tabName..' failed')busy=false after(cachedContent)end)end local row=tab:Row()
+row:Button({Text=tabName,Callback=function()cachedContent=nil produce(function(
+content)task.spawn(showContent,content)end)end})row:Button({Text='Copy',Callback
+=function()copyToClipboard(cachedContent or Editor:GetText())end})row:Button({
+Text='Save',Callback=function()if cachedContent and cachedContent~=''then local
+ok,pathOrErr=saveToFile(saveDir,scriptRef,displayText,cachedContent)setStatus(ok
+and('Saved: '..pathOrErr)or('Save failed: '..pathOrErr),ok and COLORS.green or
+COLORS.red)else produce(function(content)local ok,pathOrErr=saveToFile(saveDir,
+scriptRef,displayText,content)setStatus(ok and('Saved: '..pathOrErr)or(
+'Save failed: '..pathOrErr),ok and COLORS.green or COLORS.red)end)end end})row:
+Expand()statusLabel=tab:Label({Text='',TextColor3=COLORS.gray,TextXAlignment=
+Enum.TextXAlignment.Left})tab:Separator()return tab end local
 buildBytecodeSaveTab=function(window,scriptRef,displayText)local tab=window:
 CreateTab({Name='Bytecode (save)'})tab:Label({Text=
 'Bytecode is saved to file, not displayed.',TextColor3=COLORS.gray,

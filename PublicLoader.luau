@@ -68,42 +68,51 @@ downloadFile(entry,localPath)end end end local Assets={}function Assets.Download
 Assets end function __DARKLUA_BUNDLE_MODULES.d()local v=__DARKLUA_BUNDLE_MODULES
 .cache.d if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.d=v end
 return v.c end end do local __modImpl=function()local FunctionLibrary={}local
-RunService=Services.RunService local LocalPlayer=PlayerRefs.LocalPlayer
-FunctionLibrary.SafeString=function(Object)local Metatable=getrawmetatable(
-Object)local IsTable=typeof(Object)=='table'or typeof(Object)=='userdata'local
-__tostring=Metatable and rawget(Metatable,'__tostring')if not IsTable or type(
-__tostring)~='function'then return tostring(Object)end rawset(Metatable,
-'__tostring',nil)local String=tostring(Object)rawset(Metatable,'__tostring',
-__tostring)return String end FunctionLibrary.FunctionInfo=function(func)local
-source,line,name,numparams,vargs=debug.info(func,'slna')return{source=source,
-line=line,name=name,numparams=numparams,vargs=vargs}end FunctionLibrary.Kick=
-function(Reason)local newkick=clonefunction(PlayerRefs.LocalPlayer.kick)newkick(
-PlayerRefs.LocalPlayer,Reason)end FunctionLibrary.GetDeviceType=function()local
-uis=Services.UserInputService if uis.TouchEnabled and not uis.KeyboardEnabled
-then return'Mobile'elseif uis.KeyboardEnabled and uis.MouseEnabled then return
-'PC'end return'Unknown'end FunctionLibrary.GetSize=function()local Device=
-FunctionLibrary.GetDeviceType()if Device=='Mobile'then return 250,250 end return
-450,450 end FunctionLibrary.GetWindowSize=function()return FunctionLibrary.
-GetSize()end FunctionLibrary.Colors=function()return{default=Color3.new(1,1,1),
-black=Color3.new(0,0,0),gray=Color3.new(0.6,0.6,0.6),darkgray=Color3.new(0.3,0.3
-,0.3),red=Color3.new(1,0.2,0.2),lightred=Color3.new(1,0.5,0.5),orange=Color3.
-new(1,0.6,0.2),coral=Color3.new(1,0.4,0.3),green=Color3.new(0.2,0.8,0.2),
-lightgreen=Color3.new(0.4,1,0.4),mint=Color3.new(0.4,1,0.8),blue=Color3.new(0.3,
-0.6,1),lightblue=Color3.new(0.5,0.8,1),cyan=Color3.new(0.2,1,1),teal=Color3.new(
-0,0.8,0.8),purple=Color3.new(0.6,0.2,0.8),violet=Color3.new(0.8,0.4,1),pink=
-Color3.new(1,0.2,1),yellow=Color3.new(1,1,0.3),gold=Color3.new(1,0.84,0),cream=
-Color3.new(1,1,0.8)}end FunctionLibrary.Filters=function()return{showNil=true,
-showUnknown=true,showLocal=true,showModule=true,showServer=true,showCore=true,
-showActor=true,showCamera=true,showCommand=true,showChat=true,showPlugin=true,
-showBuilder=true,showCorePackage=true,searchQuery='',tagQuery=''}end
-FunctionLibrary.UpdateLabelVisibility=function(filters,ScriptLabels)local q=
-string.lower(filters.searchQuery or'')local tq=string.lower(filters.tagQuery or
-'')local keyMap={LocalScript='showLocal',ModuleScript='showModule',ServerScript=
-'showServer',CoreScript='showCore',Actor='showActor',CameraScript='showCamera',
-CommandScript='showCommand',ChatScript='showChat',PluginScript='showPlugin',
-ScriptBuilder='showBuilder',CorePackage='showCorePackage',Unknown='showUnknown',
-['nil']='showNil',ActorScript='showActorScript'}for _,e in next,ScriptLabels do
-local text=string.lower(e.label and e.label.Text or'')local scriptType=e.type or
+RunService=Services.RunService local LocalPlayer=PlayerRefs.LocalPlayer local
+Caps={getscriptfromthread=type(getscriptfromthread)=='function',getallthreads=
+type(getallthreads)=='function',getscripts=type(getscripts)=='function',
+getrunningscripts=type(getrunningscripts)=='function',getloadedmodules=type(
+getloadedmodules)=='function',getnilinstances=type(getnilinstances)=='function',
+getfunctionhash=type(getfunctionhash)=='function',islclosure=type(islclosure)==
+'function',isexecutorclosure=type(isexecutorclosure)=='function',
+getscriptbytecode=type(getscriptbytecode)=='function'}local ANTICHEAT_KEYWORDS={
+'luraph','lph_no_upvalues','lph_jit','lph_encstr'}local OBF_MIN_STRING_LEN=3000
+local OBF_MIN_BYTECODE=30000 FunctionLibrary.SafeString=function(Object)local
+Metatable=getrawmetatable(Object)local IsTable=typeof(Object)=='table'or typeof(
+Object)=='userdata'local __tostring=Metatable and rawget(Metatable,'__tostring')
+if not IsTable or type(__tostring)~='function'then return tostring(Object)end
+rawset(Metatable,'__tostring',nil)local String=tostring(Object)rawset(Metatable,
+'__tostring',__tostring)return String end FunctionLibrary.FunctionInfo=function(
+func)local source,line,name,numparams,vargs=debug.info(func,'slna')return{source
+=source,line=line,name=name,numparams=numparams,vargs=vargs}end FunctionLibrary.
+Kick=function(Reason)local newkick=clonefunction(PlayerRefs.LocalPlayer.kick)
+newkick(PlayerRefs.LocalPlayer,Reason)end FunctionLibrary.GetDeviceType=function
+()local uis=Services.UserInputService if uis.TouchEnabled and not uis.
+KeyboardEnabled then return'Mobile'elseif uis.KeyboardEnabled and uis.
+MouseEnabled then return'PC'end return'Unknown'end FunctionLibrary.GetSize=
+function()local Device=FunctionLibrary.GetDeviceType()if Device=='Mobile'then
+return 250,250 end return 450,450 end FunctionLibrary.GetWindowSize=function()
+return FunctionLibrary.GetSize()end FunctionLibrary.Colors=function()return{
+default=Color3.new(1,1,1),black=Color3.new(0,0,0),gray=Color3.new(0.6,0.6,0.6),
+darkgray=Color3.new(0.3,0.3,0.3),red=Color3.new(1,0.2,0.2),lightred=Color3.new(1
+,0.5,0.5),orange=Color3.new(1,0.6,0.2),coral=Color3.new(1,0.4,0.3),green=Color3.
+new(0.2,0.8,0.2),lightgreen=Color3.new(0.4,1,0.4),mint=Color3.new(0.4,1,0.8),
+blue=Color3.new(0.3,0.6,1),lightblue=Color3.new(0.5,0.8,1),cyan=Color3.new(0.2,1
+,1),teal=Color3.new(0,0.8,0.8),purple=Color3.new(0.6,0.2,0.8),violet=Color3.new(
+0.8,0.4,1),pink=Color3.new(1,0.2,1),yellow=Color3.new(1,1,0.3),gold=Color3.new(1
+,0.84,0),cream=Color3.new(1,1,0.8)}end FunctionLibrary.Filters=function()return{
+showNil=true,showUnknown=true,showLocal=true,showModule=true,showServer=true,
+showCore=true,showActor=true,showCamera=true,showCommand=true,showChat=true,
+showPlugin=true,showBuilder=true,showCorePackage=true,showAntiCheat=true,
+searchQuery='',tagQuery=''}end FunctionLibrary.UpdateLabelVisibility=function(
+filters,ScriptLabels)local q=string.lower(filters.searchQuery or'')local tq=
+string.lower(filters.tagQuery or'')local keyMap={LocalScript='showLocal',
+ModuleScript='showModule',ServerScript='showServer',CoreScript='showCore',Actor=
+'showActor',CameraScript='showCamera',CommandScript='showCommand',ChatScript=
+'showChat',PluginScript='showPlugin',ScriptBuilder='showBuilder',CorePackage=
+'showCorePackage',AntiCheat='showAntiCheat',Unknown='showUnknown',['nil']=
+'showNil',ActorScript='showActorScript'}for _,e in next,ScriptLabels do local
+text=string.lower(e.label and e.label.Text or'')local scriptType=e.type or
 'Unknown'local filterKey=keyMap[scriptType]or'showUnknown'local enabled=filters[
 filterKey]~=false local match=(q=='')or string.find(text,q,1,true)~=nil local
 tagMatch=true if tq~=''and e.valueIndex then tagMatch=string.find(e.valueIndex,
@@ -112,7 +121,39 @@ e.label.Visible=visible end if e.separator then e.separator.Visible=visible end
 end end FunctionLibrary.ScriptKey=function(inst)local ok,id=pcall(function()
 return inst:GetDebugId()end)if ok and id and id~=''then return id end local ok2,
 full=pcall(function()return inst:GetFullName()end)return(ok2 and full)or
-FunctionLibrary.SafeString(inst)end FunctionLibrary.GetActorScripts=function(
+FunctionLibrary.SafeString(inst)end FunctionLibrary.DetectAntiCheat=function(
+scriptRef)if not Caps.getscriptbytecode then return false,nil end local okBc,bc=
+pcall(getscriptbytecode,scriptRef)if not okBc or type(bc)~='string'then return
+false,nil end local len=#bc local slice=len>8000 and string.sub(bc,1,8000)or bc
+for _,kw in ANTICHEAT_KEYWORDS do if string.find(slice,kw,1,true)then return
+true,('bytecode contains %q'):format(kw)end end if string.find(slice,'Luraph',1,
+true)then return true,'bytecode contains "Luraph"'end if len>=OBF_MIN_BYTECODE
+then return true,('large obfuscated bytecode (%d bytes)'):format(len)end return
+false,nil end FunctionLibrary.BuildAntiCheatKeywordMap=function(onYield)local
+hits={}local okGc,gc=pcall(getgc,true)if not okGc or type(gc)~='table'then
+return hits end local KEYWORD_VARIANTS={'luraph','Luraph','LURAPH',
+'lph_no_upvalues','LPH_NO_UPVALUES','lph_jit','LPH_JIT','lph_encstr',
+'LPH_ENCSTR'}local keywordInString=function(s)if#s>=OBF_MIN_STRING_LEN then
+return'luraph payload (large encoded blob)'end for _,kw in KEYWORD_VARIANTS do
+if string.find(s,kw,1,true)then return('contains %q'):format(kw)end end return
+false end local scanFlat=function(tbl)if type(tbl)~='table'then return false end
+for _,v in tbl do if type(v)=='string'then local hit=keywordInString(v)if hit
+then return hit end end end return false end local processed=0 for _,obj in gc
+do if type(obj)=='function'and(not Caps.islclosure or islclosure(obj))then local
+reason=false local okC,consts=pcall(debug.getconstants,obj)if okC then reason=
+scanFlat(consts)end if not reason then local okU,ups=pcall(debug.getupvalues,obj
+)if okU then reason=scanFlat(ups)end end if reason then local okEnv,env=pcall(
+getfenv,obj)if okEnv and type(env)=='table'then local ok2,s=pcall(rawget,env,
+'script')if ok2 and typeof(s)=='Instance'then local okId,id=pcall(function()
+return s:GetDebugId()end)if okId and id and not hits[id]then hits[id]=reason end
+end end end end processed=processed+1 if processed%300==0 then if onYield then
+onYield()else RunService.Heartbeat:Wait()end end end return hits end
+FunctionLibrary.BuildThreadScriptMap=function()local map={}if not(Caps.
+getscriptfromthread and Caps.getallthreads)then return map,false end local
+okThreads,threads=pcall(getallthreads)if not okThreads or type(threads)~='table'
+then return map,false end for _,thread in threads do local okScript,scr=pcall(
+getscriptfromthread,thread)if okScript and typeof(scr)=='Instance'then map[scr]=
+thread end end return map,true end FunctionLibrary.GetActorScripts=function(
 timeout)timeout=timeout or 3 local results={}local seen={}if type(getactors)~=
 'function'or type(run_on_actor)~='function'or type(create_comm_channel)~=
 'function'then return results end local okActors,actors=pcall(getactors)if not
@@ -133,29 +174,64 @@ upvalues,valueIndex=payload.valueIndex})end end end)local COLLECTOR=
 for _,actor in actors do pcall(run_on_actor,actor,COLLECTOR,channelId)end local
 start=os.clock()while pending>0 and(os.clock()-start)<timeout do RunService.
 Heartbeat:Wait()end if conn then pcall(function()conn:Disconnect()end)end return
-results end FunctionLibrary.GetScripts=function(Reason)local SCRIPT_CONTAINERS={
-'ReplicatedStorage','ReplicatedFirst','StarterPlayer','StarterGui','StarterPack'
-}local YIELD_EVERY=2000 local IsClientContext=function(inst)if inst:IsA(
-'LocalScript')then return true elseif inst:IsA('ModuleScript')then return true
-elseif inst:IsA('Script')then return inst.RunContext==Enum.RunContext.Client end
-return false end local FullName=function(inst)local ok,name=pcall(function()
-return inst:GetFullName()end)if ok then return name end return inst.Name end
-local results={}local seen={}local processed=0 local isOtherPlayerScript=
-function(inst)local ok,plr=pcall(function()return inst:
-FindFirstAncestorWhichIsA('Player')end)if ok and plr and plr~=LocalPlayer then
+results end FunctionLibrary.GetActorScriptKeys=function()local keys={}if type(
+getactors)~='function'then return keys end local okActors,actors=pcall(getactors
+)if not okActors or type(actors)~='table'then return keys end for _,actor in
+actors do local okDesc,descendants=pcall(function()return actor:GetDescendants()
+end)if okDesc and type(descendants)=='table'then for _,inst in descendants do
+local okIs,isLsc=pcall(function()return inst:IsA('LuaSourceContainer')end)if
+okIs and isLsc then keys[FunctionLibrary.ScriptKey(inst)]=true local okName,name
+=pcall(function()return inst.Name end)if okName and name then keys['name:'..name
+]=true end end end end end return keys end FunctionLibrary.GetScripts=function(
+Reason,actorKeys)actorKeys=actorKeys or{}local keywordHits=FunctionLibrary.
+BuildAntiCheatKeywordMap()local SCRIPT_CONTAINERS={'ReplicatedStorage',
+'ReplicatedFirst','StarterPlayer','StarterGui','StarterPack'}local YIELD_EVERY=
+2000 local IsClientContext=function(inst)if inst:IsA('LocalScript')then return
+true elseif inst:IsA('ModuleScript')then return true elseif inst:IsA('Script')
+then return inst.RunContext==Enum.RunContext.Client end return false end local
+FullName=function(inst)local ok,name=pcall(function()return inst:GetFullName()
+end)if ok then return name end return inst.Name end local results={}local seen={
+}local seenRef={}local processed=0 local isOtherPlayerScript=function(inst)local
+ok,plr=pcall(function()return inst:FindFirstAncestorWhichIsA('Player')end)if ok
+and plr and plr~=LocalPlayer then return true end return false end local
+isActorScript=function(inst)local ok,actor=pcall(function()return inst:
+FindFirstAncestorWhichIsA('Actor')end)if ok and actor then return true end local
+ok2,actor2=pcall(function()return inst:GetActor()end)if ok2 and actor2 then
 return true end return false end local consider=function(inst)if not inst:IsA(
-'LuaSourceContainer')then return end local key=FunctionLibrary.ScriptKey(inst)if
-seen[key]then return end if not IsClientContext(inst)then return end if
-isOtherPlayerScript(inst)then return end seen[key]=true local context if inst:
-IsA('LocalScript')then context='LocalScript'elseif inst:IsA('ModuleScript')then
-context='ModuleScript'else context='Script(Client)'end table.insert(results,{
-script=inst,path=FullName(inst),context=context,key=key})end local okRunning,
-running=pcall(getrunningscripts)if okRunning and running then for _,inst in
-running do consider(inst)processed=processed+1 if processed%YIELD_EVERY==0 then
-RunService.Heartbeat:Wait()end end end local okNil,nilInstances=pcall(
+'LuaSourceContainer')then return end if seenRef[inst]then return end local key=
+FunctionLibrary.ScriptKey(inst)if seen[key]then return end if actorKeys[key]then
+return end local okName,name=pcall(function()return inst.Name end)if okName and
+name and actorKeys['name:'..name]then local okReach,reachable=pcall(function()
+return inst:IsDescendantOf(game)end)if not(okReach and reachable)then return end
+end if not IsClientContext(inst)then return end if isOtherPlayerScript(inst)then
+return end if isActorScript(inst)then return end seen[key]=true seenRef[inst]=
+true local context if inst:IsA('LocalScript')then context='LocalScript'elseif
+inst:IsA('ModuleScript')then context='ModuleScript'else context='Script(Client)'
+end local isAnti,antiReasons=false,{}if keywordHits[key]then isAnti=true
+antiReasons[#antiReasons+1]=keywordHits[key]else local detected,reason=
+FunctionLibrary.DetectAntiCheat(inst)if detected then isAnti=true antiReasons[#
+antiReasons+1]=reason end end table.insert(results,{script=inst,path=FullName(
+inst),context=context,key=key,isAntiCheat=isAnti,antiCheatReasons=antiReasons})
+end if Caps.getscripts then local okAll,allScripts=pcall(getscripts)if okAll and
+type(allScripts)=='table'then for _,inst in allScripts do if typeof(inst)==
+'Instance'then consider(inst)processed=processed+1 if processed%YIELD_EVERY==0
+then RunService.Heartbeat:Wait()end end end end end if Caps.getrunningscripts
+then local okRunning,running=pcall(getrunningscripts)if okRunning and running
+then for _,inst in running do consider(inst)processed=processed+1 if processed%
+YIELD_EVERY==0 then RunService.Heartbeat:Wait()end end end end if Caps.
+getloadedmodules then local okMods,mods=pcall(getloadedmodules)if okMods and
+mods then for _,inst in mods do consider(inst)processed=processed+1 if processed
+%YIELD_EVERY==0 then RunService.Heartbeat:Wait()end end end end if Caps.
+getscriptfromthread and Caps.getallthreads then local okThreads,threads=pcall(
+getallthreads)if okThreads and type(threads)=='table'then for _,thread in
+threads do local okScr,scr=pcall(getscriptfromthread,thread)if okScr and typeof(
+scr)=='Instance'then local okReach,reachable=pcall(function()return scr:
+IsDescendantOf(game)end)if okReach and reachable then consider(scr)processed=
+processed+1 if processed%YIELD_EVERY==0 then RunService.Heartbeat:Wait()end end
+end end end end if Caps.getnilinstances then local okNil,nilInstances=pcall(
 getnilinstances)if okNil and nilInstances then for _,inst in nilInstances do
 consider(inst)processed=processed+1 if processed%YIELD_EVERY==0 then RunService.
-Heartbeat:Wait()end end end for _,serviceName in SCRIPT_CONTAINERS do local
+Heartbeat:Wait()end end end end for _,serviceName in SCRIPT_CONTAINERS do local
 okService,service=pcall(function()return cloneref(game:GetService(serviceName))
 end)if not okService or not service then continue end local descendants=service:
 GetDescendants()for _,inst in descendants do consider(inst)processed=processed+1
@@ -166,102 +242,102 @@ FindFirstChildOfClass('Backpack'),LocalPlayer.Character}for _,container in
 localContainers do if container then for _,inst in container:GetDescendants()do
 consider(inst)processed=processed+1 if processed%YIELD_EVERY==0 then RunService.
 Heartbeat:Wait()end end end end end return results end FunctionLibrary.
-CollectScriptFunctions=function(scriptRef)local list={}local seen={}local okGc,
-gc=pcall(getgc,true)if not okGc or type(gc)~='table'then return list,false end
-local scriptName=scriptRef.Name local nameDistinctive=#scriptName>=8 local
-fullName do local okFull,fn=pcall(function()return scriptRef:GetFullName()end)
-fullName=okFull and fn or nil end local refId do local okId,id=pcall(function()
-return scriptRef:GetDebugId()end)refId=okId and id or nil end local
-instanceIsRef=function(v)if v==scriptRef then return true end if refId and
-typeof(v)=='Instance'then local okSid,sid=pcall(function()return v:GetDebugId()
-end)return okSid and sid==refId end return false end local matches=function(obj)
-local okEnv,env=pcall(getfenv,obj)if okEnv and type(env)=='table'then local ok2,
-s=pcall(rawget,env,'script')if ok2 and instanceIsRef(s)then return true end end
-local okU,ups=pcall(debug.getupvalues,obj)if okU and type(ups)=='table'then for
-_,v in ups do if instanceIsRef(v)then return true end end end local okC,consts=
-pcall(debug.getconstants,obj)if okC and type(consts)=='table'then for _,v in
-consts do if v==scriptRef then return true end end end local okSrc,src=pcall(
+CollectScriptFunctions=function(scriptRef)local list={}local seen={}local
+scriptName=scriptRef.Name local nameDistinctive=#scriptName>=8 local fullName do
+local okFull,fn=pcall(function()return scriptRef:GetFullName()end)fullName=
+okFull and fn or nil end local refId do local okId,id=pcall(function()return
+scriptRef:GetDebugId()end)refId=okId and id or nil end local instanceIsRef=
+function(v)if v==scriptRef then return true end if refId and typeof(v)==
+'Instance'then local okSid,sid=pcall(function()return v:GetDebugId()end)return
+okSid and sid==refId end return false end local add=function(fn)if seen[fn]then
+return end seen[fn]=true local info=FunctionLibrary.FunctionInfo(fn)list[#list+1
+]={func=fn,name=(info.name and info.name~='')and info.name or'(anonymous)',line=
+info.line,numparams=info.numparams,vargs=info.vargs}end local matches=function(
+obj)local okEnv,env=pcall(getfenv,obj)if okEnv and type(env)=='table'then local
+ok2,s=pcall(rawget,env,'script')if ok2 and instanceIsRef(s)then return true end
+end local okU,ups=pcall(debug.getupvalues,obj)if okU and type(ups)=='table'then
+for _,v in ups do if instanceIsRef(v)then return true end end end local okC,
+consts=pcall(debug.getconstants,obj)if okC and type(consts)=='table'then for _,v
+in consts do if v==scriptRef then return true end end end local okSrc,src=pcall(
 function()return debug.info(obj,'s')end)if okSrc and type(src)=='string'and src
 ~=''then if fullName and string.find(src,fullName,1,true)then return true end if
 nameDistinctive and string.find(src,scriptName,1,true)then return true end end
-return false end local add=function(fn)if seen[fn]then return end seen[fn]=true
-local info=FunctionLibrary.FunctionInfo(fn)list[#list+1]={func=fn,name=(info.
-name and info.name~='')and info.name or'(anonymous)',line=info.line,numparams=
-info.numparams,vargs=info.vargs}end for _,obj in gc do if type(obj)=='function'
-and(not islclosure or islclosure(obj))and matches(obj)then add(obj)end end table
-.sort(list,function(a,b)return(a.line or 0)<(b.line or 0)end)local invalidSource
-=(#list==0)and(fullName==nil or fullName==scriptName)return list,invalidSource
-end FunctionLibrary.CollectOrphanFunctions=function(knownFuncs)knownFuncs=
-knownFuncs or{}local list={}local seen={}local okGc,gc=pcall(getgc,true)if not
-okGc or type(gc)~='table'then return list end local belongsToSomeScript=function
-(obj)local okEnv,env=pcall(getfenv,obj)if okEnv and type(env)=='table'then local
-ok2,s=pcall(rawget,env,'script')if ok2 and typeof(s)=='Instance'and s:IsA(
+return false end local okGc,gc=pcall(getgc,true)if okGc and type(gc)=='table'
+then for _,obj in gc do if type(obj)=='function'and(not Caps.islclosure or
+islclosure(obj))and matches(obj)then add(obj)end end end table.sort(list,
+function(a,b)return(a.line or 0)<(b.line or 0)end)local invalidSource=(#list==0)
+and(fullName==nil or fullName==scriptName)return list,invalidSource end
+FunctionLibrary.CollectOrphanFunctions=function(knownFuncs)knownFuncs=knownFuncs
+or{}local list={}local seen={}local okGc,gc=pcall(getgc,true)if not okGc or
+type(gc)~='table'then return list end local belongsToSomeScript=function(obj)
+local okEnv,env=pcall(getfenv,obj)if okEnv and type(env)=='table'then local ok2,
+s=pcall(rawget,env,'script')if ok2 and typeof(s)=='Instance'and s:IsA(
 'LuaSourceContainer')then return true end for _,v in env do if typeof(v)==
 'Instance'and v:IsA('LuaSourceContainer')then return true end end end local okU,
 ups=pcall(debug.getupvalues,obj)if okU and type(ups)=='table'then for _,v in ups
 do if typeof(v)=='Instance'and v:IsA('LuaSourceContainer')then return true end
-end end return false end for _,obj in gc do if type(obj)=='function'and(not
-islclosure or islclosure(obj))and not knownFuncs[obj]and not seen[obj]then local
-isExec=false if isexecutorclosure then local okE,r=pcall(isexecutorclosure,obj)
-isExec=okE and r end if not isExec and not belongsToSomeScript(obj)then seen[obj
-]=true local info=FunctionLibrary.FunctionInfo(obj)table.insert(list,{func=obj,
-name=(info.name and info.name~='')and info.name or'(anonymous)',line=info.line,
-numparams=info.numparams,vargs=info.vargs,source=info.source})end end end table.
-sort(list,function(a,b)return(a.line or 0)<(b.line or 0)end)return list end
-return FunctionLibrary end function __DARKLUA_BUNDLE_MODULES.e()local v=
-__DARKLUA_BUNDLE_MODULES.cache.e if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.e=v end return v.c end end do local __modImpl=
-function()local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.e()local a a={cache={},
-load=function(b)if not a.cache[b]then a.cache[b]={c=a[b]()}end return a.cache[b]
-.c end}do function a.a()local b,c,d='8.0',cloneref or function(b)return b end,{
-Theme={Syntax={Text=Color3.fromRGB(204,204,204),Background=Color3.fromRGB(20,20,
-20),Selection=Color3.fromRGB(255,255,255),SelectionBack=Color3.fromRGB(102,161,
-255),Operator=Color3.fromRGB(204,204,204),Number=Color3.fromRGB(255,198,0),
-String=Color3.fromRGB(172,240,148),Comment=Color3.fromRGB(102,102,102),Keyword=
-Color3.fromRGB(248,109,124),BuiltIn=Color3.fromRGB(132,214,247),LocalMethod=
-Color3.fromRGB(253,251,172),LocalProperty=Color3.fromRGB(97,161,241),Nil=Color3.
-fromRGB(255,198,0),Bool=Color3.fromRGB(255,198,0),Function=Color3.fromRGB(248,
-109,124),Local=Color3.fromRGB(248,109,124),Self=Color3.fromRGB(248,109,124),
-FunctionName=Color3.fromRGB(253,251,172),Bracket=Color3.fromRGB(204,204,204)}}}
-local e,f=setmetatable({},{__index=function(e,f)local g=cloneref(game:
-GetService(f))return c(g)end}),{StartAndEnd={Enum.UserInputType.MouseButton1,
-Enum.UserInputType.Touch},Movement={Enum.UserInputType.MouseMovement,Enum.
-UserInputType.Touch}}local g,h,i,j=e.Players,e.UserInputService,e.RunService,e.
-TweenService local k=c(g.LocalPlayer)local l,m,n,o=c(cloneref(k:GetMouse())),
-function(l,m)for n,o in next,m do l[n]=o end return l end,function(l,m)local n=l
-.UserInputType return table.find(f[m],n)end,function(...)return c(Instance.new(
-...))end local p,q,r=function(p,q)local r=o(p)for s,t in next,q do r[s]=t end
-return r end,{},o'Frame'q.CheckMouseInGui=function(s)if s==nil then return false
-end local t,u=s.AbsolutePosition,s.AbsoluteSize return l.X>=t.X and l.X<t.X+u.X
-and l.Y>=t.Y and l.Y<t.Y+u.Y end q.Signal=(function()local s,t={},function(s)
-local t=table.find(s.Signal.Connections,s)if t then table.remove(s.Signal.
-Connections,t)end end s.Connect=function(u,v)if type(v)~='function'then error
-'Attempt to connect a non-function'end local w={Signal=u,Func=v,Disconnect=t}u.
-Connections[#u.Connections+1]=w return w end s.Fire=function(u,...)for v,w in
-next,u.Connections do xpcall(coroutine.wrap(w.Func),function(x)warn(x..'\n'..
-debug.traceback())end,...)end end local u={__index=s,__tostring=function(u)
-return'Signal: '..FunctionLibrary.SafeString(#u.Connections)..' Connections'end}
-local v=function()local v={}v.Connections={}return setmetatable(v,u)end return{
-new=v}end)()q.CreateArrow=function(s,t,u)local v,w=t,p('Frame',{
-BackgroundTransparency=1,Name='Arrow',Size=UDim2.new(0,s,0,s)})if u=='up'then
-for x=1,t do p('Frame',{BackgroundColor3=Color3.new(0.8627450980392157,
-0.8627450980392157,0.8627450980392157),BorderSizePixel=0,Position=UDim2.new(0,
-math.floor(s/2)-(x-1),0,math.floor(s/2)+x-math.floor(v/2)-1),Size=UDim2.new(0,x+
-(x-1),0,1),Parent=w})end return w elseif u=='down'then for x=1,t do p('Frame',{
-BackgroundColor3=Color3.new(0.8627450980392157,0.8627450980392157,
-0.8627450980392157),BorderSizePixel=0,Position=UDim2.new(0,math.floor(s/2)-(x-1)
-,0,math.floor(s/2)-x+math.floor(v/2)+1),Size=UDim2.new(0,x+(x-1),0,1),Parent=w})
-end return w elseif u=='left'then for x=1,t do p('Frame',{BackgroundColor3=
-Color3.new(0.8627450980392157,0.8627450980392157,0.8627450980392157),
-BorderSizePixel=0,Position=UDim2.new(0,math.floor(s/2)+x-math.floor(v/2)-1,0,
-math.floor(s/2)-(x-1)),Size=UDim2.new(0,1,0,x+(x-1)),Parent=w})end return w
-elseif u=='right'then for x=1,t do p('Frame',{BackgroundColor3=Color3.new(
+end end return false end for _,obj in gc do if type(obj)=='function'and(not Caps
+.islclosure or islclosure(obj))and not knownFuncs[obj]and not seen[obj]then
+local isExec=false if Caps.isexecutorclosure then local okE,r=pcall(
+isexecutorclosure,obj)isExec=okE and r end if not isExec and not
+belongsToSomeScript(obj)then seen[obj]=true local info=FunctionLibrary.
+FunctionInfo(obj)table.insert(list,{func=obj,name=(info.name and info.name~='')
+and info.name or'(anonymous)',line=info.line,numparams=info.numparams,vargs=info
+.vargs,source=info.source})end end end table.sort(list,function(a,b)return(a.
+line or 0)<(b.line or 0)end)return list end return FunctionLibrary end function
+__DARKLUA_BUNDLE_MODULES.e()local v=__DARKLUA_BUNDLE_MODULES.cache.e if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.e=v end return v.c end end
+do local __modImpl=function()local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.e()
+local a a={cache={},load=function(b)if not a.cache[b]then a.cache[b]={c=a[b]()}
+end return a.cache[b].c end}do function a.a()local b,c,d='8.0',cloneref or
+function(b)return b end,{Theme={Syntax={Text=Color3.fromRGB(204,204,204),
+Background=Color3.fromRGB(20,20,20),Selection=Color3.fromRGB(255,255,255),
+SelectionBack=Color3.fromRGB(102,161,255),Operator=Color3.fromRGB(204,204,204),
+Number=Color3.fromRGB(255,198,0),String=Color3.fromRGB(172,240,148),Comment=
+Color3.fromRGB(102,102,102),Keyword=Color3.fromRGB(248,109,124),BuiltIn=Color3.
+fromRGB(132,214,247),LocalMethod=Color3.fromRGB(253,251,172),LocalProperty=
+Color3.fromRGB(97,161,241),Nil=Color3.fromRGB(255,198,0),Bool=Color3.fromRGB(255
+,198,0),Function=Color3.fromRGB(248,109,124),Local=Color3.fromRGB(248,109,124),
+Self=Color3.fromRGB(248,109,124),FunctionName=Color3.fromRGB(253,251,172),
+Bracket=Color3.fromRGB(204,204,204)}}}local e,f=setmetatable({},{__index=
+function(e,f)local g=cloneref(game:GetService(f))return c(g)end}),{StartAndEnd={
+Enum.UserInputType.MouseButton1,Enum.UserInputType.Touch},Movement={Enum.
+UserInputType.MouseMovement,Enum.UserInputType.Touch}}local g,h,i,j=e.Players,e.
+UserInputService,e.RunService,e.TweenService local k=c(g.LocalPlayer)local l,m,n
+,o=c(cloneref(k:GetMouse())),function(l,m)for n,o in next,m do l[n]=o end return
+l end,function(l,m)local n=l.UserInputType return table.find(f[m],n)end,function
+(...)return c(Instance.new(...))end local p,q,r=function(p,q)local r=o(p)for s,t
+in next,q do r[s]=t end return r end,{},o'Frame'q.CheckMouseInGui=function(s)if
+s==nil then return false end local t,u=s.AbsolutePosition,s.AbsoluteSize return
+l.X>=t.X and l.X<t.X+u.X and l.Y>=t.Y and l.Y<t.Y+u.Y end q.Signal=(function()
+local s,t={},function(s)local t=table.find(s.Signal.Connections,s)if t then
+table.remove(s.Signal.Connections,t)end end s.Connect=function(u,v)if type(v)~=
+'function'then error'Attempt to connect a non-function'end local w={Signal=u,
+Func=v,Disconnect=t}u.Connections[#u.Connections+1]=w return w end s.Fire=
+function(u,...)for v,w in next,u.Connections do xpcall(coroutine.wrap(w.Func),
+function(x)warn(x..'\n'..debug.traceback())end,...)end end local u={__index=s,
+__tostring=function(u)return'Signal: '..FunctionLibrary.SafeString(#u.
+Connections)..' Connections'end}local v=function()local v={}v.Connections={}
+return setmetatable(v,u)end return{new=v}end)()q.CreateArrow=function(s,t,u)
+local v,w=t,p('Frame',{BackgroundTransparency=1,Name='Arrow',Size=UDim2.new(0,s,
+0,s)})if u=='up'then for x=1,t do p('Frame',{BackgroundColor3=Color3.new(
 0.8627450980392157,0.8627450980392157,0.8627450980392157),BorderSizePixel=0,
-Position=UDim2.new(0,math.floor(s/2)-x+math.floor(v/2)+1,0,math.floor(s/2)-(x-1)
-),Size=UDim2.new(0,1,0,x+(x-1)),Parent=w})end return w end error''end q.FastWait
-=(function(s)task.wait(s)end)q.ScrollBar=(function()local s,t,u,v={},q.
-CheckMouseInGui,q.CreateArrow,function(s)local t,u,v,w=s.TotalSpace,s.
-VisibleSpace,s.GuiElems.ScrollThumb,s.GuiElems.ScrollThumbFrame if not(s:
+Position=UDim2.new(0,math.floor(s/2)-(x-1),0,math.floor(s/2)+x-math.floor(v/2)-1
+),Size=UDim2.new(0,x+(x-1),0,1),Parent=w})end return w elseif u=='down'then for
+x=1,t do p('Frame',{BackgroundColor3=Color3.new(0.8627450980392157,
+0.8627450980392157,0.8627450980392157),BorderSizePixel=0,Position=UDim2.new(0,
+math.floor(s/2)-(x-1),0,math.floor(s/2)-x+math.floor(v/2)+1),Size=UDim2.new(0,x+
+(x-1),0,1),Parent=w})end return w elseif u=='left'then for x=1,t do p('Frame',{
+BackgroundColor3=Color3.new(0.8627450980392157,0.8627450980392157,
+0.8627450980392157),BorderSizePixel=0,Position=UDim2.new(0,math.floor(s/2)+x-
+math.floor(v/2)-1,0,math.floor(s/2)-(x-1)),Size=UDim2.new(0,1,0,x+(x-1)),Parent=
+w})end return w elseif u=='right'then for x=1,t do p('Frame',{BackgroundColor3=
+Color3.new(0.8627450980392157,0.8627450980392157,0.8627450980392157),
+BorderSizePixel=0,Position=UDim2.new(0,math.floor(s/2)-x+math.floor(v/2)+1,0,
+math.floor(s/2)-(x-1)),Size=UDim2.new(0,1,0,x+(x-1)),Parent=w})end return w end
+error''end q.FastWait=(function(s)task.wait(s)end)q.ScrollBar=(function()local s
+,t,u,v={},q.CheckMouseInGui,q.CreateArrow,function(s)local t,u,v,w=s.TotalSpace,
+s.VisibleSpace,s.GuiElems.ScrollThumb,s.GuiElems.ScrollThumbFrame if not(s:
 CanScrollUp()or s:CanScrollDown())then v.Visible=false else v.Visible=true end
 if s.Horizontal then v.Size=UDim2.new(u/t,0,1,0)if v.AbsoluteSize.X<10 then v.
 Size=UDim2.new(0,10,1,0)end local x,y=w.AbsoluteSize.X,v.AbsoluteSize.X v.
@@ -2177,8 +2253,17 @@ __DARKLUA_BUNDLE_MODULES.h()local v=__DARKLUA_BUNDLE_MODULES.cache.h if not v
 then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.h=v end return v.c end end
 do local __modImpl=function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.g()local
 ReGui=ReGuiTable.ReGui local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.e()local
-Data2Code=__DARKLUA_BUNDLE_MODULES.h()local Scripts=FunctionLibrary.GetScripts()
-local IDE=loadstring(game:HttpGet(
+Data2Code=__DARKLUA_BUNDLE_MODULES.h()local ActorScripts=FunctionLibrary.
+GetActorScripts()local actorScriptKeys={}for _,entry in ActorScripts do if entry
+.key then actorScriptKeys[entry.key]=true end if entry.name then actorScriptKeys
+['name:'..entry.name]=true end end local AllScripts=FunctionLibrary.GetScripts(
+nil,actorScriptKeys)local Scripts={}local AntiCheatScripts={}local antiSeen={}
+local antiSeenName={}for _,entry in AllScripts do if entry.isAntiCheat then
+local ref=entry.script local nameKey do local okN,nm=pcall(function()return
+entry.script.Name end)nameKey=(okN and nm or'?')..'|'..tostring(entry.path or'')
+end if not(antiSeen[ref]or antiSeenName[nameKey])then antiSeen[ref]=true
+antiSeenName[nameKey]=true AntiCheatScripts[#AntiCheatScripts+1]=entry end else
+Scripts[#Scripts+1]=entry end end local IDE=loadstring(game:HttpGet(
 [[https://raw.githubusercontent.com/Awakenchan/Dear-ReGui/refs/heads/main/lib/ide.lua]]
 ))()local COLORS=FunctionLibrary.Colors()local SafeString=FunctionLibrary.
 SafeString local CoreGui=cloneref and cloneref(game:GetService('CoreGui'))or
@@ -2283,76 +2368,78 @@ FollowCamera=true,PopperCamera=true,ZoomController=true,TransparencyController=
 true,CameraUtils=true,CameraInput=true,Gamepad=true,Keyboard=true,
 TouchThumbstick=true,DynamicThumbstick=true,VehicleCamera=true}local
 ROBLOX_DEFAULT_PATHS={'PlayerModule','CameraModule','ControlModule',
-'PlayerScriptsLoader'}local isRobloxDefault=function(scriptRef)local name=
-safeGet(function(s)return s.Name end,scriptRef)if name and ROBLOX_DEFAULT_NAMES[
-name]then return true end local okFull,full=pcall(function()return scriptRef:
-GetFullName()end)if okFull and type(full)=='string'then for _,frag in
+'PlayerScriptsLoader'}local isRobloxDefault=function(scriptRef,knownPath)local
+name=safeGet(function(s)return s.Name end,scriptRef)if name and
+ROBLOX_DEFAULT_NAMES[name]then return true end local full=knownPath if type(full
+)~='string'then local okFull,f=pcall(function()return scriptRef:GetFullName()end
+)full=okFull and f or nil end if type(full)=='string'then for _,frag in
 ROBLOX_DEFAULT_PATHS do if string.find(full,frag,1,true)then return true end end
-end return false end local classifyScript=function(scriptRef,context)if context
-=='Actor'then return'Actor'end local okType,t=pcall(function()return typeof(
-scriptRef)end)if not okType or t~='Instance'then return'nil'end local okParent,
-parent=pcall(function()return scriptRef.Parent end)if not okParent or parent==
-nil then return'nil'end local className=safeGet(function(s)return s.ClassName
-end,scriptRef)if className==nil then return'nil'end if className=='CoreScript'
-then return'CoreScript'end local ok,underCore=pcall(function()return scriptRef:
-IsDescendantOf(CoreGui)end)if ok and underCore then return'CoreScript'end if
-isRobloxDefault(scriptRef)then return'CoreScript'end if context=='LocalScript'
-then return'LocalScript'elseif context=='ModuleScript'then return'ModuleScript'
-end return'Unknown'end local typeColor=function(scriptType)if scriptType=='nil'
-then return COLORS.red elseif scriptType=='CoreScript'then return COLORS.blue
-elseif scriptType=='LocalScript'then return COLORS.green elseif scriptType==
-'ModuleScript'then return COLORS.purple elseif scriptType=='Actor'then return
-COLORS.cyan end return COLORS.orange end local buildValueIndex=function(
-constants,upvalues)local parts={}for _,c in constants do parts[#parts+1]=
-SafeString(c)end for _,u in upvalues do parts[#parts+1]=SafeString(u)end return
-string.lower(table.concat(parts,' '))end local openFunctionDetail=function(
-window,parentClass,entry)local func=entry.func local preDecoded=type(entry.
-constants)=='table'or type(entry.upvalues)=='table'local constants=entry.
-constants or(func and safeGet(getconstants,func))or{}local upvalues=entry.
-upvalues or(func and safeGet(getupvalues,func))or{}local tabName=('Fn: %s'):
-format(entry.name)local tab=window:CreateTab({Name=tabName,Closeable=true})tab:
-Label({Text=('%s  |  line %s  |  params %s%s'):format(entry.name,tostring(entry.
-line or'?'),tostring(entry.numparams or 0),entry.vargs and' +...'or''),
-TextColor3=COLORS.cyan,TextXAlignment=Enum.TextXAlignment.Left})tab:Separator()
-local constLines={}for i,c in constants do local text=preDecoded and tostring(c)
-or Data2Code.Convert(c,true)constLines[#constLines+1]={raw=(preDecoded and
-tostring(c)or SafeString(c)):lower(),text=('  [%s] = %s'):format(tostring(i),
-text)}end local upvalLines={}for i,u in upvalues do local text=preDecoded and
-tostring(u)or Data2Code.Convert(u,true)upvalLines[#upvalLines+1]={raw=(
-preDecoded and tostring(u)or SafeString(u)):lower(),text=('  [%s] = %s'):format(
-tostring(i),text)}end local Editor=IDE.CodeFrame.new({Editable=false,FontSize=13
-,Colors=SyntaxColors,FontFace=TextFont})ReGui:ApplyFlags({Object=Editor.Gui,
-WindowClass=parentClass,Class={Fill=true,Parent=tab:GetObject(),
-BackgroundTransparency=1}})local render=function(query)query=(query or''):lower(
-):match('^%s*(.-)%s*$')Editor:ClearText()local section=function(title,lines)
-local shown={}for _,ln in lines do if query==''or ln.raw:find(query,1,true)then
-shown[#shown+1]=ln.text end end Editor:AppendText(('%s (%d):\n'):format(title,#
-shown))if#shown==0 then Editor:AppendText('  (none)\n')else for _,t in shown do
-Editor:AppendText(t..'\n')end end Editor:AppendText('\n')end section('Constants'
-,constLines)section('Upvalues',upvalLines)end tab:InputText({Label=
-'Search constants / upvalues',PlaceHolder='value to filter...',Value='',Callback
-=function(_,newValue)render(newValue)end})local row=tab:Row()row:Button({Text=
-'Copy All',Callback=function()copyToClipboard(Editor:GetText())end})row:Button({
-Text='Grab Function',Callback=function()local methods=verifyGrabMethods(entry,3)
-local code=formatGrabMethods(methods)Editor:ClearText()Editor:AppendText(code..
-'\n')copyToClipboard(code)end})row:Expand()tab:Separator()render('')if window.
-SetActiveTab then pcall(function()window:SetActiveTab(tabName)end)end return tab
-end local renderFunctionList=function(tab,window,parentClass,functions,
-headerText,headerColor)tab:Label({Text=headerText,TextColor3=headerColor or
-Color3.fromRGB(200,200,200),TextXAlignment=Enum.TextXAlignment.Left})local rows=
-{}local searchInput=tab:InputText({Label='Search functions (name / values)',
-PlaceHolder='filter functions...',Value='',Callback=function(_,newValue)local q=
-(newValue or''):lower():match('^%s*(.-)%s*$')for _,r in rows do local visible=q
-==''or r.nameLower:find(q,1,true)or r.valueIndex:find(q,1,true)if r.label then r
-.label.Visible=visible end if r.separator then r.separator.Visible=visible end
-end end})tab:Button({Text='Clear Search',Callback=function()searchInput.Value=''
-for _,r in rows do if r.label then r.label.Visible=true end if r.separator then
-r.separator.Visible=true end end end})local progressLabel=tab:Label({Text='',
-TextColor3=COLORS.gray,TextXAlignment=Enum.TextXAlignment.Left})tab:Separator()
-local ordered={}for _,entry in functions do ordered[#ordered+1]=entry end table.
-sort(ordered,function(a,b)local an=a.name and a.name~='(anonymous)'local bn=b.
-name and b.name~='(anonymous)'if an~=bn then return an end return(a.name or''):
-lower()<(b.name or''):lower()end)local CHUNK=40 local total=#ordered task.spawn(
+end return false end local classifyScript=function(scriptRef,context,knownPath)
+if context=='Actor'then return'Actor'end local okType,t=pcall(function()return
+typeof(scriptRef)end)if not okType or t~='Instance'then return'nil'end local
+okParent,parent=pcall(function()return scriptRef.Parent end)if not okParent or
+parent==nil then return'nil'end local className=safeGet(function(s)return s.
+ClassName end,scriptRef)if className==nil then return'nil'end if className==
+'CoreScript'then return'CoreScript'end local ok,underCore=pcall(function()return
+scriptRef:IsDescendantOf(CoreGui)end)if ok and underCore then return'CoreScript'
+end if isRobloxDefault(scriptRef,knownPath)then return'CoreScript'end if context
+=='LocalScript'then return'LocalScript'elseif context=='ModuleScript'then return
+'ModuleScript'end return'Unknown'end local typeColor=function(scriptType)if
+scriptType=='nil'then return COLORS.red elseif scriptType=='CoreScript'then
+return COLORS.blue elseif scriptType=='LocalScript'then return COLORS.green
+elseif scriptType=='ModuleScript'then return COLORS.purple elseif scriptType==
+'Actor'then return COLORS.cyan elseif scriptType=='AntiCheat'then return COLORS.
+gold end return COLORS.orange end local buildValueIndex=function(constants,
+upvalues)local parts={}for _,c in constants do parts[#parts+1]=SafeString(c)end
+for _,u in upvalues do parts[#parts+1]=SafeString(u)end return string.lower(
+table.concat(parts,' '))end local openFunctionDetail=function(window,parentClass
+,entry)local func=entry.func local preDecoded=type(entry.constants)=='table'or
+type(entry.upvalues)=='table'local constants=entry.constants or(func and
+safeGet(getconstants,func))or{}local upvalues=entry.upvalues or(func and
+safeGet(getupvalues,func))or{}local tabName=('Fn: %s'):format(entry.name)local
+tab=window:CreateTab({Name=tabName,Closeable=true})tab:Label({Text=(
+'%s  |  line %s  |  params %s%s'):format(entry.name,tostring(entry.line or'?'),
+tostring(entry.numparams or 0),entry.vargs and' +...'or''),TextColor3=COLORS.
+cyan,TextXAlignment=Enum.TextXAlignment.Left})tab:Separator()local constLines={}
+for i,c in constants do local text=preDecoded and tostring(c)or Data2Code.
+Convert(c,true)constLines[#constLines+1]={raw=(preDecoded and tostring(c)or
+SafeString(c)):lower(),text=('  [%s] = %s'):format(tostring(i),text)}end local
+upvalLines={}for i,u in upvalues do local text=preDecoded and tostring(u)or
+Data2Code.Convert(u,true)upvalLines[#upvalLines+1]={raw=(preDecoded and
+tostring(u)or SafeString(u)):lower(),text=('  [%s] = %s'):format(tostring(i),
+text)}end local Editor=IDE.CodeFrame.new({Editable=false,FontSize=13,Colors=
+SyntaxColors,FontFace=TextFont})ReGui:ApplyFlags({Object=Editor.Gui,WindowClass=
+parentClass,Class={Fill=true,Parent=tab:GetObject(),BackgroundTransparency=1}})
+local render=function(query)query=(query or''):lower():match('^%s*(.-)%s*$')
+Editor:ClearText()local section=function(title,lines)local shown={}for _,ln in
+lines do if query==''or ln.raw:find(query,1,true)then shown[#shown+1]=ln.text
+end end Editor:AppendText(('%s (%d):\n'):format(title,#shown))if#shown==0 then
+Editor:AppendText('  (none)\n')else for _,t in shown do Editor:AppendText(t..
+'\n')end end Editor:AppendText('\n')end section('Constants',constLines)section(
+'Upvalues',upvalLines)end tab:InputText({Label='Search constants / upvalues',
+PlaceHolder='value to filter...',Value='',Callback=function(_,newValue)render(
+newValue)end})local row=tab:Row()row:Button({Text='Copy All',Callback=function()
+copyToClipboard(Editor:GetText())end})row:Button({Text='Grab Function',Callback=
+function()local methods=verifyGrabMethods(entry,3)local code=formatGrabMethods(
+methods)Editor:ClearText()Editor:AppendText(code..'\n')copyToClipboard(code)end}
+)row:Expand()tab:Separator()render('')if window.SetActiveTab then pcall(function
+()window:SetActiveTab(tabName)end)end return tab end local renderFunctionList=
+function(tab,window,parentClass,functions,headerText,headerColor)tab:Label({Text
+=headerText,TextColor3=headerColor or Color3.fromRGB(200,200,200),TextXAlignment
+=Enum.TextXAlignment.Left})local rows={}local searchInput=tab:InputText({Label=
+'Search functions (name / values)',PlaceHolder='filter functions...',Value='',
+Callback=function(_,newValue)local q=(newValue or''):lower():match(
+'^%s*(.-)%s*$')for _,r in rows do local visible=q==''or r.nameLower:find(q,1,
+true)or r.valueIndex:find(q,1,true)if r.label then r.label.Visible=visible end
+if r.separator then r.separator.Visible=visible end end end})tab:Button({Text=
+'Clear Search',Callback=function()searchInput.Value=''for _,r in rows do if r.
+label then r.label.Visible=true end if r.separator then r.separator.Visible=true
+end end end})local progressLabel=tab:Label({Text='',TextColor3=COLORS.gray,
+TextXAlignment=Enum.TextXAlignment.Left})tab:Separator()local ordered={}for _,
+entry in functions do ordered[#ordered+1]=entry end table.sort(ordered,function(
+a,b)local an=a.name and a.name~='(anonymous)'local bn=b.name and b.name~=
+'(anonymous)'if an~=bn then return an end return(a.name or''):lower()<(b.name or
+''):lower()end)local CHUNK=15 local DELAY=0.03 local total=#ordered task.spawn(
 function()for i=1,total do local entry=ordered[i]local _=type(entry.constants)==
 'table'or type(entry.upvalues)=='table'local constants=entry.constants or(entry.
 func and safeGet(getconstants,entry.func))or{}local upvalues=entry.upvalues or(
@@ -2367,41 +2454,42 @@ nameLower=(entry.name or''):lower(),valueIndex=vIndex}label.InputBegan:Connect(
 function(input)if input.UserInputType==Enum.UserInputType.MouseButton1 or input.
 UserInputType==Enum.UserInputType.Touch then openFunctionDetail(window,
 parentClass,entry)end end)if i%CHUNK==0 then progressLabel.Text=(
-'Loading functions... %d/%d'):format(i,total)task.wait()end end progressLabel.
-Text=''end)return tab end local buildFunctionsTab=function(window,parentClass,
-scriptRef)local functions,invalidSource=FunctionLibrary.CollectScriptFunctions(
-scriptRef)local tabLabel=invalidSource and'Invalid Source Scripts'or'Functions'
-local tab=window:CreateTab({Name=tabLabel})renderFunctionList(tab,window,
-parentClass,functions,('%d function(s) in %s'):format(#functions,scriptRef.Name)
-,invalidSource and COLORS.red or Color3.fromRGB(200,200,200))return tab end
-local buildCodeTab=function(window,parentClass,tabName,getter,scriptRef,saveDir,
-displayText)local tab=window:CreateTab({Name=tabName})local Editor=IDE.CodeFrame
-.new({Editable=false,FontSize=13,Colors=SyntaxColors,FontFace=TextFont})ReGui:
-ApplyFlags({Object=Editor.Gui,WindowClass=parentClass,Class={Fill=true,Parent=
-tab:GetObject(),BackgroundTransparency=1}})local statusLabel local cachedContent
-local busy=false local setStatus=function(text,color)if statusLabel then
-statusLabel.Text=text statusLabel.TextColor3=color or COLORS.gray end end local
-showContent=function(content)setStatus('Rendering...',COLORS.gray)task.wait()
-local ok,err=pcall(function()Editor:SetText(content)end)if ok then setStatus('',
-COLORS.gray)else setStatus('Render failed (file too large for editor): '..
-tostring(err),COLORS.red)end end local produce=function(after)if busy then
-return end if cachedContent then after(cachedContent)return end busy=true
-setStatus('Working on '..tabName..'...',COLORS.gray)task.spawn(function()task.
-wait()local ok,result=pcall(getter,scriptRef)cachedContent=ok and SafeString(
-result)or('-- '..tabName..' failed')busy=false after(cachedContent)end)end local
-row=tab:Row()row:Button({Text=tabName,Callback=function()cachedContent=nil
-produce(function(content)task.spawn(showContent,content)end)end})row:Button({
-Text='Copy',Callback=function()copyToClipboard(cachedContent or Editor:GetText()
-)end})row:Button({Text='Save',Callback=function()if cachedContent and
-cachedContent~=''then local ok,pathOrErr=saveToFile(saveDir,scriptRef,
-displayText,cachedContent)setStatus(ok and('Saved: '..pathOrErr)or(
-'Save failed: '..pathOrErr),ok and COLORS.green or COLORS.red)else produce(
-function(content)local ok,pathOrErr=saveToFile(saveDir,scriptRef,displayText,
-content)setStatus(ok and('Saved: '..pathOrErr)or('Save failed: '..pathOrErr),ok
-and COLORS.green or COLORS.red)end)end end})row:Expand()statusLabel=tab:Label({
-Text='',TextColor3=COLORS.gray,TextXAlignment=Enum.TextXAlignment.Left})tab:
-Separator()return tab end local buildBytecodeSaveTab=function(window,scriptRef,
-displayText)local tab=window:CreateTab({Name='Bytecode (save)'})tab:Label({Text=
+'Loading functions... %d/%d'):format(i,total)task.wait(DELAY)end end
+progressLabel.Text=''end)return tab end local buildFunctionsTab=function(window,
+parentClass,scriptRef)local functions,invalidSource=FunctionLibrary.
+CollectScriptFunctions(scriptRef)local tabLabel=invalidSource and
+'Invalid Source Scripts'or'Functions'local tab=window:CreateTab({Name=tabLabel})
+renderFunctionList(tab,window,parentClass,functions,('%d function(s) in %s'):
+format(#functions,scriptRef.Name),invalidSource and COLORS.red or Color3.
+fromRGB(200,200,200))return tab end local buildCodeTab=function(window,
+parentClass,tabName,getter,scriptRef,saveDir,displayText)local tab=window:
+CreateTab({Name=tabName})local Editor=IDE.CodeFrame.new({Editable=false,FontSize
+=13,Colors=SyntaxColors,FontFace=TextFont})ReGui:ApplyFlags({Object=Editor.Gui,
+WindowClass=parentClass,Class={Fill=true,Parent=tab:GetObject(),
+BackgroundTransparency=1}})local statusLabel local cachedContent local busy=
+false local setStatus=function(text,color)if statusLabel then statusLabel.Text=
+text statusLabel.TextColor3=color or COLORS.gray end end local showContent=
+function(content)setStatus('Rendering...',COLORS.gray)task.wait()local ok,err=
+pcall(function()Editor:SetText(content)end)if ok then setStatus('',COLORS.gray)
+else setStatus('Render failed (file too large for editor): '..tostring(err),
+COLORS.red)end end local produce=function(after)if busy then return end if
+cachedContent then after(cachedContent)return end busy=true setStatus(
+'Working on '..tabName..'...',COLORS.gray)task.spawn(function()task.wait()local
+ok,result=pcall(getter,scriptRef)cachedContent=ok and SafeString(result)or('-- '
+..tabName..' failed')busy=false after(cachedContent)end)end local row=tab:Row()
+row:Button({Text=tabName,Callback=function()cachedContent=nil produce(function(
+content)task.spawn(showContent,content)end)end})row:Button({Text='Copy',Callback
+=function()copyToClipboard(cachedContent or Editor:GetText())end})row:Button({
+Text='Save',Callback=function()if cachedContent and cachedContent~=''then local
+ok,pathOrErr=saveToFile(saveDir,scriptRef,displayText,cachedContent)setStatus(ok
+and('Saved: '..pathOrErr)or('Save failed: '..pathOrErr),ok and COLORS.green or
+COLORS.red)else produce(function(content)local ok,pathOrErr=saveToFile(saveDir,
+scriptRef,displayText,content)setStatus(ok and('Saved: '..pathOrErr)or(
+'Save failed: '..pathOrErr),ok and COLORS.green or COLORS.red)end)end end})row:
+Expand()statusLabel=tab:Label({Text='',TextColor3=COLORS.gray,TextXAlignment=
+Enum.TextXAlignment.Left})tab:Separator()return tab end local
+buildBytecodeSaveTab=function(window,scriptRef,displayText)local tab=window:
+CreateTab({Name='Bytecode (save)'})tab:Label({Text=
 'Bytecode is saved to file, not displayed.',TextColor3=COLORS.gray,
 TextXAlignment=Enum.TextXAlignment.Left})tab:Separator()local statusLabel=tab:
 Label({Text='',TextColor3=COLORS.gray,TextXAlignment=Enum.TextXAlignment.Left})
@@ -2411,11 +2499,11 @@ getscriptbytecode,scriptRef)if not ok then statusLabel.Text=
 end local okSave,pathOrErr=saveToFile(BYTE_DIR,scriptRef,displayText,bc)
 statusLabel.Text=okSave and('Saved: '..pathOrErr)or('Save failed: '..pathOrErr)
 statusLabel.TextColor3=okSave and COLORS.green or COLORS.red end})return tab end
-local openScriptWindow=function(scriptRef,displayText)if typeof(scriptRef)~=
-'Instance'then local Sizex,Sizey=FunctionLibrary.GetWindowSize()local window=
-ReGui:TabsWindow({Title='Actor Script: '..SafeString(displayText or'unresolved')
-,Size=UDim2.fromOffset(Sizex,Sizey)}):Center()local tab=window:CreateTab({Name=
-'Info'})tab:Label({Text=
+local openScriptWindow=function(scriptRef,displayText,antiReasons)if typeof(
+scriptRef)~='Instance'then local Sizex,Sizey=FunctionLibrary.GetWindowSize()
+local window=ReGui:TabsWindow({Title='Actor Script: '..SafeString(displayText or
+'unresolved'),Size=UDim2.fromOffset(Sizex,Sizey)}):Center()local tab=window:
+CreateTab({Name='Info'})tab:Label({Text=
 [[This actor script's live reference isn't available on this VM, so it can't be decompiled or have its bytecode read here.]]
 ,TextColor3=COLORS.orange,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.
 Left})return window end if openWindows[scriptRef]then local existing=openWindows
@@ -2424,39 +2512,48 @@ existing end local Sizex,Sizey=FunctionLibrary.GetWindowSize()local titleName=
 displayText if not titleName then local ok,full=pcall(function()return scriptRef
 :GetFullName()end)titleName=ok and full or SafeString(scriptRef)end local window
 =ReGui:TabsWindow({Title='Script: '..SafeString(titleName),Size=UDim2.
-fromOffset(Sizex+120,Sizey+80)}):Center()openWindows[scriptRef]=window
-buildFunctionsTab(window,window,scriptRef)buildCodeTab(window,window,'Source',
-decompile,scriptRef,DECOMP_DIR,displayText)buildCodeTab(window,window,
-'disassemble',disassemble,scriptRef,DISASM_DIR,displayText)buildBytecodeSaveTab(
-window,scriptRef,displayText)return window end local unknownWindowOpen local
-openUnknownWindow=function()if unknownWindowOpen then if unknownWindowOpen.
-SetVisible then unknownWindowOpen:SetVisible(true)end return unknownWindowOpen
-end local Sizex,Sizey=FunctionLibrary.GetWindowSize()local window=ReGui:
-TabsWindow({Title='UnknownScript (unresolved functions)',Size=UDim2.fromOffset(
-Sizex+120,Sizey+80)}):Center()unknownWindowOpen=window local orphans=
-FunctionLibrary.CollectOrphanFunctions()local tab=window:CreateTab({Name=
+fromOffset(Sizex+120,Sizey+80)}):Center()openWindows[scriptRef]=window if
+antiReasons and#antiReasons>0 then local infoTab=window:CreateTab({Name=
+'Anti Cheat'})infoTab:Label({Text='Potential anti-cheat detected. Reasons:',
+TextColor3=COLORS.gold,TextXAlignment=Enum.TextXAlignment.Left})infoTab:
+Separator()for _,r in antiReasons do infoTab:Label({Text='- '..SafeString(r),
+TextColor3=COLORS.orange,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.
+Left})end end buildFunctionsTab(window,window,scriptRef)buildCodeTab(window,
+window,'Source',decompile,scriptRef,DECOMP_DIR,displayText)buildCodeTab(window,
+window,'disassemble',disassemble,scriptRef,DISASM_DIR,displayText)
+buildBytecodeSaveTab(window,scriptRef,displayText)return window end local
+unknownWindowOpen local openUnknownWindow=function()if unknownWindowOpen then if
+unknownWindowOpen.SetVisible then unknownWindowOpen:SetVisible(true)end return
+unknownWindowOpen end local Sizex,Sizey=FunctionLibrary.GetWindowSize()local
+window=ReGui:TabsWindow({Title='UnknownScript (unresolved functions)',Size=UDim2
+.fromOffset(Sizex+120,Sizey+80)}):Center()unknownWindowOpen=window local orphans
+=FunctionLibrary.CollectOrphanFunctions()local tab=window:CreateTab({Name=
 'Unknown Functions'})renderFunctionList(tab,window,window,orphans,(
 '%d orphan function(s) (no resolvable script)'):format(#orphans),COLORS.red)
 return window end local TYPE_ORDER={CoreScript=1,Unknown=2,LocalScript=3,
 ModuleScript=4,['nil']=5,Actor=6}local buildScriptList=function(tab,scripts,
-labelStore)local prepared={}for _,entry in scripts do local scriptRef=entry.
-script local scriptType=classifyScript(scriptRef,entry.context)local displayText
-if scriptType=='nil'then local nm=safeGet(function(s)return s.Name end,scriptRef
-)or entry.path or'nil'displayText='[nil] '..SafeString(nm)else displayText=(
-'[%s] %s'):format(entry.context,entry.path or'?')end prepared[#prepared+1]={
-scriptRef=scriptRef,scriptType=scriptType,displayText=displayText}end table.
-sort(prepared,function(a,b)local oa=TYPE_ORDER[a.scriptType]or 99 local ob=
-TYPE_ORDER[b.scriptType]or 99 if oa~=ob then return oa<ob end return a.
-displayText:lower()<b.displayText:lower()end)for _,item in prepared do local
-scriptRef=item.scriptRef local displayText=item.displayText local label=tab:
-Label({Text=displayText,TextColor3=typeColor(item.scriptType),TextXAlignment=
-Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top})local sep=tab:
+labelStore)task.spawn(function()local prepared={}local classified=0 for _,entry
+in scripts do local scriptRef=entry.script local scriptType=classifyScript(
+scriptRef,entry.context,entry.path)local displayText if scriptType=='nil'then
+local nm=safeGet(function(s)return s.Name end,scriptRef)or entry.path or'nil'
+displayText='[nil] '..SafeString(nm)else displayText=('[%s] %s'):format(entry.
+context,entry.path or'?')end prepared[#prepared+1]={scriptRef=scriptRef,
+scriptType=scriptType,displayText=displayText,antiReasons=entry.antiCheatReasons
+}classified=classified+1 if classified%50==0 then task.wait()end end table.sort(
+prepared,function(a,b)local oa=TYPE_ORDER[a.scriptType]or 99 local ob=TYPE_ORDER
+[b.scriptType]or 99 if oa~=ob then return oa<ob end return a.displayText:lower()
+<b.displayText:lower()end)local BATCH=12 local DELAY=0.03 local count=0 for _,
+item in prepared do local scriptRef=item.scriptRef local displayText=item.
+displayText local antiReasons=item.antiReasons local label=tab:Label({Text=
+displayText,TextColor3=typeColor(item.scriptType),TextXAlignment=Enum.
+TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top})local sep=tab:
 Separator()labelStore[#labelStore+1]={label=label,separator=sep,type=item.
 scriptType}label.InputBegan:Connect(function(input)if input.UserInputType==Enum.
 UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
-openScriptWindow(scriptRef,displayText)end end)end end local ScriptTab=getgenv()
-.Window:CreateTab({Name='Scripts'})ScriptTab:Label({Text=('%d client script(s)')
-:format(#Scripts),TextColor3=Color3.fromRGB(200,200,200),TextXAlignment=Enum.
+openScriptWindow(scriptRef,displayText,antiReasons)end end)count=count+1 if
+count%BATCH==0 then task.wait(DELAY)end end end)end local ScriptTab=getgenv().
+Window:CreateTab({Name='Scripts'})ScriptTab:Label({Text=('%d client script(s)'):
+format(#Scripts),TextColor3=Color3.fromRGB(200,200,200),TextXAlignment=Enum.
 TextXAlignment.Left})local filters=FunctionLibrary.Filters()local ScriptLabels={
 }local refreshFilter=function()FunctionLibrary.UpdateLabelVisibility(filters,
 ScriptLabels)end local filterRow=ScriptTab:Row()filterRow:Checkbox({Label=
@@ -2471,17 +2568,40 @@ Checkbox({Label='Other',Value=true,Callback=function(_,v)filters.showUnknown=v
 refreshFilter()end})ScriptTab:InputText({Label='Search scripts',PlaceHolder=
 'filter by name / path...',Value='',Callback=function(_,newValue)filters.
 searchQuery=newValue or''refreshFilter()end})ScriptTab:Separator()
-buildScriptList(ScriptTab,Scripts,ScriptLabels)do local unknownLabel=ScriptTab:
-Label({Text='UnknownScript',TextColor3=COLORS.red,TextXAlignment=Enum.
-TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top})local unknownSep=
-ScriptTab:Separator()ScriptLabels[#ScriptLabels+1]={label=unknownLabel,separator
-=unknownSep,type='nil'}unknownLabel.InputBegan:Connect(function(input)if input.
+buildScriptList(ScriptTab,Scripts,ScriptLabels)refreshFilter()local AntiCheatTab
+=getgenv().Window:CreateTab({Name='Anti Cheat'})AntiCheatTab:Label({Text=(
+'%d potential anti-cheat script(s)'):format(#AntiCheatScripts),TextColor3=COLORS
+.gold,TextXAlignment=Enum.TextXAlignment.Left})local antiFilters=FunctionLibrary
+.Filters()local AntiLabels={}local refreshAntiFilter=function()FunctionLibrary.
+UpdateLabelVisibility(antiFilters,AntiLabels)end AntiCheatTab:InputText({Label=
+'Search anti-cheat scripts',PlaceHolder='filter by name / path...',Value='',
+Callback=function(_,newValue)antiFilters.searchQuery=newValue or''
+refreshAntiFilter()end})AntiCheatTab:Separator()do local unknownLabel=
+AntiCheatTab:Label({Text='UnknownScript',TextColor3=COLORS.red,TextXAlignment=
+Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top})local
+unknownSep=AntiCheatTab:Separator()AntiLabels[#AntiLabels+1]={label=unknownLabel
+,separator=unknownSep,type='AntiCheat'}unknownLabel.InputBegan:Connect(function(
+input)if input.UserInputType==Enum.UserInputType.MouseButton1 or input.
+UserInputType==Enum.UserInputType.Touch then openUnknownWindow()end end)end do
+local preparedAnti={}for _,entry in AntiCheatScripts do local scriptRef=entry.
+script local nm=safeGet(function(s)return s.Name end,scriptRef)or entry.path or
+'nil'local displayText='[nil] '..SafeString(nm)preparedAnti[#preparedAnti+1]={
+scriptRef=scriptRef,displayText=displayText,antiReasons=entry.antiCheatReasons}
+end table.sort(preparedAnti,function(a,b)return a.displayText:lower()<b.
+displayText:lower()end)task.spawn(function()local BATCH=12 local DELAY=0.03
+local count=0 for _,item in preparedAnti do local scriptRef=item.scriptRef local
+displayText=item.displayText local antiReasons=item.antiReasons local label=
+AntiCheatTab:Label({Text=displayText,TextColor3=typeColor('AntiCheat'),
+TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top})
+local sep=AntiCheatTab:Separator()AntiLabels[#AntiLabels+1]={label=label,
+separator=sep,type='AntiCheat'}label.InputBegan:Connect(function(input)if input.
 UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.
-UserInputType.Touch then openUnknownWindow()end end)end refreshFilter()local
-ActorScripts=FunctionLibrary.GetActorScripts()local ActorTab=getgenv().Window:
-CreateTab({Name='Actor Scripts'})ActorTab:Label({Text=('%d actor script(s)'):
-format(#ActorScripts),TextColor3=Color3.fromRGB(200,200,200),TextXAlignment=Enum
-.TextXAlignment.Left})local actorFilters=FunctionLibrary.Filters()local
+UserInputType.Touch then openScriptWindow(scriptRef,displayText,antiReasons)end
+end)count=count+1 if count%BATCH==0 then task.wait(DELAY)end end end)end
+refreshAntiFilter()local ActorTab=getgenv().Window:CreateTab({Name=
+'Actor Scripts'})ActorTab:Label({Text=('%d actor script(s)'):format(#
+ActorScripts),TextColor3=Color3.fromRGB(200,200,200),TextXAlignment=Enum.
+TextXAlignment.Left})local actorFilters=FunctionLibrary.Filters()local
 ActorLabels={}local refreshActorFilter=function()FunctionLibrary.
 UpdateLabelVisibility(actorFilters,ActorLabels)end local actorFilterRow=ActorTab
 :Row()actorFilterRow:Checkbox({Label='Local',Value=true,Callback=function(_,v)

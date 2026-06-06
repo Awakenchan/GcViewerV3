@@ -2434,24 +2434,98 @@ elseif scriptType=='Actor'then return COLORS.cyan elseif scriptType=='AntiCheat'
 then return COLORS.gold end return COLORS.orange end local buildValueIndex=
 function(constants,upvalues)local parts={}for _,c in constants do parts[#parts+1
 ]=SafeString(c)end for _,u in upvalues do parts[#parts+1]=SafeString(u)end
-return string.lower(table.concat(parts,' '))end local collectScriptTables=
-function(scriptRef,entries)local seen={}local out={}local consider=function(tbl,
-originLabel)if type(tbl)~='table'or seen[tbl]then return end if tbl==getgenv()or
-tbl==_G or tbl==shared then return end seen[tbl]=true local count=0 for _ in tbl
-do count=count+1 end out[#out+1]={value=tbl,origin=originLabel,count=count,
-address=tostring(tbl)}end local funcs=entries if not funcs then funcs=select(1,
-FunctionLibrary.CollectScriptFunctions(scriptRef))end for _,entry in funcs do
-local func=entry.func if typeof(func)~='function'then continue end if
-isExecClosureSafe(func)then continue end local upvalues=entry.upvalues or
-safeGet(getupvalues,func)or{}for _,u in upvalues do consider(u,'upvalue of '..
-tostring(entry.name or'?'))end local constants=entry.constants or safeGet(
-getconstants,func)or{}for _,c in constants do consider(c,'constant of '..
-tostring(entry.name or'?'))end local env=safeGet(getfenv,func)consider(env,
-'fenv of '..tostring(entry.name or'?'))end table.sort(out,function(a,b)if a.
-count~=b.count then return a.count>b.count end return a.address<b.address end)
-return out end local openGcTableDetail=function(window,parentClass,info,index)
-local tabName=('Table #%d (%d)'):format(index,info.count)local tab=window:
-CreateTab({Name=tabName,Closeable=true})tab:Label({Text=(
+return string.lower(table.concat(parts,' '))end local isLuaSourceContainer=
+function(s)if typeof(s)~='Instance'then return false end local ok,res=pcall(
+function()return s:IsA('LuaSourceContainer')end)return ok and res end local
+GLOBAL_ENVS={}do local capture=function(fn)local ok,e=pcall(fn)if ok and type(e)
+=='table'then GLOBAL_ENVS[e]=true end end if type(getrenv)=='function'then
+capture(getrenv)end if type(getgenv)=='function'then capture(getgenv)end
+capture(function()return getfenv(0)end)end local resolveFuncScript=function(func
+)local env=safeGet(getfenv,func)if type(env)~='table'then return nil end local s
+=rawget(env,'script')if isLuaSourceContainer(s)then return s end if GLOBAL_ENVS[
+env]then return nil end local found pcall(function()local k,v=next(env)local n=0
+while k~=nil do if isLuaSourceContainer(v)then found=v return end n=n+1 if n>=64
+then return end k,v=next(env,k)end end)return found end local MAX_TABLE_SCAN=
+5000 local isFuncInfoEntry=function(t)if type(t)~='table'then return false end
+if typeof(rawget(t,'func'))~='function'then return false end return rawget(t,
+'line')~=nil or rawget(t,'numparams')~=nil or rawget(t,'source')~=nil or rawget(
+t,'hash')~=nil end local isGcViewTable=function(tbl)if isFuncInfoEntry(tbl)then
+return true end local checked=0 local k,v=next(tbl)while k~=nil do if
+isFuncInfoEntry(v)then return true end checked=checked+1 if checked>=8 then
+break end k,v=next(tbl,k)end return false end local gcTableBuckets local
+MAX_TOTAL_TABLES=200000 local YIELD_EVERY=2000 local scriptHashIndex local
+scriptPathCache local funcOwnerCache local execClosureCache local getScriptPath=
+function(scriptRef)if scriptPathCache[scriptRef]~=nil then return
+scriptPathCache[scriptRef]or nil end local path=false pcall(function()path=
+scriptRef:GetFullName()end)if type(path)~='string'then local nm=safeGet(function
+(s)return s.Name end,scriptRef)path=type(nm)=='string'and nm or false end
+scriptPathCache[scriptRef]=path return path or nil end local getScriptName=
+function(scriptRef)return safeGet(function(s)return s.Name end,scriptRef)end
+local buildHashIndex=function()if scriptHashIndex then return end
+scriptHashIndex={}scriptPathCache={}if type(getfunctionhash)~='function'then
+return end local index=function(entries)if type(entries)~='table'then return end
+for _,entry in entries do local s=entry.script if typeof(s)=='Instance'then
+local h=entry.hash if not h and typeof(entry.func)=='function'then h=safeGet(
+getfunctionhash,entry.func)end if h and scriptHashIndex[h]==nil then
+scriptHashIndex[h]=s end end end end index(Scripts)index(AntiCheatScripts)index(
+ActorScripts)end local ownerOfFunc=function(fn)local cached=funcOwnerCache[fn]if
+cached~=nil then if cached then return cached[1],cached[2]end return nil end
+local owner=resolveFuncScript(fn)local reason='fenv'if owner==nil and
+scriptHashIndex then local h=safeGet(getfunctionhash,fn)if h then local hs=
+scriptHashIndex[h]if hs~=nil then owner=hs reason='hash'end end end if owner~=
+nil then funcOwnerCache[fn]={owner,reason}return owner,reason end funcOwnerCache
+[fn]=false return nil end local funcSourceMatches=function(func,targetPath)if
+not targetPath then return false end local src=safeGet(function(f)local s=debug.
+info(f,'s')return s end,func)if type(src)~='string'then return false end src=src
+:gsub('^[=@]','')return src==targetPath or src:find(targetPath,1,true)~=nil end
+local SCORE_MIN=4 local scoreTableForScripts=function(funcsInTable,
+scriptRefsInTable,nameHits)local scores={}local reasons={}local bump=function(
+scriptRef,amount,why)if scriptRef==nil then return end scores[scriptRef]=(scores
+[scriptRef]or 0)+amount local r=reasons[scriptRef]if not r then r={}reasons[
+scriptRef]=r end r[why]=true end for _,fn in funcsInTable do local owner,why=
+ownerOfFunc(fn)if owner~=nil then bump(owner,10,why)end end for _,ref in
+scriptRefsInTable do bump(ref,8,'script-ref')end local lead,leadScore for
+scriptRef,sc in scores do if not leadScore or sc>leadScore then lead,leadScore=
+scriptRef,sc end end if lead and funcsInTable[1]then local path=getScriptPath(
+lead)if funcSourceMatches(funcsInTable[1],path)then scores[lead]=scores[lead]+5
+reasons[lead]['source']=true end end local best,bestScore for scriptRef,sc in
+scores do local nm=getScriptName(scriptRef)if nm and nameHits[nm]then sc=sc+2
+scores[scriptRef]=sc reasons[scriptRef]['name']=true end if not bestScore or sc>
+bestScore then best,bestScore=scriptRef,sc end end if best and bestScore and
+bestScore>=SCORE_MIN then local why={}for k in reasons[best]do why[#why+1]=k end
+table.sort(why)return best,bestScore,table.concat(why,'+')end return nil end
+local scanGcTables=function(onProgress)if gcTableBuckets then return end
+gcTableBuckets={}funcOwnerCache={}execClosureCache={}buildHashIndex()local okGc,
+gc=pcall(getgc,true)if not okGc or type(gc)~='table'then return end local seen={
+}local skip={}skip[getgenv()]=true if _G then skip[_G]=true end if shared then
+skip[shared]=true end local processed=0 for _,tbl in gc do processed=processed+1
+if processed%YIELD_EVERY==0 then if onProgress then onProgress(processed)end
+task.wait()end if processed>MAX_TOTAL_TABLES then break end if type(tbl)~=
+'table'or seen[tbl]or skip[tbl]then continue end seen[tbl]=true local okShape,
+isOwn=pcall(isGcViewTable,tbl)if not okShape or isOwn then continue end local
+funcsInTable={}local scriptRefs={}local nameHits={}local count=0 local tainted=
+false local okWalk=pcall(function()local consider=function(x)local tx=type(x)if
+tx=='function'then local isExec=execClosureCache[x]if isExec==nil then isExec=
+isExecClosureSafe(x)execClosureCache[x]=isExec end if isExec then tainted=true
+return true end funcsInTable[#funcsInTable+1]=x elseif tx=='string'then nameHits
+[x]=true elseif tx=='userdata'and isLuaSourceContainer(x)then scriptRefs[#
+scriptRefs+1]=x end return false end local k,v=next(tbl)while k~=nil do count=
+count+1 if count>MAX_TABLE_SCAN then return end if consider(v)or consider(k)then
+return end k,v=next(tbl,k)end end)if not okWalk or tainted or#funcsInTable==0
+then continue end pcall(function()local owner,score,why=scoreTableForScripts(
+funcsInTable,scriptRefs,nameHits)if owner==nil then return end local info={value
+=tbl,count=count,address=SafeString(tbl),funcCount=#funcsInTable,origin=(
+'%d fn(s) | score %d | %s'):format(#funcsInTable,score,why)}local bucket=
+gcTableBuckets[owner]if not bucket then bucket={}gcTableBuckets[owner]=bucket
+end bucket[#bucket+1]=info end)end end local collectScriptTables=function(
+scriptRef,entries,onProgress)scanGcTables(onProgress)local out={}if typeof(
+scriptRef)=='Instance'and gcTableBuckets then local bucket=gcTableBuckets[
+scriptRef]if bucket then for _,info in bucket do out[#out+1]={value=info.value,
+origin=info.origin,count=info.count,address=info.address}end end end table.sort(
+out,function(a,b)if a.count~=b.count then return a.count>b.count end return a.
+address<b.address end)return out end local openGcTableDetail=function(window,
+parentClass,info,index)local tabName=('Table #%d (%d)'):format(index,info.count)
+local tab=window:CreateTab({Name=tabName,Closeable=true})tab:Label({Text=(
 '%s  |  %d entr%s  |  %s'):format(info.origin,info.count,info.count==1 and'y'or
 'ies',info.address),TextColor3=COLORS.cyan,TextWrapped=true,TextXAlignment=Enum.
 TextXAlignment.Left})tab:Separator()local Editor=IDE.CodeFrame.new({Editable=
@@ -2466,73 +2540,82 @@ pcall(function()window:SetActiveTab(tabName)end)end return tab end local
 buildGcTablesTab=function(window,parentClass,scriptRef,entries)local tab=window:
 CreateTab({Name='GC Tables'})local headerLabel=tab:Label({Text=
 'Collecting GC tables...',TextColor3=COLORS.gray,TextXAlignment=Enum.
-TextXAlignment.Left})tab:Separator()task.spawn(function()local tables=
-collectScriptTables(scriptRef,entries)headerLabel.Text=(
-"%d table(s) referenced by this script's functions"):format(#tables)headerLabel.
+TextXAlignment.Left})local listLabels={}local clearList=function()for _,obj in
+listLabels do pcall(function()obj:Destroy()end)end listLabels={}end local run
+tab:Button({Text='Rescan GC',Callback=function()gcTableBuckets=nil
+scriptHashIndex=nil scriptPathCache=nil clearList()run()end})tab:Separator()run=
+function()headerLabel.Text='Collecting GC tables...'headerLabel.TextColor3=
+COLORS.gray task.spawn(function()local ok,tables=pcall(collectScriptTables,
+scriptRef,entries,function(n)headerLabel.Text=('Scanning GC... %d objects'):
+format(n)end)if not ok or type(tables)~='table'then headerLabel.Text=
+'GC table collection failed: '..tostring(tables)headerLabel.TextColor3=COLORS.
+red return end headerLabel.Text=(
+"%d table(s) containing this script's functions"):format(#tables)headerLabel.
 TextColor3=Color3.fromRGB(200,200,200)local BATCH=15 local DELAY=0.03 for i,info
 in tables do local label=tab:Label({Text=('[%d entries] %s  (%s)'):format(info.
 count,info.origin,info.address),TextColor3=Color3.fromRGB(180,200,230),
-TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left})tab:Separator()label.
+TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left})local sep=tab:
+Separator()listLabels[#listLabels+1]=label listLabels[#listLabels+1]=sep label.
 InputBegan:Connect(function(input)if input.UserInputType==Enum.UserInputType.
 MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
 openGcTableDetail(window,parentClass,info,i)end end)if i%BATCH==0 then task.
-wait(DELAY)end end end)return tab end local openFunctionDetail=function(window,
-parentClass,entry)local func=entry.func local preDecoded=type(entry.constants)==
-'table'or type(entry.upvalues)=='table'local constants=entry.constants or(func
-and safeGet(getconstants,func))or{}local upvalues=entry.upvalues or(func and
-safeGet(getupvalues,func))or{}local tabName=('Fn: %s'):format(entry.name)local
-tab=window:CreateTab({Name=tabName,Closeable=true})tab:Label({Text=(
-'%s  |  line %s  |  params %s%s'):format(entry.name,tostring(entry.line or'?'),
-tostring(entry.numparams or 0),entry.vargs and' +...'or''),TextColor3=COLORS.
-cyan,TextXAlignment=Enum.TextXAlignment.Left})tab:Separator()local constLines={}
-for i,c in constants do local text=preDecoded and tostring(c)or Data2Code.
-Convert(c,true)constLines[#constLines+1]={raw=(preDecoded and tostring(c)or
-SafeString(c)):lower(),text=('  [%s] = %s'):format(tostring(i),text)}end local
-upvalLines={}for i,u in upvalues do local text=preDecoded and tostring(u)or
-Data2Code.Convert(u,true)upvalLines[#upvalLines+1]={raw=(preDecoded and
-tostring(u)or SafeString(u)):lower(),text=('  [%s] = %s'):format(tostring(i),
-text)}end local Editor=IDE.CodeFrame.new({Editable=false,FontSize=13,Colors=
-SyntaxColors,FontFace=TextFont})ReGui:ApplyFlags({Object=Editor.Gui,WindowClass=
-parentClass,Class={Fill=true,Parent=tab:GetObject(),BackgroundTransparency=1}})
-local render=function(query)query=(query or''):lower():match('^%s*(.-)%s*$')
-Editor:ClearText()local section=function(title,lines)local shown={}for _,ln in
-lines do if query==''or ln.raw:find(query,1,true)then shown[#shown+1]=ln.text
-end end Editor:AppendText(('%s (%d):\n'):format(title,#shown))if#shown==0 then
-Editor:AppendText('  (none)\n')else for _,t in shown do Editor:AppendText(t..
-'\n')end end Editor:AppendText('\n')end section('Constants',constLines)section(
-'Upvalues',upvalLines)end tab:InputText({Label='Search constants / upvalues',
-PlaceHolder='value to filter...',Value='',Callback=function(_,newValue)render(
-newValue)end})local row=tab:Row()row:Button({Text='Copy All',Callback=function()
-copyToClipboard(Editor:GetText())end})row:Button({Text='Grab Function',Callback=
-function()local methods=verifyGrabMethods(entry,3)local code=formatGrabMethods(
-methods)Editor:ClearText()Editor:AppendText(code..'\n')copyToClipboard(code)end}
-)row:Expand()tab:Separator()render('')if window.SetActiveTab then pcall(function
-()window:SetActiveTab(tabName)end)end return tab end local renderFunctionList=
-function(tab,window,parentClass,functions,headerText,headerColor)tab:Label({Text
-=headerText,TextColor3=headerColor or Color3.fromRGB(200,200,200),TextXAlignment
-=Enum.TextXAlignment.Left})local rows={}local searchInput=tab:InputText({Label=
-'Search functions (name / values)',PlaceHolder='filter functions...',Value='',
-Callback=function(_,newValue)local q=(newValue or''):lower():match(
-'^%s*(.-)%s*$')for _,r in rows do local visible=q==''or r.nameLower:find(q,1,
-true)or r.valueIndex:find(q,1,true)if r.label then r.label.Visible=visible end
-if r.separator then r.separator.Visible=visible end end end})tab:Button({Text=
-'Clear Search',Callback=function()searchInput.Value=''for _,r in rows do if r.
-label then r.label.Visible=true end if r.separator then r.separator.Visible=true
-end end end})local progressLabel=tab:Label({Text='',TextColor3=COLORS.gray,
-TextXAlignment=Enum.TextXAlignment.Left})tab:Separator()local ordered={}for _,
-entry in functions do ordered[#ordered+1]=entry end table.sort(ordered,function(
-a,b)local an=a.name and a.name~='(anonymous)'local bn=b.name and b.name~=
-'(anonymous)'if an~=bn then return an end return(a.name or''):lower()<(b.name or
-''):lower()end)local CHUNK=15 local DELAY=0.03 local total=#ordered task.spawn(
-function()for i=1,total do local entry=ordered[i]local _=type(entry.constants)==
-'table'or type(entry.upvalues)=='table'local constants=entry.constants or(entry.
-func and safeGet(getconstants,entry.func))or{}local upvalues=entry.upvalues or(
-entry.func and safeGet(getupvalues,entry.func))or{}local lineText=(
-'%s  |  line %s  |  params %s%s  |  C:%d U:%d'):format(entry.name,tostring(entry
-.line or'?'),tostring(entry.numparams or 0),entry.vargs and' +...'or'',#
-constants,#upvalues)local label=tab:Label({Text=lineText,TextColor3=Color3.
-fromRGB(180,200,230),TextXAlignment=Enum.TextXAlignment.Left})local sep=tab:
-Separator()local vIndex=entry.valueIndex if not vIndex then vIndex=
+wait(DELAY)end end end)end run()return tab end local openFunctionDetail=function
+(window,parentClass,entry)local func=entry.func local preDecoded=type(entry.
+constants)=='table'or type(entry.upvalues)=='table'local constants=entry.
+constants or(func and safeGet(getconstants,func))or{}local upvalues=entry.
+upvalues or(func and safeGet(getupvalues,func))or{}local tabName=('Fn: %s'):
+format(entry.name)local tab=window:CreateTab({Name=tabName,Closeable=true})tab:
+Label({Text=('%s  |  line %s  |  params %s%s'):format(entry.name,tostring(entry.
+line or'?'),tostring(entry.numparams or 0),entry.vargs and' +...'or''),
+TextColor3=COLORS.cyan,TextXAlignment=Enum.TextXAlignment.Left})tab:Separator()
+local constLines={}for i,c in constants do local text=preDecoded and tostring(c)
+or Data2Code.Convert(c,true)constLines[#constLines+1]={raw=(preDecoded and
+tostring(c)or SafeString(c)):lower(),text=('  [%s] = %s'):format(tostring(i),
+text)}end local upvalLines={}for i,u in upvalues do local text=preDecoded and
+tostring(u)or Data2Code.Convert(u,true)upvalLines[#upvalLines+1]={raw=(
+preDecoded and tostring(u)or SafeString(u)):lower(),text=('  [%s] = %s'):format(
+tostring(i),text)}end local Editor=IDE.CodeFrame.new({Editable=false,FontSize=13
+,Colors=SyntaxColors,FontFace=TextFont})ReGui:ApplyFlags({Object=Editor.Gui,
+WindowClass=parentClass,Class={Fill=true,Parent=tab:GetObject(),
+BackgroundTransparency=1}})local render=function(query)query=(query or''):lower(
+):match('^%s*(.-)%s*$')Editor:ClearText()local section=function(title,lines)
+local shown={}for _,ln in lines do if query==''or ln.raw:find(query,1,true)then
+shown[#shown+1]=ln.text end end Editor:AppendText(('%s (%d):\n'):format(title,#
+shown))if#shown==0 then Editor:AppendText('  (none)\n')else for _,t in shown do
+Editor:AppendText(t..'\n')end end Editor:AppendText('\n')end section('Constants'
+,constLines)section('Upvalues',upvalLines)end tab:InputText({Label=
+'Search constants / upvalues',PlaceHolder='value to filter...',Value='',Callback
+=function(_,newValue)render(newValue)end})local row=tab:Row()row:Button({Text=
+'Copy All',Callback=function()copyToClipboard(Editor:GetText())end})row:Button({
+Text='Grab Function',Callback=function()local methods=verifyGrabMethods(entry,3)
+local code=formatGrabMethods(methods)Editor:ClearText()Editor:AppendText(code..
+'\n')copyToClipboard(code)end})row:Expand()tab:Separator()render('')if window.
+SetActiveTab then pcall(function()window:SetActiveTab(tabName)end)end return tab
+end local renderFunctionList=function(tab,window,parentClass,functions,
+headerText,headerColor)tab:Label({Text=headerText,TextColor3=headerColor or
+Color3.fromRGB(200,200,200),TextXAlignment=Enum.TextXAlignment.Left})local rows=
+{}local searchInput=tab:InputText({Label='Search functions (name / values)',
+PlaceHolder='filter functions...',Value='',Callback=function(_,newValue)local q=
+(newValue or''):lower():match('^%s*(.-)%s*$')for _,r in rows do local visible=q
+==''or r.nameLower:find(q,1,true)or r.valueIndex:find(q,1,true)if r.label then r
+.label.Visible=visible end if r.separator then r.separator.Visible=visible end
+end end})tab:Button({Text='Clear Search',Callback=function()searchInput.Value=''
+for _,r in rows do if r.label then r.label.Visible=true end if r.separator then
+r.separator.Visible=true end end end})local progressLabel=tab:Label({Text='',
+TextColor3=COLORS.gray,TextXAlignment=Enum.TextXAlignment.Left})tab:Separator()
+local ordered={}for _,entry in functions do ordered[#ordered+1]=entry end table.
+sort(ordered,function(a,b)local an=a.name and a.name~='(anonymous)'local bn=b.
+name and b.name~='(anonymous)'if an~=bn then return an end return(a.name or''):
+lower()<(b.name or''):lower()end)local CHUNK=15 local DELAY=0.03 local total=#
+ordered task.spawn(function()for i=1,total do local entry=ordered[i]local _=
+type(entry.constants)=='table'or type(entry.upvalues)=='table'local constants=
+entry.constants or(entry.func and safeGet(getconstants,entry.func))or{}local
+upvalues=entry.upvalues or(entry.func and safeGet(getupvalues,entry.func))or{}
+local lineText=('%s  |  line %s  |  params %s%s  |  C:%d U:%d'):format(entry.
+name,tostring(entry.line or'?'),tostring(entry.numparams or 0),entry.vargs and
+' +...'or'',#constants,#upvalues)local label=tab:Label({Text=lineText,TextColor3
+=Color3.fromRGB(180,200,230),TextXAlignment=Enum.TextXAlignment.Left})local sep=
+tab:Separator()local vIndex=entry.valueIndex if not vIndex then vIndex=
 buildValueIndex(constants,upvalues)end rows[#rows+1]={label=label,separator=sep,
 nameLower=(entry.name or''):lower(),valueIndex=vIndex}label.InputBegan:Connect(
 function(input)if input.UserInputType==Enum.UserInputType.MouseButton1 or input.
@@ -2543,9 +2626,10 @@ progressLabel.Text=''end)return tab end local buildFunctionsTab=function(window,
 parentClass,scriptRef)local functions,invalidSource=FunctionLibrary.
 CollectScriptFunctions(scriptRef)local tabLabel=invalidSource and
 'Invalid Source Scripts'or'Functions'local tab=window:CreateTab({Name=tabLabel})
+local scriptName=safeGet(function(s)return s.Name end,scriptRef)or'script'
 renderFunctionList(tab,window,parentClass,functions,('%d function(s) in %s'):
-format(#functions,scriptRef.Name),invalidSource and COLORS.red or Color3.
-fromRGB(200,200,200))return tab end local buildCodeTab=function(window,
+format(#functions,scriptName),invalidSource and COLORS.red or Color3.fromRGB(200
+,200,200))return tab,functions end local buildCodeTab=function(window,
 parentClass,tabName,getter,scriptRef,saveDir,displayText)local tab=window:
 CreateTab({Name=tabName})local Editor=IDE.CodeFrame.new({Editable=false,FontSize
 =13,Colors=SyntaxColors,FontFace=TextFont})ReGui:ApplyFlags({Object=Editor.Gui,
@@ -2602,21 +2686,22 @@ antiReasons and#antiReasons>0 then local infoTab=window:CreateTab({Name=
 TextColor3=COLORS.gold,TextXAlignment=Enum.TextXAlignment.Left})infoTab:
 Separator()for _,r in antiReasons do infoTab:Label({Text='- '..SafeString(r),
 TextColor3=COLORS.orange,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.
-Left})end end buildFunctionsTab(window,window,scriptRef)buildGcTablesTab(window,
-window,scriptRef)buildCodeTab(window,window,'Source',decompile,scriptRef,
-DECOMP_DIR,displayText)buildCodeTab(window,window,'disassemble',disassemble,
-scriptRef,DISASM_DIR,displayText)buildBytecodeSaveTab(window,scriptRef,
-displayText)return window end local orphanCache local unknownWindowOpen local
-openUnknownWindow=function()if unknownWindowOpen then if unknownWindowOpen.
-SetVisible then unknownWindowOpen:SetVisible(true)end return unknownWindowOpen
-end local Sizex,Sizey=FunctionLibrary.GetWindowSize()local window=ReGui:
-TabsWindow({Title='UnknownScript (unresolved functions)',Size=UDim2.fromOffset(
-Sizex+120,Sizey+80)}):Center()unknownWindowOpen=window local orphans=orphanCache
-or FunctionLibrary.CollectOrphanFunctions(nil,getKnownHashes())local tab=window:
-CreateTab({Name='Unknown Functions'})renderFunctionList(tab,window,window,
-orphans,('%d orphan function(s) (no resolvable script)'):format(#orphans),COLORS
-.red)return window end local TYPE_ORDER={Unknown=1,LocalScript=2,ModuleScript=3,
-['nil']=4,Actor=5}local buildScriptList=function(tab,scripts,labelStore)task.
+Left})end end local _,_,collectedFuncs=pcall(buildFunctionsTab,window,window,
+scriptRef)pcall(buildGcTablesTab,window,window,scriptRef,collectedFuncs)pcall(
+buildCodeTab,window,window,'Source',decompile,scriptRef,DECOMP_DIR,displayText)
+pcall(buildCodeTab,window,window,'disassemble',disassemble,scriptRef,DISASM_DIR,
+displayText)pcall(buildBytecodeSaveTab,window,scriptRef,displayText)return
+window end local orphanCache local unknownWindowOpen local openUnknownWindow=
+function()if unknownWindowOpen then if unknownWindowOpen.SetVisible then
+unknownWindowOpen:SetVisible(true)end return unknownWindowOpen end local Sizex,
+Sizey=FunctionLibrary.GetWindowSize()local window=ReGui:TabsWindow({Title=
+'UnknownScript (unresolved functions)',Size=UDim2.fromOffset(Sizex+120,Sizey+80)
+}):Center()unknownWindowOpen=window local orphans=orphanCache or FunctionLibrary
+.CollectOrphanFunctions(nil,getKnownHashes())local tab=window:CreateTab({Name=
+'Unknown Functions'})renderFunctionList(tab,window,window,orphans,(
+'%d orphan function(s) (no resolvable script)'):format(#orphans),COLORS.red)
+return window end local TYPE_ORDER={Unknown=1,LocalScript=2,ModuleScript=3,[
+'nil']=4,Actor=5}local buildScriptList=function(tab,scripts,labelStore)task.
 spawn(function()local prepared={}local classified=0 for _,entry in scripts do
 local scriptRef=entry.script local scriptType=classifyScript(scriptRef,entry.
 context)if scriptType=='CoreScript'then classified=classified+1 if classified%50
@@ -2712,26 +2797,27 @@ Center()actorWindows[entry.key]=window local funcs=entry.functions or{}local tab
 =window:CreateTab({Name='Functions'})renderFunctionList(tab,window,window,funcs,
 ('%d function(s) in %s'):format(#funcs,entry.name or'actor script'),COLORS.cyan)
 buildGcTablesTab(window,window,entry.script,funcs)local scriptRef=entry.script
-if typeof(scriptRef)=='Instance'then buildCodeTab(window,window,'Source',
-decompile,scriptRef,DECOMP_DIR,entry.path)buildCodeTab(window,window,
-'disassemble',disassemble,scriptRef,DISASM_DIR,entry.path)buildBytecodeSaveTab(
-window,scriptRef,entry.path)end return window end local actorOrder={Unknown=1,
-LocalScript=2,ModuleScript=3,['nil']=4}local preparedActors={}for _,entry in
-ActorScripts do local scriptType=classifyActor(entry.class)local displayText=(
-'[%s] %s'):format(entry.class or'Actor',entry.path or entry.name or entry.key)
-preparedActors[#preparedActors+1]={entry=entry,scriptType=scriptType,displayText
-=displayText}end table.sort(preparedActors,function(a,b)local oa=actorOrder[a.
-scriptType]or 99 local ob=actorOrder[b.scriptType]or 99 if oa~=ob then return oa
-<ob end return a.displayText:lower()<b.displayText:lower()end)for _,item in
-preparedActors do local entry=item.entry local label=ActorTab:Label({Text=item.
-displayText,TextColor3=typeColor(item.scriptType),TextXAlignment=Enum.
-TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top})local sep=ActorTab:
-Separator()ActorLabels[#ActorLabels+1]={label=label,separator=sep,type=item.
-scriptType}label.InputBegan:Connect(function(input)if input.UserInputType==Enum.
-UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
-openActorWindow(entry)end end)end refreshActorFilter()return{ReGui=ReGui,
-OpenScriptWindow=openScriptWindow}end function __DARKLUA_BUNDLE_MODULES.i()local
-v=__DARKLUA_BUNDLE_MODULES.cache.i if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.i=v end return v.c end end end
-__DARKLUA_BUNDLE_MODULES.a()__DARKLUA_BUNDLE_MODULES.b()__DARKLUA_BUNDLE_MODULES
-.g()__DARKLUA_BUNDLE_MODULES.i()__DARKLUA_BUNDLE_MODULES.h()
+if typeof(scriptRef)=='Instance'then pcall(buildCodeTab,window,window,'Source',
+decompile,scriptRef,DECOMP_DIR,entry.path)pcall(buildCodeTab,window,window,
+'disassemble',disassemble,scriptRef,DISASM_DIR,entry.path)pcall(
+buildBytecodeSaveTab,window,scriptRef,entry.path)end return window end local
+actorOrder={Unknown=1,LocalScript=2,ModuleScript=3,['nil']=4}local
+preparedActors={}for _,entry in ActorScripts do local scriptType=classifyActor(
+entry.class)local displayText=('[%s] %s'):format(entry.class or'Actor',entry.
+path or entry.name or entry.key)preparedActors[#preparedActors+1]={entry=entry,
+scriptType=scriptType,displayText=displayText}end table.sort(preparedActors,
+function(a,b)local oa=actorOrder[a.scriptType]or 99 local ob=actorOrder[b.
+scriptType]or 99 if oa~=ob then return oa<ob end return a.displayText:lower()<b.
+displayText:lower()end)for _,item in preparedActors do local entry=item.entry
+local label=ActorTab:Label({Text=item.displayText,TextColor3=typeColor(item.
+scriptType),TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.
+TextYAlignment.Top})local sep=ActorTab:Separator()ActorLabels[#ActorLabels+1]={
+label=label,separator=sep,type=item.scriptType}label.InputBegan:Connect(function
+(input)if input.UserInputType==Enum.UserInputType.MouseButton1 or input.
+UserInputType==Enum.UserInputType.Touch then openActorWindow(entry)end end)end
+refreshActorFilter()return{ReGui=ReGui,OpenScriptWindow=openScriptWindow}end
+function __DARKLUA_BUNDLE_MODULES.i()local v=__DARKLUA_BUNDLE_MODULES.cache.i if
+not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.i=v end return v.c
+end end end __DARKLUA_BUNDLE_MODULES.a()__DARKLUA_BUNDLE_MODULES.b()
+__DARKLUA_BUNDLE_MODULES.g()__DARKLUA_BUNDLE_MODULES.i()__DARKLUA_BUNDLE_MODULES
+.h()

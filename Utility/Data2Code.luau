@@ -29,24 +29,13 @@ FunctionLibrary.FunctionInfo = function(func)
     }
 end
 
+
 local INDENT = "    "
 
-local SafeString = FunctionLibrary.SafeString
-local FunctionInfo = FunctionLibrary.FunctionInfo
-
-local byte = string.byte
-local sub = string.sub
-local format = string.format
-local concat = table.concat
-local insert = table.insert
-local rep = string.rep
-local floor = math.floor
-local abs = math.abs
-local round = math.round
-local huge = math.huge
-
 local function try(fn, fallback)
-	local ok, res = xpcall(fn, function() return fallback end)
+	local ok, res = xpcall(fn, function()
+		return fallback
+	end)
 	if ok then
 		return res
 	end
@@ -71,41 +60,41 @@ local ESCAPES = {
 
 local function EscapeString(str)
 	if type(str) ~= "string" then
-		str = SafeString(str)
+		str = FunctionLibrary.SafeString(str)
 	end
 	local n = #str
 	local out = table.create(n + 2)
 	out[1] = '"'
 	local len = 1
 	for i = 1, n do
-		local b = byte(str, i)
+		local b = string.byte(str, i)
 		local esc = ESCAPES[b]
 		if esc then
 			len += 1
 			out[len] = esc
 		elseif b >= 32 and b <= 126 then
 			len += 1
-			out[len] = sub(str, i, i)
+			out[len] = string.sub(str, i, i)
 		else
 			len += 1
-			out[len] = format("\\%03d", b)
+			out[len] = string.format("\\%03d", b)
 		end
 	end
 	out[len + 1] = '"'
-	return concat(out)
+	return table.concat(out)
 end
 
 local function FormatNumber(n)
 	if n ~= n then
 		return "0/0"
-	elseif n == huge then
+	elseif n == math.huge then
 		return "math.huge"
-	elseif n == -huge then
+	elseif n == -math.huge then
 		return "-math.huge"
-	elseif n == floor(n) and abs(n) < 1e15 then
-		return format("%d", n)
+	elseif n == math.floor(n) and math.abs(n) < 1e15 then
+		return string.format("%d", n)
 	end
-	return format("%.14g", n)
+	return string.format("%.14g", n)
 end
 
 local function ChildSegment(name)
@@ -132,11 +121,15 @@ local function GetInstancePath(instance)
 
 		if current == game then
 			table.insert(segments, 1, "game")
-			return concat(segments)
+			return table.concat(segments)
 		end
 
-		local parent = try(function() return current.Parent end, nil)
-		local name = try(function() return current.Name end, "Instance")
+		local parent = try(function()
+			return current.Parent
+		end, nil)
+		local name = try(function()
+			return current.Name
+		end, "Instance")
 
 		if parent == game then
 			local isService = pcall(function()
@@ -147,11 +140,13 @@ local function GetInstancePath(instance)
 			else
 				table.insert(segments, 1, "game" .. ChildSegment(name))
 			end
-			return concat(segments)
+			return table.concat(segments)
 		end
 
 		if not parent then
-			local className = try(function() return current.ClassName end, "Instance")
+			local className = try(function()
+				return current.ClassName
+			end, "Instance")
 			return EscapeString(("<unparented %s: %s>"):format(className, name))
 		end
 
@@ -164,7 +159,7 @@ end
 
 local function IsPureArray(t)
 	local count = 0
-	for _ in next, t do
+	for _ in t do
 		count += 1
 	end
 	local len = rawlen(t)
@@ -179,82 +174,125 @@ local function IsPureArray(t)
 	return true, len
 end
 
-local function SerializeScalar(value)
-	local vt = try(function() return typeof(value) end, "unknown")
-
-	if value == nil then
-		return "nil"
-	elseif vt == "string" then
+local SCALAR_HANDLERS = {
+	string = function(value)
 		return EscapeString(value)
-	elseif vt == "number" then
+	end,
+	number = function(value)
 		return FormatNumber(value)
-	elseif vt == "boolean" then
+	end,
+	boolean = function(value)
 		return value and "true" or "false"
-	elseif vt == "Instance" then
-		return try(function() return GetInstancePath(value) end, '"<instance>"')
-	elseif vt == "EnumItem" then
-		return try(function() return SafeString(value) end, '"<EnumItem>"')
-	elseif vt == "Enum" then
-		return try(function() return "Enum." .. SafeString(value) end, '"<Enum>"')
-	elseif vt == "Vector3" then
+	end,
+	Instance = function(value)
+		return try(function()
+			return GetInstancePath(value)
+		end, '"<instance>"')
+	end,
+	EnumItem = function(value)
+		return try(function()
+			return FunctionLibrary.SafeString(value)
+		end, '"<EnumItem>"')
+	end,
+	Enum = function(value)
+		return try(function()
+			return "Enum." .. FunctionLibrary.SafeString(value)
+		end, '"<Enum>"')
+	end,
+	Vector3 = function(value)
 		return try(function()
 			return ("Vector3.new(%s, %s, %s)"):format(
-				FormatNumber(value.X), FormatNumber(value.Y), FormatNumber(value.Z)
+				FormatNumber(value.X),
+				FormatNumber(value.Y),
+				FormatNumber(value.Z)
 			)
 		end, '"<Vector3>"')
-	elseif vt == "Vector2" then
+	end,
+	Vector2 = function(value)
 		return try(function()
 			return ("Vector2.new(%s, %s)"):format(FormatNumber(value.X), FormatNumber(value.Y))
 		end, '"<Vector2>"')
-	elseif vt == "Color3" then
+	end,
+	Color3 = function(value)
 		return try(function()
 			return ("Color3.fromRGB(%d, %d, %d)"):format(
-				round(value.R * 255), round(value.G * 255), round(value.B * 255)
+				math.round(value.R * 255),
+				math.round(value.G * 255),
+				math.round(value.B * 255)
 			)
 		end, '"<Color3>"')
-	elseif vt == "CFrame" then
+	end,
+	CFrame = function(value)
 		return try(function()
 			local comps = { value:GetComponents() }
 			for i = 1, #comps do
 				comps[i] = FormatNumber(comps[i])
 			end
-			return ("CFrame.new(%s)"):format(concat(comps, ", "))
+			return ("CFrame.new(%s)"):format(table.concat(comps, ", "))
 		end, '"<CFrame>"')
-	elseif vt == "UDim2" then
+	end,
+	UDim2 = function(value)
 		return try(function()
 			return ("UDim2.new(%s, %s, %s, %s)"):format(
-				FormatNumber(value.X.Scale), FormatNumber(value.X.Offset),
-				FormatNumber(value.Y.Scale), FormatNumber(value.Y.Offset)
+				FormatNumber(value.X.Scale),
+				FormatNumber(value.X.Offset),
+				FormatNumber(value.Y.Scale),
+				FormatNumber(value.Y.Offset)
 			)
 		end, '"<UDim2>"')
-	elseif vt == "UDim" then
+	end,
+	UDim = function(value)
 		return try(function()
 			return ("UDim.new(%s, %s)"):format(FormatNumber(value.Scale), FormatNumber(value.Offset))
 		end, '"<UDim>"')
-	elseif vt == "BrickColor" then
+	end,
+	BrickColor = function(value)
 		return try(function()
 			return ("BrickColor.new(%s)"):format(EscapeString(value.Name))
 		end, '"<BrickColor>"')
-	elseif vt == "RBXScriptConnection" then
+	end,
+	RBXScriptConnection = function()
 		return '"<RBXScriptConnection>"'
-	elseif vt == "RBXScriptSignal" then
+	end,
+	RBXScriptSignal = function()
 		return '"<RBXScriptSignal>"'
-	elseif vt == "function" then
+	end,
+	["function"] = function()
 		return '"<function>"'
-	elseif vt == "thread" then
+	end,
+	thread = function()
 		return '"<thread>"'
+	end,
+}
+
+local function SerializeScalar(value)
+	if value == nil then
+		return "nil"
+	end
+
+	local vt = try(function()
+		return typeof(value)
+	end, "unknown")
+
+	local handler = SCALAR_HANDLERS[vt]
+	if handler then
+		return handler(value)
 	end
 
 	local descriptor = try(function()
-		return SafeString(value):gsub("[%c]", " ")
-	end, "<" .. SafeString(vt) .. ">")
+		return (FunctionLibrary.SafeString(value):gsub("[%c]", " "))
+	end, "<" .. FunctionLibrary.SafeString(vt) .. ">")
 	return EscapeString(("<%s: %s>"):format(vt, descriptor))
 end
 
 local function SerializeRoot(root, pretty)
 	local function normalize(v)
-		if try(function() return typeof(v) end, "") == "function" then
-			return try(function() return FunctionInfo(v) end, "<function>")
+		if try(function()
+			return typeof(v)
+		end, "") == "function" then
+			return try(function()
+				return FunctionLibrary.FunctionInfo(v)
+			end, "<function>")
 		end
 		return v
 	end
@@ -277,7 +315,9 @@ local function SerializeRoot(root, pretty)
 	local function buildEntries(t)
 		local entries = {}
 		local ecount = 0
-		local pure, arrayLen = try(function() return IsPureArray(t) end, false)
+		local pure, arrayLen = try(function()
+			return IsPureArray(t)
+		end, false)
 		arrayLen = arrayLen or rawlen(t)
 
 		if pure then
@@ -300,7 +340,7 @@ local function SerializeRoot(root, pretty)
 
 		local keyed = {}
 		local kcount = 0
-		for key in next, t do
+		for key in t do
 			if not seen[key] then
 				kcount += 1
 				keyed[kcount] = key
@@ -313,7 +353,7 @@ local function SerializeRoot(root, pretty)
 				if ta == "string" and tb == "string" then
 					return a < b
 				end
-				return SafeString(ta) < SafeString(tb)
+				return FunctionLibrary.SafeString(ta) < FunctionLibrary.SafeString(tb)
 			end)
 		end)
 
@@ -346,7 +386,7 @@ local function SerializeRoot(root, pretty)
 
 		if fi > #entries then
 			if pretty and #entries > 0 then
-				emit("\n" .. rep(INDENT, frame.indent))
+				emit("\n" .. string.rep(INDENT, frame.indent))
 			end
 			emit("}")
 			emit(frame.sep)
@@ -364,15 +404,17 @@ local function SerializeRoot(root, pretty)
 
 		if pretty then
 			if entry.keyStr then
-				emit(("\n%s%s = "):format(rep(INDENT, nextIndent), entry.keyStr))
+				emit(("\n%s%s = "):format(string.rep(INDENT, nextIndent), entry.keyStr))
 			else
-				emit("\n" .. rep(INDENT, nextIndent))
+				emit("\n" .. string.rep(INDENT, nextIndent))
 			end
 		elseif entry.keyStr then
 			emit(entry.keyStr .. " = ")
 		end
 
-		if try(function() return typeof(rawValue) end, "") == "table" then
+		if try(function()
+			return typeof(rawValue)
+		end, "") == "table" then
 			if visited[rawValue] then
 				emit('"<cyclic table>"')
 				emit(sep)
@@ -394,14 +436,14 @@ local function SerializeRoot(root, pretty)
 		end
 	end
 
-	return concat(out)
+	return table.concat(out)
 end
 
 function Data2Code.Convert(data, pretty)
 	local ok, result = xpcall(function()
 		return SerializeRoot(data, pretty)
 	end, function(err)
-		return "--[[ Data2Code.Convert error: " .. SafeString(err) .. " ]] nil"
+		return "--[[ Data2Code.Convert error: " .. FunctionLibrary.SafeString(err) .. " ]] nil"
 	end)
 	return result
 end

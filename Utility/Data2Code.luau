@@ -28,8 +28,6 @@ FunctionLibrary.FunctionInfo = function(func)
         vargs = vargs,
     }
 end
-
-
 local INDENT = "    "
 
 local function try(fn, fallback)
@@ -85,6 +83,9 @@ local function EscapeString(str)
 end
 
 local function FormatNumber(n)
+	if type(n) ~= "number" then
+		n = tonumber(n) or 0
+	end
 	if n ~= n then
 		return "0/0"
 	elseif n == math.huge then
@@ -95,6 +96,22 @@ local function FormatNumber(n)
 		return string.format("%d", n)
 	end
 	return string.format("%.14g", n)
+end
+
+local function Vec3(v)
+	return ("Vector3.new(%s, %s, %s)"):format(FormatNumber(v.X), FormatNumber(v.Y), FormatNumber(v.Z))
+end
+
+local function Color3Lit(v)
+	return ("Color3.fromRGB(%d, %d, %d)"):format(
+		math.round(v.R * 255),
+		math.round(v.G * 255),
+		math.round(v.B * 255)
+	)
+end
+
+local function EnumLit(item)
+	return "Enum." .. tostring(item.EnumType) .. "." .. item.Name
 end
 
 local function ChildSegment(name)
@@ -159,8 +176,10 @@ end
 
 local function IsPureArray(t)
 	local count = 0
-	for _ in t do
+	local k = next(t)
+	while k ~= nil do
 		count += 1
+		k = next(t, k)
 	end
 	local len = rawlen(t)
 	if count ~= len then
@@ -265,6 +284,146 @@ local SCALAR_HANDLERS = {
 	end,
 }
 
+local function register(name, builder, fallback)
+	SCALAR_HANDLERS[name] = function(value)
+		return try(function()
+			return builder(value)
+		end, fallback or ('"<' .. name .. '>"'))
+	end
+end
+
+register("Vector3int16", function(v)
+	return ("Vector3int16.new(%s, %s, %s)"):format(FormatNumber(v.X), FormatNumber(v.Y), FormatNumber(v.Z))
+end)
+
+register("Vector2int16", function(v)
+	return ("Vector2int16.new(%s, %s)"):format(FormatNumber(v.X), FormatNumber(v.Y))
+end)
+
+register("NumberRange", function(v)
+	return ("NumberRange.new(%s, %s)"):format(FormatNumber(v.Min), FormatNumber(v.Max))
+end)
+
+register("NumberSequenceKeypoint", function(v)
+	return ("NumberSequenceKeypoint.new(%s, %s, %s)"):format(
+		FormatNumber(v.Time),
+		FormatNumber(v.Value),
+		FormatNumber(v.Envelope)
+	)
+end)
+
+register("NumberSequence", function(v)
+	local kps = v.Keypoints
+	local parts = {}
+	for i = 1, #kps do
+		local kp = kps[i]
+		parts[i] = ("NumberSequenceKeypoint.new(%s, %s, %s)"):format(
+			FormatNumber(kp.Time),
+			FormatNumber(kp.Value),
+			FormatNumber(kp.Envelope)
+		)
+	end
+	return ("NumberSequence.new({%s})"):format(table.concat(parts, ", "))
+end)
+
+register("ColorSequenceKeypoint", function(v)
+	return ("ColorSequenceKeypoint.new(%s, %s)"):format(FormatNumber(v.Time), Color3Lit(v.Value))
+end)
+
+register("ColorSequence", function(v)
+	local kps = v.Keypoints
+	local parts = {}
+	for i = 1, #kps do
+		local kp = kps[i]
+		parts[i] = ("ColorSequenceKeypoint.new(%s, %s)"):format(FormatNumber(kp.Time), Color3Lit(kp.Value))
+	end
+	return ("ColorSequence.new({%s})"):format(table.concat(parts, ", "))
+end)
+
+register("Rect", function(v)
+	return ("Rect.new(%s, %s, %s, %s)"):format(
+		FormatNumber(v.Min.X),
+		FormatNumber(v.Min.Y),
+		FormatNumber(v.Max.X),
+		FormatNumber(v.Max.Y)
+	)
+end)
+
+register("Ray", function(v)
+	return ("Ray.new(%s, %s)"):format(Vec3(v.Origin), Vec3(v.Direction))
+end)
+
+register("Region3", function(v)
+	local cf = v.CFrame
+	local size = v.Size
+	local pos = cf.Position
+	return ("Region3.new(%s, %s)"):format(Vec3(pos - size / 2), Vec3(pos + size / 2))
+end)
+
+register("Region3int16", function(v)
+	return ("Region3int16.new(Vector3int16.new(%s, %s, %s), Vector3int16.new(%s, %s, %s))"):format(
+		FormatNumber(v.Min.X),
+		FormatNumber(v.Min.Y),
+		FormatNumber(v.Min.Z),
+		FormatNumber(v.Max.X),
+		FormatNumber(v.Max.Y),
+		FormatNumber(v.Max.Z)
+	)
+end)
+
+register("Faces", function(v)
+	local on = {}
+	for _, f in { "Top", "Bottom", "Left", "Right", "Back", "Front" } do
+		if v[f] then
+			on[#on + 1] = "Enum.NormalId." .. f
+		end
+	end
+	return ("Faces.new(%s)"):format(table.concat(on, ", "))
+end)
+
+register("Axes", function(v)
+	local on = {}
+	for _, a in { "X", "Y", "Z" } do
+		if v[a] then
+			on[#on + 1] = "Enum.Axis." .. a
+		end
+	end
+	return ("Axes.new(%s)"):format(table.concat(on, ", "))
+end)
+
+register("PhysicalProperties", function(v)
+	return ("PhysicalProperties.new(%s, %s, %s, %s, %s)"):format(
+		FormatNumber(v.Density),
+		FormatNumber(v.Friction),
+		FormatNumber(v.Elasticity),
+		FormatNumber(v.FrictionWeight),
+		FormatNumber(v.ElasticityWeight)
+	)
+end)
+
+register("Font", function(v)
+	return ("Font.new(%s, %s, %s)"):format(EscapeString(v.Family), EnumLit(v.Weight), EnumLit(v.Style))
+end)
+
+register("TweenInfo", function(v)
+	return ("TweenInfo.new(%s, %s, %s, %s, %s, %s)"):format(
+		FormatNumber(v.Time),
+		EnumLit(v.EasingStyle),
+		EnumLit(v.EasingDirection),
+		FormatNumber(v.RepeatCount),
+		v.Reverses and "true" or "false",
+		FormatNumber(v.DelayTime)
+	)
+end)
+
+register("DateTime", function(v)
+	return ("DateTime.fromUnixTimestampMillis(%s)"):format(FormatNumber(v.UnixTimestampMillis))
+end)
+
+register("PathWaypoint", function(v)
+	return ("PathWaypoint.new(%s, %s)"):format(Vec3(v.Position), EnumLit(v.Action))
+end)
+
 local function SerializeScalar(value)
 	if value == nil then
 		return "nil"
@@ -340,11 +499,13 @@ local function SerializeRoot(root, pretty)
 
 		local keyed = {}
 		local kcount = 0
-		for key in t do
+		local key = next(t)
+		while key ~= nil do
 			if not seen[key] then
 				kcount += 1
 				keyed[kcount] = key
 			end
+			key = next(t, key)
 		end
 
 		pcall(function()
@@ -372,10 +533,16 @@ local function SerializeRoot(root, pretty)
 		return entries
 	end
 
+	local function safeBuildEntries(t)
+		return try(function()
+			return buildEntries(t)
+		end, {})
+	end
+
 	local sep = pretty and "," or ", "
 
 	visited[root] = true
-	local stack = { { entries = buildEntries(root), i = 1, indent = 0, tableRef = root, sep = "" } }
+	local stack = { { entries = safeBuildEntries(root), i = 1, indent = 0, tableRef = root, sep = "" } }
 	local depth = 1
 	emit("{")
 
@@ -423,7 +590,7 @@ local function SerializeRoot(root, pretty)
 				emit("{")
 				depth += 1
 				stack[depth] = {
-					entries = buildEntries(rawValue),
+					entries = safeBuildEntries(rawValue),
 					i = 1,
 					indent = nextIndent,
 					tableRef = rawValue,

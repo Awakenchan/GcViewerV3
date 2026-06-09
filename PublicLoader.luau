@@ -126,9 +126,7 @@ not Caps.isexecutorclosure then return false end local ok,r=pcall(
 isexecutorclosure,fn)return ok and r==true end FunctionLibrary.IsExecutorClosure
 =isExecClosure local EXECUTOR_NAME_FRAGS={'GcView','awakenkn','Dear-ReGui',
 'ReGui'}FunctionLibrary.IsExecutorScript=function(scriptRef,knownPath)if typeof(
-scriptRef)~='Instance'then return false end if Caps.getscriptclosure then local
-okCl,cl=pcall(getscriptclosure,scriptRef)if okCl and type(cl)=='function'and
-isExecClosure(cl)then return true end end local name=knownPath if type(name)~=
+scriptRef)~='Instance'then return false end local name=knownPath if type(name)~=
 'string'then local okN,n=pcall(function()return scriptRef.Name end)name=okN and
 n or nil end if type(name)=='string'then for _,frag in EXECUTOR_NAME_FRAGS do if
 string.find(name,frag,1,true)then return true end end end return false end
@@ -2216,37 +2214,42 @@ SafeString(str)end local n=#str local out=table.create(n+2)out[1]='"'local len=1
 for i=1,n do local b=string.byte(str,i)local esc=ESCAPES[b]if esc then len=len+1
 out[len]=esc elseif b>=32 and b<=126 then len=len+1 out[len]=string.sub(str,i,i)
 else len=len+1 out[len]=string.format('\\%03d',b)end end out[len+1]='"'return
-table.concat(out)end local FormatNumber=function(n)if n~=n then return'0/0'
-elseif n==math.huge then return'math.huge'elseif n==-math.huge then return
-'-math.huge'elseif n==math.floor(n)and math.abs(n)<1e15 then return string.
-format('%d',n)end return string.format('%.14g',n)end local ChildSegment=function
-(name)if IsIdentifier(name)then return'.'..name end return'['..EscapeString(name
-)..']'end local GetInstancePath=function(instance)if instance==game then return
-'game'end local segments={}local current=instance local guard=0 while current do
-guard=guard+1 if guard>512 then return EscapeString('<deep instance>')end if
-current==game then table.insert(segments,1,'game')return table.concat(segments)
-end local parent=try(function()return current.Parent end,nil)local name=try(
-function()return current.Name end,'Instance')if parent==game then local
-isService=pcall(function()return game:GetService(name)end)if isService then
-table.insert(segments,1,string.format('game:GetService(%s)',tostring(
-EscapeString(name))))else table.insert(segments,1,'game'..ChildSegment(name))end
-return table.concat(segments)end if not parent then local className=try(function
-()return current.ClassName end,'Instance')return EscapeString((
-'<unparented %s: %s>'):format(className,name))end table.insert(segments,1,
-ChildSegment(name))current=parent end return EscapeString(
-'<unresolved instance>')end local IsPureArray=function(t)local count=0 for _ in
-t do count=count+1 end local len=rawlen(t)if count~=len then return false,len
-end for i=1,len do if rawget(t,i)==nil then return false,len end end return true
-,len end local SCALAR_HANDLERS={string=function(value)return EscapeString(value)
-end,number=function(value)return FormatNumber(value)end,boolean=function(value)
-return value and'true'or'false'end,Instance=function(value)return try(function()
-return GetInstancePath(value)end,'"<instance>"')end,EnumItem=function(value)
-return try(function()return FunctionLibrary.SafeString(value)end,'"<EnumItem>"')
-end,Enum=function(value)return try(function()return'Enum.'..FunctionLibrary.
-SafeString(value)end,'"<Enum>"')end,Vector3=function(value)return try(function()
-return('Vector3.new(%s, %s, %s)'):format(FormatNumber(value.X),FormatNumber(
-value.Y),FormatNumber(value.Z))end,'"<Vector3>"')end,Vector2=function(value)
-return try(function()return('Vector2.new(%s, %s)'):format(FormatNumber(value.X),
+table.concat(out)end local FormatNumber=function(n)if type(n)~='number'then n=
+tonumber(n)or 0 end if n~=n then return'0/0'elseif n==math.huge then return
+'math.huge'elseif n==-math.huge then return'-math.huge'elseif n==math.floor(n)
+and math.abs(n)<1e15 then return string.format('%d',n)end return string.format(
+'%.14g',n)end local Vec3=function(v)return('Vector3.new(%s, %s, %s)'):format(
+FormatNumber(v.X),FormatNumber(v.Y),FormatNumber(v.Z))end local Color3Lit=
+function(v)return('Color3.fromRGB(%d, %d, %d)'):format(math.round(v.R*255),math.
+round(v.G*255),math.round(v.B*255))end local EnumLit=function(item)return'Enum.'
+..tostring(item.EnumType)..'.'..item.Name end local ChildSegment=function(name)
+if IsIdentifier(name)then return'.'..name end return'['..EscapeString(name)..']'
+end local GetInstancePath=function(instance)if instance==game then return'game'
+end local segments={}local current=instance local guard=0 while current do guard
+=guard+1 if guard>512 then return EscapeString('<deep instance>')end if current
+==game then table.insert(segments,1,'game')return table.concat(segments)end
+local parent=try(function()return current.Parent end,nil)local name=try(function
+()return current.Name end,'Instance')if parent==game then local isService=pcall(
+function()return game:GetService(name)end)if isService then table.insert(
+segments,1,string.format('game:GetService(%s)',tostring(EscapeString(name))))
+else table.insert(segments,1,'game'..ChildSegment(name))end return table.concat(
+segments)end if not parent then local className=try(function()return current.
+ClassName end,'Instance')return EscapeString(('<unparented %s: %s>'):format(
+className,name))end table.insert(segments,1,ChildSegment(name))current=parent
+end return EscapeString('<unresolved instance>')end local IsPureArray=function(t
+)local count=0 local k=next(t)while k~=nil do count=count+1 k=next(t,k)end local
+len=rawlen(t)if count~=len then return false,len end for i=1,len do if rawget(t,
+i)==nil then return false,len end end return true,len end local SCALAR_HANDLERS=
+{string=function(value)return EscapeString(value)end,number=function(value)
+return FormatNumber(value)end,boolean=function(value)return value and'true'or
+'false'end,Instance=function(value)return try(function()return GetInstancePath(
+value)end,'"<instance>"')end,EnumItem=function(value)return try(function()return
+FunctionLibrary.SafeString(value)end,'"<EnumItem>"')end,Enum=function(value)
+return try(function()return'Enum.'..FunctionLibrary.SafeString(value)end,
+'"<Enum>"')end,Vector3=function(value)return try(function()return(
+'Vector3.new(%s, %s, %s)'):format(FormatNumber(value.X),FormatNumber(value.Y),
+FormatNumber(value.Z))end,'"<Vector3>"')end,Vector2=function(value)return try(
+function()return('Vector2.new(%s, %s)'):format(FormatNumber(value.X),
 FormatNumber(value.Y))end,'"<Vector2>"')end,Color3=function(value)return try(
 function()return('Color3.fromRGB(%d, %d, %d)'):format(math.round(value.R*255),
 math.round(value.G*255),math.round(value.B*255))end,'"<Color3>"')end,CFrame=
@@ -2261,65 +2264,113 @@ end,'"<UDim>"')end,BrickColor=function(value)return try(function()return(
 'BrickColor.new(%s)'):format(EscapeString(value.Name))end,'"<BrickColor>"')end,
 RBXScriptConnection=function()return'"<RBXScriptConnection>"'end,RBXScriptSignal
 =function()return'"<RBXScriptSignal>"'end,['function']=function()return
-'"<function>"'end,thread=function()return'"<thread>"'end}local SerializeScalar=
-function(value)if value==nil then return'nil'end local vt=try(function()return
-typeof(value)end,'unknown')local handler=SCALAR_HANDLERS[vt]if handler then
-return handler(value)end local descriptor=try(function()return(FunctionLibrary.
-SafeString(value):gsub('[%c]',' '))end,'<'..FunctionLibrary.SafeString(vt)..'>')
-return EscapeString(('<%s: %s>'):format(vt,descriptor))end local SerializeRoot=
-function(root,pretty)local normalize=function(v)if try(function()return typeof(v
-)end,'')=='function'then return try(function()return FunctionLibrary.
-FunctionInfo(v)end,'<function>')end return v end root=normalize(root)if typeof(
-root)~='table'then return SerializeScalar(root)end local out={}local len=0 local
-visited={}local emit=function(s)len=len+1 out[len]=s end local buildEntries=
-function(t)local entries={}local ecount=0 local pure,arrayLen=try(function()
-return IsPureArray(t)end,false)arrayLen=arrayLen or rawlen(t)if pure then for
-idx=1,arrayLen do ecount=ecount+1 entries[ecount]={keyStr=nil,value=rawget(t,idx
-)}end return entries end local seen={}for idx=1,arrayLen do if rawget(t,idx)==
-nil then break end seen[idx]=true ecount=ecount+1 entries[ecount]={keyStr=nil,
-value=rawget(t,idx)}end local keyed={}local kcount=0 for key in t do if not seen
-[key]then kcount=kcount+1 keyed[kcount]=key end end pcall(function()table.sort(
-keyed,function(a,b)local ta,tb=typeof(a),typeof(b)if ta=='string'and tb==
-'string'then return a<b end return FunctionLibrary.SafeString(ta)<
-FunctionLibrary.SafeString(tb)end)end)for i=1,kcount do local key=keyed[i]local
-keyStr if type(key)=='string'and IsIdentifier(key)then keyStr=key else keyStr=
-'['..SerializeScalar(normalize(key))..']'end ecount=ecount+1 entries[ecount]={
-keyStr=keyStr,value=rawget(t,key)}end return entries end local sep=pretty and','
-or', 'visited[root]=true local stack={{entries=buildEntries(root),i=1,indent=0,
-tableRef=root,sep=''}}local depth=1 emit('{')while depth>0 do local frame=stack[
-depth]local entries=frame.entries local fi=frame.i if fi>#entries then if pretty
-and#entries>0 then emit('\n'..string.rep(INDENT,frame.indent))end emit('}')emit(
-frame.sep)visited[frame.tableRef]=nil stack[depth]=nil depth=depth-1 continue
-end local entry=entries[fi]frame.i=fi+1 local rawValue=normalize(entry.value)
-local nextIndent=frame.indent+1 if pretty then if entry.keyStr then emit((
-'\n%s%s = '):format(string.rep(INDENT,nextIndent),entry.keyStr))else emit('\n'..
-string.rep(INDENT,nextIndent))end elseif entry.keyStr then emit(entry.keyStr..
-' = ')end if try(function()return typeof(rawValue)end,'')=='table'then if
-visited[rawValue]then emit('"<cyclic table>"')emit(sep)else visited[rawValue]=
-true emit('{')depth=depth+1 stack[depth]={entries=buildEntries(rawValue),i=1,
-indent=nextIndent,tableRef=rawValue,sep=sep}end else emit(SerializeScalar(
-rawValue))emit(sep)end end return table.concat(out)end function Data2Code.
-Convert(data,pretty)local ok,result=xpcall(function()return SerializeRoot(data,
-pretty)end,function(err)return'--[[ Data2Code.Convert error: '..FunctionLibrary.
-SafeString(err)..' ]] nil'end)return result end return Data2Code end function
-__DARKLUA_BUNDLE_MODULES.h()local v=__DARKLUA_BUNDLE_MODULES.cache.h if not v
-then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.h=v end return v.c end end
-do local __modImpl=function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.g()local
-ReGui=ReGuiTable.ReGui local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.e()local
-Data2Code=__DARKLUA_BUNDLE_MODULES.h()local ActorScripts=FunctionLibrary.
-GetActorScripts()local actorScriptKeys={}for _,entry in ActorScripts do if entry
-.key then actorScriptKeys[entry.key]=true end if entry.name then actorScriptKeys
-['name:'..entry.name]=true end end local AllScripts=FunctionLibrary.GetScripts(
-nil,actorScriptKeys)local Scripts={}local AntiCheatScripts={}local antiSeen={}
-local antiSeenName={}for _,entry in AllScripts do if entry.isAntiCheat then
-local ref=entry.script local nameKey do local okN,nm=pcall(function()return
-entry.script.Name end)nameKey=(okN and nm or'?')..'|'..tostring(entry.path or'')
-end if not(antiSeen[ref]or antiSeenName[nameKey])then antiSeen[ref]=true
-antiSeenName[nameKey]=true AntiCheatScripts[#AntiCheatScripts+1]=entry end else
-Scripts[#Scripts+1]=entry end end local knownHashCache local getKnownHashes=
-function()if knownHashCache then return knownHashCache end local merged={}local
-fold=function(into,from)for k in from do into[k]=true end end fold(merged,
-FunctionLibrary.BuildKnownScriptHashSet(Scripts))fold(merged,FunctionLibrary.
+'"<function>"'end,thread=function()return'"<thread>"'end}local register=function
+(name,builder,fallback)SCALAR_HANDLERS[name]=function(value)return try(function(
+)return builder(value)end,fallback or('"<'..name..'>"'))end end register(
+'Vector3int16',function(v)return('Vector3int16.new(%s, %s, %s)'):format(
+FormatNumber(v.X),FormatNumber(v.Y),FormatNumber(v.Z))end)register(
+'Vector2int16',function(v)return('Vector2int16.new(%s, %s)'):format(
+FormatNumber(v.X),FormatNumber(v.Y))end)register('NumberRange',function(v)return
+('NumberRange.new(%s, %s)'):format(FormatNumber(v.Min),FormatNumber(v.Max))end)
+register('NumberSequenceKeypoint',function(v)return(
+'NumberSequenceKeypoint.new(%s, %s, %s)'):format(FormatNumber(v.Time),
+FormatNumber(v.Value),FormatNumber(v.Envelope))end)register('NumberSequence',
+function(v)local kps=v.Keypoints local parts={}for i=1,#kps do local kp=kps[i]
+parts[i]=('NumberSequenceKeypoint.new(%s, %s, %s)'):format(FormatNumber(kp.Time)
+,FormatNumber(kp.Value),FormatNumber(kp.Envelope))end return(
+'NumberSequence.new({%s})'):format(table.concat(parts,', '))end)register(
+'ColorSequenceKeypoint',function(v)return('ColorSequenceKeypoint.new(%s, %s)'):
+format(FormatNumber(v.Time),Color3Lit(v.Value))end)register('ColorSequence',
+function(v)local kps=v.Keypoints local parts={}for i=1,#kps do local kp=kps[i]
+parts[i]=('ColorSequenceKeypoint.new(%s, %s)'):format(FormatNumber(kp.Time),
+Color3Lit(kp.Value))end return('ColorSequence.new({%s})'):format(table.concat(
+parts,', '))end)register('Rect',function(v)return('Rect.new(%s, %s, %s, %s)'):
+format(FormatNumber(v.Min.X),FormatNumber(v.Min.Y),FormatNumber(v.Max.X),
+FormatNumber(v.Max.Y))end)register('Ray',function(v)return('Ray.new(%s, %s)'):
+format(Vec3(v.Origin),Vec3(v.Direction))end)register('Region3',function(v)local
+cf=v.CFrame local size=v.Size local pos=cf.Position return('Region3.new(%s, %s)'
+):format(Vec3(pos-size/2),Vec3(pos+size/2))end)register('Region3int16',function(
+v)return(
+[[Region3int16.new(Vector3int16.new(%s, %s, %s), Vector3int16.new(%s, %s, %s))]]
+):format(FormatNumber(v.Min.X),FormatNumber(v.Min.Y),FormatNumber(v.Min.Z),
+FormatNumber(v.Max.X),FormatNumber(v.Max.Y),FormatNumber(v.Max.Z))end)register(
+'Faces',function(v)local on={}for _,f in{'Top','Bottom','Left','Right','Back',
+'Front'}do if v[f]then on[#on+1]='Enum.NormalId.'..f end end return(
+'Faces.new(%s)'):format(table.concat(on,', '))end)register('Axes',function(v)
+local on={}for _,a in{'X','Y','Z'}do if v[a]then on[#on+1]='Enum.Axis.'..a end
+end return('Axes.new(%s)'):format(table.concat(on,', '))end)register(
+'PhysicalProperties',function(v)return(
+'PhysicalProperties.new(%s, %s, %s, %s, %s)'):format(FormatNumber(v.Density),
+FormatNumber(v.Friction),FormatNumber(v.Elasticity),FormatNumber(v.
+FrictionWeight),FormatNumber(v.ElasticityWeight))end)register('Font',function(v)
+return('Font.new(%s, %s, %s)'):format(EscapeString(v.Family),EnumLit(v.Weight),
+EnumLit(v.Style))end)register('TweenInfo',function(v)return(
+'TweenInfo.new(%s, %s, %s, %s, %s, %s)'):format(FormatNumber(v.Time),EnumLit(v.
+EasingStyle),EnumLit(v.EasingDirection),FormatNumber(v.RepeatCount),v.Reverses
+and'true'or'false',FormatNumber(v.DelayTime))end)register('DateTime',function(v)
+return('DateTime.fromUnixTimestampMillis(%s)'):format(FormatNumber(v.
+UnixTimestampMillis))end)register('PathWaypoint',function(v)return(
+'PathWaypoint.new(%s, %s)'):format(Vec3(v.Position),EnumLit(v.Action))end)local
+SerializeScalar=function(value)if value==nil then return'nil'end local vt=try(
+function()return typeof(value)end,'unknown')local handler=SCALAR_HANDLERS[vt]if
+handler then return handler(value)end local descriptor=try(function()return(
+FunctionLibrary.SafeString(value):gsub('[%c]',' '))end,'<'..FunctionLibrary.
+SafeString(vt)..'>')return EscapeString(('<%s: %s>'):format(vt,descriptor))end
+local SerializeRoot=function(root,pretty)local normalize=function(v)if try(
+function()return typeof(v)end,'')=='function'then return try(function()return
+FunctionLibrary.FunctionInfo(v)end,'<function>')end return v end root=normalize(
+root)if typeof(root)~='table'then return SerializeScalar(root)end local out={}
+local len=0 local visited={}local emit=function(s)len=len+1 out[len]=s end local
+buildEntries=function(t)local entries={}local ecount=0 local pure,arrayLen=try(
+function()return IsPureArray(t)end,false)arrayLen=arrayLen or rawlen(t)if pure
+then for idx=1,arrayLen do ecount=ecount+1 entries[ecount]={keyStr=nil,value=
+rawget(t,idx)}end return entries end local seen={}for idx=1,arrayLen do if
+rawget(t,idx)==nil then break end seen[idx]=true ecount=ecount+1 entries[ecount]
+={keyStr=nil,value=rawget(t,idx)}end local keyed={}local kcount=0 local key=
+next(t)while key~=nil do if not seen[key]then kcount=kcount+1 keyed[kcount]=key
+end key=next(t,key)end pcall(function()table.sort(keyed,function(a,b)local ta,tb
+=typeof(a),typeof(b)if ta=='string'and tb=='string'then return a<b end return
+FunctionLibrary.SafeString(ta)<FunctionLibrary.SafeString(tb)end)end)for i=1,
+kcount do local key=keyed[i]local keyStr if type(key)=='string'and IsIdentifier(
+key)then keyStr=key else keyStr='['..SerializeScalar(normalize(key))..']'end
+ecount=ecount+1 entries[ecount]={keyStr=keyStr,value=rawget(t,key)}end return
+entries end local safeBuildEntries=function(t)return try(function()return
+buildEntries(t)end,{})end local sep=pretty and','or', 'visited[root]=true local
+stack={{entries=safeBuildEntries(root),i=1,indent=0,tableRef=root,sep=''}}local
+depth=1 emit('{')while depth>0 do local frame=stack[depth]local entries=frame.
+entries local fi=frame.i if fi>#entries then if pretty and#entries>0 then emit(
+'\n'..string.rep(INDENT,frame.indent))end emit('}')emit(frame.sep)visited[frame.
+tableRef]=nil stack[depth]=nil depth=depth-1 continue end local entry=entries[fi
+]frame.i=fi+1 local rawValue=normalize(entry.value)local nextIndent=frame.indent
++1 if pretty then if entry.keyStr then emit(('\n%s%s = '):format(string.rep(
+INDENT,nextIndent),entry.keyStr))else emit('\n'..string.rep(INDENT,nextIndent))
+end elseif entry.keyStr then emit(entry.keyStr..' = ')end if try(function()
+return typeof(rawValue)end,'')=='table'then if visited[rawValue]then emit(
+'"<cyclic table>"')emit(sep)else visited[rawValue]=true emit('{')depth=depth+1
+stack[depth]={entries=safeBuildEntries(rawValue),i=1,indent=nextIndent,tableRef=
+rawValue,sep=sep}end else emit(SerializeScalar(rawValue))emit(sep)end end return
+table.concat(out)end function Data2Code.Convert(data,pretty)local ok,result=
+xpcall(function()return SerializeRoot(data,pretty)end,function(err)return
+'--[[ Data2Code.Convert error: '..FunctionLibrary.SafeString(err)..' ]] nil'end)
+return result end return Data2Code end function __DARKLUA_BUNDLE_MODULES.h()
+local v=__DARKLUA_BUNDLE_MODULES.cache.h if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.h=v end return v.c end end do local __modImpl=
+function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.g()local ReGui=ReGuiTable.
+ReGui local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.e()local Data2Code=
+__DARKLUA_BUNDLE_MODULES.h()local ActorScripts=FunctionLibrary.GetActorScripts()
+local actorScriptKeys={}for _,entry in ActorScripts do if entry.key then
+actorScriptKeys[entry.key]=true end if entry.name then actorScriptKeys['name:'..
+entry.name]=true end end local AllScripts=FunctionLibrary.GetScripts(nil,
+actorScriptKeys)local Scripts={}local AntiCheatScripts={}local antiSeen={}local
+antiSeenName={}for _,entry in AllScripts do if entry.isAntiCheat then local ref=
+entry.script local nameKey do local okN,nm=pcall(function()return entry.script.
+Name end)nameKey=(okN and nm or'?')..'|'..tostring(entry.path or'')end if not(
+antiSeen[ref]or antiSeenName[nameKey])then antiSeen[ref]=true antiSeenName[
+nameKey]=true AntiCheatScripts[#AntiCheatScripts+1]=entry end else Scripts[#
+Scripts+1]=entry end end local knownHashCache local getKnownHashes=function()if
+knownHashCache then return knownHashCache end local merged={}local fold=function
+(into,from)for k in from do into[k]=true end end fold(merged,FunctionLibrary.
+BuildKnownScriptHashSet(Scripts))fold(merged,FunctionLibrary.
 BuildKnownScriptHashSet(AntiCheatScripts))fold(merged,FunctionLibrary.
 BuildKnownScriptHashSet(ActorScripts))knownHashCache=merged return merged end
 local IDE=loadstring(game:HttpGet(

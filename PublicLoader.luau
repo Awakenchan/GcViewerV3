@@ -2596,24 +2596,15 @@ local entry={label=cand.label,template=cand.template}if unique then result.
 unique[#result.unique+1]=entry else result.ambiguous[#result.ambiguous+1]=entry
 end end task.wait()end return result end local formatGrabMethods=function(result
 )local unique=(result and result.unique)or{}local ambiguous=(result and result.
-ambiguous)or{}local parts={}local emit=function(methods,suffix)for i,m in
-methods do parts[#parts+1]=('-- Method %d: %s%s'):format(i,m.label,suffix)parts[
-#parts+1]='local fn = '..m.template parts[#parts+1]=''end end if#unique>0 then
-emit(unique,' (uniquely identifies this function)')return table.concat(parts,
-'\n')end if#ambiguous>0 then parts[#parts+1]=
-[[-- No UNIQUE retrieval method exists for this function: it shares its]]parts[#
-parts+1]=
-[[-- name/line/signature with other closures, and no usable function hash]]parts
-[#parts+1]='-- is available on this executor.'parts[#parts+1]=
-[[-- The methods below DO return this function from the live GC, but the]]parts[
-#parts+1]=
-[[-- same query also matches other functions, so you may get a different one.]]
-parts[#parts+1]=''emit(ambiguous,' (ambiguous -- matches multiple functions)')
-return table.concat(parts,'\n')end return
-[[-- This function is in the GC (that's how it's listed here), but no
--- filtergc/getgc query by name, line, signature or hash could re-fetch it.
--- Its debug name/line are likely stripped, and getfunctionhash is
--- unavailable on this executor, so there's no standalone way to target it.]]
+ambiguous)or{}local parts={}local emit=function(methods)for i,m in methods do
+parts[#parts+1]=('-- Method %d: %s'):format(i,m.label)parts[#parts+1]=
+'local fn = '..m.template parts[#parts+1]=''end end if#unique>0 then emit(unique
+)return table.concat(parts,'\n')end if#ambiguous>0 then parts[#parts+1]=
+[[-- Note: these can match more than one function, so you might grab the wrong one.]]
+parts[#parts+1]=''emit(ambiguous)return table.concat(parts,'\n')end return
+[[-- No reliable getter for this one. It's in the gc right now, but the name
+-- and line are stripped and there's no hash to match on, so a fresh script
+-- has nothing to find it by.]]
 end local BASE_DIR='GcView@awakenkn'local BYTE_DIR=BASE_DIR..'/GcViewByteSaves'
 local DECOMP_DIR=BASE_DIR..'/GcViewDecompiled'local DISASM_DIR=BASE_DIR..
 '/GcViewDisassembled'local gameNameCache local getGameName=function()if

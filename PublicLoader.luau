@@ -66,22 +66,47 @@ entry,localPath)end end end local Assets={}function Assets.Download()
 assertExploitFunctions()walk(Constants.ASSETS_DIR_NAME,ASSET_PATH)end return
 Assets end function __DARKLUA_BUNDLE_MODULES.d()local v=__DARKLUA_BUNDLE_MODULES
 .cache.d if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.d=v end
-return v.c end end do local __modImpl=function()local FunctionLibrary={}local
-RunService=Services.RunService local LocalPlayer=PlayerRefs.LocalPlayer local
-Caps={getscriptfromthread=type(getscriptfromthread)=='function',getallthreads=
-type(getallthreads)=='function',getscripts=type(getscripts)=='function',
-getrunningscripts=type(getrunningscripts)=='function',getloadedmodules=type(
-getloadedmodules)=='function',getnilinstances=type(getnilinstances)=='function',
-getfunctionhash=type(getfunctionhash)=='function',islclosure=type(islclosure)==
-'function',isexecutorclosure=type(isexecutorclosure)=='function',
-getscriptbytecode=type(getscriptbytecode)=='function',getscriptclosure=type(
-getscriptclosure)=='function',getsenv=false}local ANTICHEAT_KEYWORDS={'luraph',
-'lph_no_upvalues','lph_jit','lph_encstr'}local OBF_MIN_STRING_LEN=3000 local
-OBF_MIN_BYTECODE=100000 FunctionLibrary.SafeString=function(Object)local
-Metatable=getrawmetatable(Object)local IsTable=typeof(Object)=='table'or typeof(
-Object)=='userdata'local __tostring=Metatable and rawget(Metatable,'__tostring')
-if not IsTable or type(__tostring)~='function'then return tostring(Object)end
-rawset(Metatable,'__tostring',nil)local String=tostring(Object)rawset(Metatable,
+return v.c end end do local __modImpl=function()local GcShared={}local HAS_GETGC
+=type(getgc)=='function'local HAS_ISEXEC=type(isexecutorclosure)=='function'
+local HAS_HASH=type(getfunctionhash)=='function'local snapshot local snapshotOk=
+false local execCache={}local fenvCache={}local hashCache={}function GcShared.
+Snapshot()if snapshot~=nil then return snapshot,snapshotOk end if not HAS_GETGC
+then snapshot,snapshotOk={},false return snapshot,snapshotOk end local ok,gc=
+pcall(getgc,true)if ok and type(gc)=='table'then snapshot,snapshotOk=gc,true
+else snapshot,snapshotOk={},false end return snapshot,snapshotOk end function
+GcShared.IsExec(fn)if type(fn)~='function'or not HAS_ISEXEC then return false
+end local cached=execCache[fn]if cached~=nil then return cached end local ok,r=
+pcall(isexecutorclosure,fn)r=ok and r==true execCache[fn]=r return r end
+function GcShared.Fenv(fn)local cached=fenvCache[fn]if cached~=nil then if
+cached==false then return nil end return cached end local ok,env=pcall(getfenv,
+fn)if ok and type(env)=='table'then fenvCache[fn]=env return env end fenvCache[
+fn]=false return nil end function GcShared.Hash(fn)if type(fn)~='function'or not
+HAS_HASH then return nil end local cached=hashCache[fn]if cached~=nil then if
+cached==false then return nil end return cached end local ok,h=pcall(
+getfunctionhash,fn)if ok and type(h)=='string'and h~=''then hashCache[fn]=h
+return h end hashCache[fn]=false return nil end function GcShared.Reset()
+snapshot=nil snapshotOk=false execCache={}fenvCache={}hashCache={}end return
+GcShared end function __DARKLUA_BUNDLE_MODULES.e()local v=
+__DARKLUA_BUNDLE_MODULES.cache.e if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.e=v end return v.c end end do local __modImpl=
+function()local FunctionLibrary={}local Services=__DARKLUA_BUNDLE_MODULES.a()
+local PlayerRefs=__DARKLUA_BUNDLE_MODULES.b()local GcShared=
+__DARKLUA_BUNDLE_MODULES.e()local RunService=Services.RunService local
+LocalPlayer=PlayerRefs.LocalPlayer local Caps={getscriptfromthread=type(
+getscriptfromthread)=='function',getallthreads=type(getallthreads)=='function',
+getscripts=type(getscripts)=='function',getrunningscripts=type(getrunningscripts
+)=='function',getloadedmodules=type(getloadedmodules)=='function',
+getnilinstances=type(getnilinstances)=='function',getfunctionhash=type(
+getfunctionhash)=='function',islclosure=type(islclosure)=='function',
+isexecutorclosure=type(isexecutorclosure)=='function',getscriptbytecode=type(
+getscriptbytecode)=='function',getscriptclosure=type(getscriptclosure)==
+'function',getsenv=false}local ANTICHEAT_KEYWORDS={'luraph','lph_no_upvalues',
+'lph_jit','lph_encstr'}local OBF_MIN_STRING_LEN=3000 local OBF_MIN_BYTECODE=
+100000 FunctionLibrary.SafeString=function(Object)local Metatable=
+getrawmetatable(Object)local IsTable=typeof(Object)=='table'or typeof(Object)==
+'userdata'local __tostring=Metatable and rawget(Metatable,'__tostring')if not
+IsTable or type(__tostring)~='function'then return tostring(Object)end rawset(
+Metatable,'__tostring',nil)local String=tostring(Object)rawset(Metatable,
 '__tostring',__tostring)return String end FunctionLibrary.FunctionInfo=function(
 func)local source,line,name,numparams,vargs=debug.info(func,'slna')return{source
 =source,line=line,name=name,numparams=numparams,vargs=vargs}end FunctionLibrary.
@@ -121,30 +146,27 @@ end if e.separator then e.separator.Visible=visible end end end FunctionLibrary.
 ScriptKey=function(inst)local ok,id=pcall(function()return inst:GetDebugId()end)
 if ok and id and id~=''then return id end local ok2,full=pcall(function()return
 inst:GetFullName()end)return(ok2 and full)or FunctionLibrary.SafeString(inst)end
-local isExecClosure=function(fn)if type(fn)~='function'then return false end if
-not Caps.isexecutorclosure then return false end local ok,r=pcall(
-isexecutorclosure,fn)return ok and r==true end FunctionLibrary.IsExecutorClosure
-=isExecClosure local EXECUTOR_NAME_FRAGS={'GcView','awakenkn','Dear-ReGui',
-'ReGui'}FunctionLibrary.IsExecutorScript=function(scriptRef,knownPath)if typeof(
-scriptRef)~='Instance'then return false end local name=knownPath if type(name)~=
-'string'then local okN,n=pcall(function()return scriptRef.Name end)name=okN and
-n or nil end if type(name)=='string'then for _,frag in EXECUTOR_NAME_FRAGS do if
-string.find(name,frag,1,true)then return true end end end return false end
-FunctionLibrary.DetectAntiCheat=function(scriptRef)if not Caps.getscriptbytecode
-then return false,nil end local okBc,bc=pcall(getscriptbytecode,scriptRef)if not
-okBc or type(bc)~='string'then return false,nil end local len=#bc local slice=
-len>8000 and string.sub(bc,1,8000)or bc for _,kw in ANTICHEAT_KEYWORDS do if
-string.find(slice,kw,1,true)then return true,('bytecode contains %q'):format(kw)
-end end if string.find(slice,'Luraph',1,true)then return true,
-'bytecode contains "Luraph"'end if len>=OBF_MIN_BYTECODE then return true,(
-'large obfuscated bytecode (%d bytes)'):format(len)end return false,nil end
-FunctionLibrary.BuildAntiCheatKeywordMap=function(onYield)local hits={}local
-okGc,gc=pcall(getgc,true)if not okGc or type(gc)~='table'then return hits end
-local KEYWORD_VARIANTS={'luraph','Luraph','LURAPH','lph_no_upvalues',
-'LPH_NO_UPVALUES','lph_jit','LPH_JIT','lph_encstr','LPH_ENCSTR'}local
-keywordInString=function(s)if#s>=OBF_MIN_STRING_LEN then return
-'luraph payload (large encoded blob)'end for _,kw in KEYWORD_VARIANTS do if
-string.find(s,kw,1,true)then return('contains %q'):format(kw)end end return
+local isExecClosure=function(fn)return GcShared.IsExec(fn)end FunctionLibrary.
+IsExecutorClosure=isExecClosure local EXECUTOR_NAME_FRAGS={'GcView','awakenkn',
+'Dear-ReGui','ReGui'}FunctionLibrary.IsExecutorScript=function(scriptRef,
+knownPath)if typeof(scriptRef)~='Instance'then return false end local name=
+knownPath if type(name)~='string'then local okN,n=pcall(function()return
+scriptRef.Name end)name=okN and n or nil end if type(name)=='string'then for _,
+frag in EXECUTOR_NAME_FRAGS do if string.find(name,frag,1,true)then return true
+end end end return false end FunctionLibrary.DetectAntiCheat=function(scriptRef)
+if not Caps.getscriptbytecode then return false,nil end local okBc,bc=pcall(
+getscriptbytecode,scriptRef)if not okBc or type(bc)~='string'then return false,
+nil end local len=#bc local slice=len>8000 and string.sub(bc,1,8000)or bc for _,
+kw in ANTICHEAT_KEYWORDS do if string.find(slice,kw,1,true)then return true,(
+'bytecode contains %q'):format(kw)end end if string.find(slice,'Luraph',1,true)
+then return true,'bytecode contains "Luraph"'end if len>=OBF_MIN_BYTECODE then
+return true,('large obfuscated bytecode (%d bytes)'):format(len)end return false
+,nil end FunctionLibrary.BuildAntiCheatKeywordMap=function(onYield)local hits={}
+local gc=GcShared.Snapshot()local KEYWORD_VARIANTS={'luraph','Luraph','LURAPH',
+'lph_no_upvalues','LPH_NO_UPVALUES','lph_jit','LPH_JIT','lph_encstr',
+'LPH_ENCSTR'}local keywordInString=function(s)if#s>=OBF_MIN_STRING_LEN then
+return'luraph payload (large encoded blob)'end for _,kw in KEYWORD_VARIANTS do
+if string.find(s,kw,1,true)then return('contains %q'):format(kw)end end return
 false end local scanFlat=function(tbl)if type(tbl)~='table'then return false end
 for _,v in tbl do if type(v)=='string'then local hit=keywordInString(v)if hit
 then return hit end end end return false end local processed=0 for _,obj in gc
@@ -152,34 +174,33 @@ do if type(obj)=='function'and(not Caps.islclosure or islclosure(obj))and not
 isExecClosure(obj)then local reason=false local okC,consts=pcall(debug.
 getconstants,obj)if okC then reason=scanFlat(consts)end if not reason then local
 okU,ups=pcall(debug.getupvalues,obj)if okU then reason=scanFlat(ups)end end if
-reason then local okEnv,env=pcall(getfenv,obj)if okEnv and type(env)=='table'
-then local ok2,s=pcall(rawget,env,'script')if ok2 and typeof(s)=='Instance'then
-local okId,id=pcall(function()return s:GetDebugId()end)if okId and id and not
-hits[id]then hits[id]=reason end end end end end processed=processed+1 if
-processed%300==0 then if onYield then onYield()else RunService.Heartbeat:Wait()
-end end end return hits end FunctionLibrary.BuildThreadScriptMap=function()local
-map={}if not(Caps.getscriptfromthread and Caps.getallthreads)then return map,
-false end local okThreads,threads=pcall(getallthreads)if not okThreads or type(
-threads)~='table'then return map,false end for _,thread in threads do local
-okScript,scr=pcall(getscriptfromthread,thread)if okScript and typeof(scr)==
-'Instance'then map[scr]=thread end end return map,true end FunctionLibrary.
-GetActorScripts=function(timeout)timeout=timeout or 3 local results={}local seen
-={}if type(getactors)~='function'or type(run_on_actor)~='function'or type(
-create_comm_channel)~='function'then return results end local okActors,actors=
-pcall(getactors)if not okActors or type(actors)~='table'or#actors==0 then return
-results end local channelId,channel=create_comm_channel()if not channel then
-return results end local pending=#actors local byKey={}local conn conn=channel.
-Event:Connect(function(payload)if type(payload)~='table'then return end if
-payload.kind=='done'then pending=pending-1 return end if payload.kind=='script'
-then local key=payload.key if key and not seen[key]then seen[key]=true local
-entry={script=payload.script,path=payload.path or payload.name or'ActorScript',
-context='Actor',name=payload.name,class=payload.class,key=key,functions={}}byKey
-[key]=entry table.insert(results,entry)end return end if payload.kind==
-'function'then local entry=byKey[payload.key]if entry then table.insert(entry.
-functions,{func=payload.func,name=payload.name,line=payload.line,numparams=
-payload.numparams,vargs=payload.vargs,hash=payload.hash,constants=payload.
-constants,upvalues=payload.upvalues,valueIndex=payload.valueIndex})end end end)
-local COLLECTOR=
+reason then local env=GcShared.Fenv(obj)if type(env)=='table'then local ok2,s=
+pcall(rawget,env,'script')if ok2 and typeof(s)=='Instance'then local okId,id=
+pcall(function()return s:GetDebugId()end)if okId and id and not hits[id]then
+hits[id]=reason end end end end end processed=processed+1 if processed%300==0
+then if onYield then onYield()else RunService.Heartbeat:Wait()end end end return
+hits end FunctionLibrary.BuildThreadScriptMap=function()local map={}if not(Caps.
+getscriptfromthread and Caps.getallthreads)then return map,false end local
+okThreads,threads=pcall(getallthreads)if not okThreads or type(threads)~='table'
+then return map,false end for _,thread in threads do local okScript,scr=pcall(
+getscriptfromthread,thread)if okScript and typeof(scr)=='Instance'then map[scr]=
+thread end end return map,true end FunctionLibrary.GetActorScripts=function(
+timeout)timeout=timeout or 3 local results={}local seen={}if type(getactors)~=
+'function'or type(run_on_actor)~='function'or type(create_comm_channel)~=
+'function'then return results end local okActors,actors=pcall(getactors)if not
+okActors or type(actors)~='table'or#actors==0 then return results end local
+channelId,channel=create_comm_channel()if not channel then return results end
+local pending=#actors local byKey={}local conn conn=channel.Event:Connect(
+function(payload)if type(payload)~='table'then return end if payload.kind==
+'done'then pending=pending-1 return end if payload.kind=='script'then local key=
+payload.key if key and not seen[key]then seen[key]=true local entry={script=
+payload.script,path=payload.path or payload.name or'ActorScript',context='Actor'
+,name=payload.name,class=payload.class,key=key,functions={}}byKey[key]=entry
+table.insert(results,entry)end return end if payload.kind=='function'then local
+entry=byKey[payload.key]if entry then table.insert(entry.functions,{func=payload
+.func,name=payload.name,line=payload.line,numparams=payload.numparams,vargs=
+payload.vargs,hash=payload.hash,constants=payload.constants,upvalues=payload.
+upvalues,valueIndex=payload.valueIndex})end end end)local COLLECTOR=
 '\r\n        local channelId = ...\r\n        local ch = get_comm_channel(channelId)\r\n        if not ch then return end\r\n\r\n        local function classify(inst)\r\n            local ok, cls = pcall(function() return inst.ClassName end)\r\n            return ok and cls or "Unknown"\r\n        end\r\n        local function fullName(inst)\r\n            local ok, n = pcall(function() return inst:GetFullName() end)\r\n            return ok and n or inst.Name\r\n        end\r\n        local function debugId(inst)\r\n            local ok, id = pcall(function() return inst:GetDebugId() end)\r\n            return ok and id or fullName(inst)\r\n        end\r\n\r\n        local function safeStr(v)\r\n            local ok, r = pcall(function() return tostring(v) end)\r\n            return ok and r or "<value>"\r\n        end\r\n\r\n        local function decode(v)\r\n            local t = typeof(v)\r\n            if t == "string" then\r\n                return string.format("%q", v)\r\n            elseif t == "number" or t == "boolean" then\r\n                return safeStr(v)\r\n            elseif t == "Instance" then\r\n                local ok, fn = pcall(function() return v:GetFullName() end)\r\n                return ok and fn or "<instance>"\r\n            elseif t == "table" then\r\n                return "<table>"\r\n            elseif t == "function" then\r\n                return "<function>"\r\n            end\r\n            return "<" .. t .. ">"\r\n        end\r\n\r\n        local function funcInfo(fn)\r\n            local ok, s, l, n, np, va = pcall(function()\r\n                return debug.info(fn, "slna")\r\n            end)\r\n            if ok then\r\n                return s, l, n, np, va\r\n            end\r\n            return nil, nil, nil, nil, nil\r\n        end\r\n\r\n        local scriptsSeen = {}\r\n        local scriptList = {}\r\n        local function consider(inst)\r\n            if typeof(inst) ~= "Instance" then return end\r\n            if not inst:IsA("LuaSourceContainer") then return end\r\n            local id = debugId(inst)\r\n            if scriptsSeen[id] then return end\r\n            scriptsSeen[id] = true\r\n            scriptList[#scriptList + 1] = { inst = inst, id = id }\r\n            ch:Fire({\r\n                kind = "script",\r\n                script = inst,\r\n                key = id,\r\n                name = inst.Name,\r\n                path = fullName(inst),\r\n                class = classify(inst),\r\n            })\r\n        end\r\n\r\n        if type(getscripts) == "function" then\r\n            local ok, scripts = pcall(getscripts)\r\n            if ok and type(scripts) == "table" then\r\n                for _, s in scripts do consider(s) end\r\n            end\r\n        end\r\n        if type(getrunningscripts) == "function" then\r\n            local ok, rs = pcall(getrunningscripts)\r\n            if ok and type(rs) == "table" then\r\n                for _, s in rs do consider(s) end\r\n            end\r\n        end\r\n        if type(getloadedmodules) == "function" then\r\n            local ok, lm = pcall(getloadedmodules)\r\n            if ok and type(lm) == "table" then\r\n                for _, s in lm do consider(s) end\r\n            end\r\n        end\r\n\r\n        local function fireFunction(scriptId, fn)\r\n            local s, l, n, np, va = funcInfo(fn)\r\n            local consts, ups = {}, {}\r\n            local okc, c = pcall(function() return debug.getconstants(fn) end)\r\n            if okc and type(c) == "table" then\r\n                for i, v in c do consts[i] = decode(v) end\r\n            end\r\n            local oku, u = pcall(function() return debug.getupvalues(fn) end)\r\n            if oku and type(u) == "table" then\r\n                for i, v in u do ups[i] = decode(v) end\r\n            end\r\n            local parts = {}\r\n            for _, v in consts do parts[#parts + 1] = v end\r\n            for _, v in ups do parts[#parts + 1] = v end\r\n            local hash\r\n            if type(getfunctionhash) == "function" then\r\n                local okh, h = pcall(getfunctionhash, fn)\r\n                if okh then hash = h end\r\n            end\r\n            ch:Fire({\r\n                kind = "function",\r\n                key = scriptId,\r\n                func = fn,\r\n                name = (n and n ~= "") and n or "(anonymous)",\r\n                line = l,\r\n                numparams = np,\r\n                vargs = va,\r\n                hash = hash,\r\n                constants = consts,\r\n                upvalues = ups,\r\n                valueIndex = string.lower(table.concat(parts, " ")),\r\n            })\r\n        end\r\n        for _, obj in getgc(true) do\r\n            if type(obj) == "function"\r\n                and (not islclosure or islclosure(obj))\r\n                and not (isexecutorclosure and isexecutorclosure(obj))\r\n            then\r\n                local matchedId\r\n                local okEnv, env = pcall(getfenv, obj)\r\n                if okEnv and type(env) == "table" then\r\n                    local s = rawget(env, "script")\r\n                    if typeof(s) == "Instance" then\r\n                        local id = debugId(s)\r\n                        if scriptsSeen[id] then\r\n                            matchedId = id\r\n                        end\r\n                    end\r\n                end\r\n                if not matchedId then\r\n                    local src = funcInfo(obj)\r\n                    if type(src) == "string" then\r\n                        for _, sc in scriptList do\r\n                            if string.find(src, sc.inst.Name, 1, true) then\r\n                                matchedId = sc.id\r\n                                break\r\n                            end\r\n                        end\r\n                    end\r\n                end\r\n                if matchedId then\r\n                    fireFunction(matchedId, obj)\r\n                end\r\n            end\r\n        end\r\n\r\n        ch:Fire({ kind = "done" })\r\n    '
 for _,actor in actors do pcall(run_on_actor,actor,COLLECTOR,channelId)end local
 start=os.clock()while pending>0 and(os.clock()-start)<timeout do RunService.
@@ -288,107 +309,104 @@ end)return okSid and sid==refId end return false end local add=function(fn)if
 seen[fn]then return end seen[fn]=true local info=FunctionLibrary.FunctionInfo(fn
 )list[#list+1]={func=fn,name=(info.name and info.name~='')and info.name or
 '(anonymous)',line=info.line,numparams=info.numparams,vargs=info.vargs}end local
-matches=function(obj)local okEnv,env=pcall(getfenv,obj)if okEnv and type(env)==
-'table'then local ok2,s=pcall(rawget,env,'script')if ok2 and instanceIsRef(s)
-then return true end end local okU,ups=pcall(debug.getupvalues,obj)if okU and
-type(ups)=='table'then for _,v in ups do if instanceIsRef(v)then return true end
-end end local okC,consts=pcall(debug.getconstants,obj)if okC and type(consts)==
-'table'then for _,v in consts do if v==scriptRef then return true end end end
-local okSrc,src=pcall(function()return debug.info(obj,'s')end)if okSrc and type(
-src)=='string'and src~=''then if fullName and string.find(src,fullName,1,true)
-then return true end if nameDistinctive and string.find(src,scriptName,1,true)
-then return true end end return false end local okGc,gc=pcall(getgc,true)if okGc
-and type(gc)=='table'then for _,obj in gc do if type(obj)=='function'and(not
-Caps.islclosure or islclosure(obj))and not isExecClosure(obj)and matches(obj)
-then add(obj)end end end table.sort(list,function(a,b)return(a.line or 0)<(b.
-line or 0)end)local invalidSource=(#list==0)and(fullName==nil or fullName==
-scriptName)return list,invalidSource end local funcHash=function(fn)if not Caps.
-getfunctionhash or type(fn)~='function'then return nil end local ok,h=pcall(
-getfunctionhash,fn)if ok and type(h)=='string'and h~=''then return h end return
-nil end FunctionLibrary.BuildKnownScriptHashSet=function(knownScripts)local
-hashes={}if type(knownScripts)~='table'then return hashes end local processed=0
-for _,entry in knownScripts do local scriptRef=entry.script or entry if typeof(
-scriptRef)=='Instance'then if Caps.getscriptclosure then local okCl,cl=pcall(
-getscriptclosure,scriptRef)if okCl and type(cl)=='function'then local h=
-funcHash(cl)if h then hashes[h]=true end end end if Caps.getscriptbytecode then
-local okBc,bc=pcall(getscriptbytecode,scriptRef)if okBc and type(bc)=='string'
-and bc~=''then hashes['bc:'..bc]=true end end end if type(entry.functions)==
-'table'then for _,f in entry.functions do local target=f.func or f local h=
-funcHash(target)if h then hashes[h]=true end if type(f.hash)=='string'and f.hash
-~=''then hashes[f.hash]=true end end end processed=processed+1 if processed%100
-==0 then RunService.Heartbeat:Wait()end end return hashes end FunctionLibrary.
-CollectOrphanFunctions=function(knownFuncs,knownHashes)knownFuncs=knownFuncs or{
-}knownHashes=knownHashes or{}local list={}local seen={}local okGc,gc=pcall(getgc
-,true)if not okGc or type(gc)~='table'then return list end local isLiveScript=
-function(v)if typeof(v)~='Instance'then return false end local okIs,isLsc=pcall(
-function()return v:IsA('LuaSourceContainer')end)if not(okIs and isLsc)then
-return false end local okReach,reachable=pcall(function()return v:
-IsDescendantOf(game)end)return okReach and reachable end local
-belongsToSomeScript=function(obj)local okEnv,env=pcall(getfenv,obj)if okEnv and
-type(env)=='table'then local ok2,s=pcall(rawget,env,'script')if ok2 and
-isLiveScript(s)then return true end end return false end local processed=0 for _
-,obj in gc do if type(obj)=='function'and(not Caps.islclosure or islclosure(obj)
-)and not knownFuncs[obj]and not seen[obj]then local isExec=isExecClosure(obj)if
-not isExec and not belongsToSomeScript(obj)then local h=funcHash(obj)if not(h
-and knownHashes[h])then seen[obj]=true local info=FunctionLibrary.FunctionInfo(
-obj)table.insert(list,{func=obj,name=(info.name and info.name~='')and info.name
-or'(anonymous)',line=info.line,numparams=info.numparams,vargs=info.vargs,source=
-info.source,hash=h})end end end processed=processed+1 if processed%2000==0 then
-RunService.Heartbeat:Wait()end end table.sort(list,function(a,b)return(a.line or
-0)<(b.line or 0)end)return list end return FunctionLibrary end function
-__DARKLUA_BUNDLE_MODULES.e()local v=__DARKLUA_BUNDLE_MODULES.cache.e if not v
-then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.e=v end return v.c end end
-do local __modImpl=function()local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.e()
-local a a={cache={},load=function(b)if not a.cache[b]then a.cache[b]={c=a[b]()}
-end return a.cache[b].c end}do function a.a()local b,c,d='8.0',cloneref or
-function(b)return b end,{Theme={Syntax={Text=Color3.fromRGB(204,204,204),
-Background=Color3.fromRGB(20,20,20),Selection=Color3.fromRGB(255,255,255),
-SelectionBack=Color3.fromRGB(102,161,255),Operator=Color3.fromRGB(204,204,204),
-Number=Color3.fromRGB(255,198,0),String=Color3.fromRGB(172,240,148),Comment=
-Color3.fromRGB(102,102,102),Keyword=Color3.fromRGB(248,109,124),BuiltIn=Color3.
-fromRGB(132,214,247),LocalMethod=Color3.fromRGB(253,251,172),LocalProperty=
-Color3.fromRGB(97,161,241),Nil=Color3.fromRGB(255,198,0),Bool=Color3.fromRGB(255
-,198,0),Function=Color3.fromRGB(248,109,124),Local=Color3.fromRGB(248,109,124),
-Self=Color3.fromRGB(248,109,124),FunctionName=Color3.fromRGB(253,251,172),
-Bracket=Color3.fromRGB(204,204,204)}}}local e,f=setmetatable({},{__index=
-function(e,f)local g=cloneref(game:GetService(f))return c(g)end}),{StartAndEnd={
-Enum.UserInputType.MouseButton1,Enum.UserInputType.Touch},Movement={Enum.
-UserInputType.MouseMovement,Enum.UserInputType.Touch}}local g,h,i,j=e.Players,e.
-UserInputService,e.RunService,e.TweenService local k=c(g.LocalPlayer)local l,m,n
-,o=c(cloneref(k:GetMouse())),function(l,m)for n,o in next,m do l[n]=o end return
-l end,function(l,m)local n=l.UserInputType return table.find(f[m],n)end,function
-(...)return c(Instance.new(...))end local p,q,r=function(p,q)local r=o(p)for s,t
-in next,q do r[s]=t end return r end,{},o'Frame'q.CheckMouseInGui=function(s)if
-s==nil then return false end local t,u=s.AbsolutePosition,s.AbsoluteSize return
-l.X>=t.X and l.X<t.X+u.X and l.Y>=t.Y and l.Y<t.Y+u.Y end q.Signal=(function()
-local s,t={},function(s)local t=table.find(s.Signal.Connections,s)if t then
-table.remove(s.Signal.Connections,t)end end s.Connect=function(u,v)if type(v)~=
-'function'then error'Attempt to connect a non-function'end local w={Signal=u,
-Func=v,Disconnect=t}u.Connections[#u.Connections+1]=w return w end s.Fire=
-function(u,...)for v,w in next,u.Connections do xpcall(coroutine.wrap(w.Func),
-function(x)warn(x..'\n'..debug.traceback())end,...)end end local u={__index=s,
-__tostring=function(u)return'Signal: '..FunctionLibrary.SafeString(#u.
-Connections)..' Connections'end}local v=function()local v={}v.Connections={}
-return setmetatable(v,u)end return{new=v}end)()q.CreateArrow=function(s,t,u)
-local v,w=t,p('Frame',{BackgroundTransparency=1,Name='Arrow',Size=UDim2.new(0,s,
-0,s)})if u=='up'then for x=1,t do p('Frame',{BackgroundColor3=Color3.new(
-0.8627450980392157,0.8627450980392157,0.8627450980392157),BorderSizePixel=0,
-Position=UDim2.new(0,math.floor(s/2)-(x-1),0,math.floor(s/2)+x-math.floor(v/2)-1
-),Size=UDim2.new(0,x+(x-1),0,1),Parent=w})end return w elseif u=='down'then for
-x=1,t do p('Frame',{BackgroundColor3=Color3.new(0.8627450980392157,
+matches=function(obj)local env=GcShared.Fenv(obj)if type(env)=='table'then local
+ok2,s=pcall(rawget,env,'script')if ok2 and instanceIsRef(s)then return true end
+end local okU,ups=pcall(debug.getupvalues,obj)if okU and type(ups)=='table'then
+for _,v in ups do if instanceIsRef(v)then return true end end end local okC,
+consts=pcall(debug.getconstants,obj)if okC and type(consts)=='table'then for _,v
+in consts do if v==scriptRef then return true end end end local okSrc,src=pcall(
+function()return debug.info(obj,'s')end)if okSrc and type(src)=='string'and src
+~=''then if fullName and string.find(src,fullName,1,true)then return true end if
+nameDistinctive and string.find(src,scriptName,1,true)then return true end end
+return false end local gc=GcShared.Snapshot()for _,obj in gc do if type(obj)==
+'function'and(not Caps.islclosure or islclosure(obj))and not isExecClosure(obj)
+and matches(obj)then add(obj)end end table.sort(list,function(a,b)return(a.line
+or 0)<(b.line or 0)end)local invalidSource=(#list==0)and(fullName==nil or
+fullName==scriptName)return list,invalidSource end local funcHash=function(fn)
+return GcShared.Hash(fn)end FunctionLibrary.BuildKnownScriptHashSet=function(
+knownScripts)local hashes={}if type(knownScripts)~='table'then return hashes end
+local processed=0 for _,entry in knownScripts do local scriptRef=entry.script or
+entry if typeof(scriptRef)=='Instance'then if Caps.getscriptclosure then local
+okCl,cl=pcall(getscriptclosure,scriptRef)if okCl and type(cl)=='function'then
+local h=funcHash(cl)if h then hashes[h]=true end end end if Caps.
+getscriptbytecode then local okBc,bc=pcall(getscriptbytecode,scriptRef)if okBc
+and type(bc)=='string'and bc~=''then hashes['bc:'..bc]=true end end end if type(
+entry.functions)=='table'then for _,f in entry.functions do local target=f.func
+or f local h=funcHash(target)if h then hashes[h]=true end if type(f.hash)==
+'string'and f.hash~=''then hashes[f.hash]=true end end end processed=processed+1
+if processed%100==0 then RunService.Heartbeat:Wait()end end return hashes end
+FunctionLibrary.CollectOrphanFunctions=function(knownFuncs,knownHashes)
+knownFuncs=knownFuncs or{}knownHashes=knownHashes or{}local list={}local seen={}
+local gc=GcShared.Snapshot()local isLiveScript=function(v)if typeof(v)~=
+'Instance'then return false end local okIs,isLsc=pcall(function()return v:IsA(
+'LuaSourceContainer')end)if not(okIs and isLsc)then return false end local
+okReach,reachable=pcall(function()return v:IsDescendantOf(game)end)return
+okReach and reachable end local belongsToSomeScript=function(obj)local env=
+GcShared.Fenv(obj)if type(env)=='table'then local ok2,s=pcall(rawget,env,
+'script')if ok2 and isLiveScript(s)then return true end end return false end
+local processed=0 for _,obj in gc do if type(obj)=='function'and(not Caps.
+islclosure or islclosure(obj))and not knownFuncs[obj]and not seen[obj]then local
+isExec=isExecClosure(obj)if not isExec and not belongsToSomeScript(obj)then
+local h=funcHash(obj)if not(h and knownHashes[h])then seen[obj]=true local info=
+FunctionLibrary.FunctionInfo(obj)table.insert(list,{func=obj,name=(info.name and
+info.name~='')and info.name or'(anonymous)',line=info.line,numparams=info.
+numparams,vargs=info.vargs,source=info.source,hash=h})end end end processed=
+processed+1 if processed%2000==0 then RunService.Heartbeat:Wait()end end table.
+sort(list,function(a,b)return(a.line or 0)<(b.line or 0)end)return list end
+return FunctionLibrary end function __DARKLUA_BUNDLE_MODULES.f()local v=
+__DARKLUA_BUNDLE_MODULES.cache.f if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.f=v end return v.c end end do local __modImpl=
+function()local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.f()local a a={cache={},
+load=function(b)if not a.cache[b]then a.cache[b]={c=a[b]()}end return a.cache[b]
+.c end}do function a.a()local b,c,d='8.0',cloneref or function(b)return b end,{
+Theme={Syntax={Text=Color3.fromRGB(204,204,204),Background=Color3.fromRGB(20,20,
+20),Selection=Color3.fromRGB(255,255,255),SelectionBack=Color3.fromRGB(102,161,
+255),Operator=Color3.fromRGB(204,204,204),Number=Color3.fromRGB(255,198,0),
+String=Color3.fromRGB(172,240,148),Comment=Color3.fromRGB(102,102,102),Keyword=
+Color3.fromRGB(248,109,124),BuiltIn=Color3.fromRGB(132,214,247),LocalMethod=
+Color3.fromRGB(253,251,172),LocalProperty=Color3.fromRGB(97,161,241),Nil=Color3.
+fromRGB(255,198,0),Bool=Color3.fromRGB(255,198,0),Function=Color3.fromRGB(248,
+109,124),Local=Color3.fromRGB(248,109,124),Self=Color3.fromRGB(248,109,124),
+FunctionName=Color3.fromRGB(253,251,172),Bracket=Color3.fromRGB(204,204,204)}}}
+local e,f=setmetatable({},{__index=function(e,f)local g=cloneref(game:
+GetService(f))return c(g)end}),{StartAndEnd={Enum.UserInputType.MouseButton1,
+Enum.UserInputType.Touch},Movement={Enum.UserInputType.MouseMovement,Enum.
+UserInputType.Touch}}local g,h,i,j=e.Players,e.UserInputService,e.RunService,e.
+TweenService local k=c(g.LocalPlayer)local l,m,n,o=c(cloneref(k:GetMouse())),
+function(l,m)for n,o in next,m do l[n]=o end return l end,function(l,m)local n=l
+.UserInputType return table.find(f[m],n)end,function(...)return c(Instance.new(
+...))end local p,q,r=function(p,q)local r=o(p)for s,t in next,q do r[s]=t end
+return r end,{},o'Frame'q.CheckMouseInGui=function(s)if s==nil then return false
+end local t,u=s.AbsolutePosition,s.AbsoluteSize return l.X>=t.X and l.X<t.X+u.X
+and l.Y>=t.Y and l.Y<t.Y+u.Y end q.Signal=(function()local s,t={},function(s)
+local t=table.find(s.Signal.Connections,s)if t then table.remove(s.Signal.
+Connections,t)end end s.Connect=function(u,v)if type(v)~='function'then error
+'Attempt to connect a non-function'end local w={Signal=u,Func=v,Disconnect=t}u.
+Connections[#u.Connections+1]=w return w end s.Fire=function(u,...)for v,w in
+next,u.Connections do xpcall(coroutine.wrap(w.Func),function(x)warn(x..'\n'..
+debug.traceback())end,...)end end local u={__index=s,__tostring=function(u)
+return'Signal: '..FunctionLibrary.SafeString(#u.Connections)..' Connections'end}
+local v=function()local v={}v.Connections={}return setmetatable(v,u)end return{
+new=v}end)()q.CreateArrow=function(s,t,u)local v,w=t,p('Frame',{
+BackgroundTransparency=1,Name='Arrow',Size=UDim2.new(0,s,0,s)})if u=='up'then
+for x=1,t do p('Frame',{BackgroundColor3=Color3.new(0.8627450980392157,
 0.8627450980392157,0.8627450980392157),BorderSizePixel=0,Position=UDim2.new(0,
-math.floor(s/2)-(x-1),0,math.floor(s/2)-x+math.floor(v/2)+1),Size=UDim2.new(0,x+
-(x-1),0,1),Parent=w})end return w elseif u=='left'then for x=1,t do p('Frame',{
+math.floor(s/2)-(x-1),0,math.floor(s/2)+x-math.floor(v/2)-1),Size=UDim2.new(0,x+
+(x-1),0,1),Parent=w})end return w elseif u=='down'then for x=1,t do p('Frame',{
 BackgroundColor3=Color3.new(0.8627450980392157,0.8627450980392157,
-0.8627450980392157),BorderSizePixel=0,Position=UDim2.new(0,math.floor(s/2)+x-
-math.floor(v/2)-1,0,math.floor(s/2)-(x-1)),Size=UDim2.new(0,1,0,x+(x-1)),Parent=
-w})end return w elseif u=='right'then for x=1,t do p('Frame',{BackgroundColor3=
+0.8627450980392157),BorderSizePixel=0,Position=UDim2.new(0,math.floor(s/2)-(x-1)
+,0,math.floor(s/2)-x+math.floor(v/2)+1),Size=UDim2.new(0,x+(x-1),0,1),Parent=w})
+end return w elseif u=='left'then for x=1,t do p('Frame',{BackgroundColor3=
 Color3.new(0.8627450980392157,0.8627450980392157,0.8627450980392157),
-BorderSizePixel=0,Position=UDim2.new(0,math.floor(s/2)-x+math.floor(v/2)+1,0,
-math.floor(s/2)-(x-1)),Size=UDim2.new(0,1,0,x+(x-1)),Parent=w})end return w end
-error''end q.FastWait=(function(s)task.wait(s)end)q.ScrollBar=(function()local s
-,t,u,v={},q.CheckMouseInGui,q.CreateArrow,function(s)local t,u,v,w=s.TotalSpace,
-s.VisibleSpace,s.GuiElems.ScrollThumb,s.GuiElems.ScrollThumbFrame if not(s:
+BorderSizePixel=0,Position=UDim2.new(0,math.floor(s/2)+x-math.floor(v/2)-1,0,
+math.floor(s/2)-(x-1)),Size=UDim2.new(0,1,0,x+(x-1)),Parent=w})end return w
+elseif u=='right'then for x=1,t do p('Frame',{BackgroundColor3=Color3.new(
+0.8627450980392157,0.8627450980392157,0.8627450980392157),BorderSizePixel=0,
+Position=UDim2.new(0,math.floor(s/2)-x+math.floor(v/2)+1,0,math.floor(s/2)-(x-1)
+),Size=UDim2.new(0,1,0,x+(x-1)),Parent=w})end return w end error''end q.FastWait
+=(function(s)task.wait(s)end)q.ScrollBar=(function()local s,t,u,v={},q.
+CheckMouseInGui,q.CreateArrow,function(s)local t,u,v,w=s.TotalSpace,s.
+VisibleSpace,s.GuiElems.ScrollThumb,s.GuiElems.ScrollThumbFrame if not(s:
 CanScrollUp()or s:CanScrollDown())then v.Visible=false else v.Visible=true end
 if s.Horizontal then v.Size=UDim2.new(u/t,0,1,0)if v.AbsoluteSize.X<10 then v.
 Size=UDim2.new(0,10,1,0)end local x,y=w.AbsoluteSize.X,v.AbsoluteSize.X v.
@@ -2141,8 +2159,8 @@ NoButtons=true})m('InputInt4','InputInt',4,{NoButtons=true})m('SliderInt2',
 'DragFloat4','DragFloat',4)n('InputColor3','InputInt3')n('SliderColor3',
 'SliderInt3')n('DragColor3','DragInt3')o('InputCFrame','InputInt3')o(
 'SliderCFrame','SliderInt3')o('DragCFrame','DragInt3')return aa end function
-__DARKLUA_BUNDLE_MODULES.f()local v=__DARKLUA_BUNDLE_MODULES.cache.f if not v
-then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.f=v end return v.c end end
+__DARKLUA_BUNDLE_MODULES.g()local v=__DARKLUA_BUNDLE_MODULES.cache.g if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.g=v end return v.c end end
 do local __modImpl=function()local API='http://api.plusgiant5.com'local
 last_call=0 local call=function(konstantType,scriptPath)local success,bytecode=
 pcall(getscriptbytecode,scriptPath)if not success then return
@@ -2186,9 +2204,9 @@ JSONEncode({script=encoded})})last=os.clock()if not reqOk then return
 StatusCode~=200 then return'-- api request error\n--[[\n'..(res and res.Body or
 'no response')..'\n--]]'end return res.Body end getgenv().disassemble=
 disassemble local Assets=__DARKLUA_BUNDLE_MODULES.d()Assets.Download()local
-FunctionLibrary=__DARKLUA_BUNDLE_MODULES.e()local Sizex,Sizey=FunctionLibrary.
+FunctionLibrary=__DARKLUA_BUNDLE_MODULES.f()local Sizex,Sizey=FunctionLibrary.
 GetSize()local isActor=getactors and#getactors()>0 or false local ReGui=
-__DARKLUA_BUNDLE_MODULES.f()ReGui:DefineTheme('Cherry',{TitleAlign=Enum.
+__DARKLUA_BUNDLE_MODULES.g()ReGui:DefineTheme('Cherry',{TitleAlign=Enum.
 TextXAlignment.Center,TextDisabled=Color3.fromRGB(120,100,120),Text=Color3.
 fromRGB(200,180,200),FrameBg=Color3.fromRGB(25,20,25),FrameBgTransparency=0.4,
 FrameBgActive=Color3.fromRGB(120,100,120),FrameBgTransparencyActive=0.4,
@@ -2198,18 +2216,95 @@ ButtonsBg=Color3.fromRGB(150,100,150),CollapsingHeaderBg=Color3.fromRGB(150,100,
 Color3.fromRGB(150,100,150),WindowBg=Color3.fromRGB(35,30,35),TitleBarBg=Color3.
 fromRGB(35,30,35),TitleBarBgActive=Color3.fromRGB(50,45,50),Border=Color3.
 fromRGB(50,45,50),ResizeGrab=Color3.fromRGB(50,45,50),RegionBgTransparency=1})
-getgenv().Window=ReGui:TabsWindow({Title='GCViewV3 by @awakenkn | Exe: '..
+getgenv().Window=ReGui:TabsWindow({Title='GCViewV4 by @awakenkn | Exe: '..
 identifyexecutor()..' | Actor: '..FunctionLibrary.SafeString(isActor),Size=UDim2
 .fromOffset(Sizex,Sizey),Theme='Cherry'}):Center()return{ReGui=ReGui}end
-function __DARKLUA_BUNDLE_MODULES.g()local v=__DARKLUA_BUNDLE_MODULES.cache.g if
-not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.g=v end return v.c
-end end do local __modImpl=function()local Data2Code={}local FunctionLibrary=
-__DARKLUA_BUNDLE_MODULES.e()local INDENT='    'local try=function(fn,fallback)
-local ok,res=xpcall(fn,function()return fallback end)if ok then return res end
-return fallback end local IsIdentifier=function(str)return type(str)=='string'
-and str:match('^[%a_][%w_]*$')~=nil end local ESCAPES={[34]='\\"',[92]='\\\\',[7
-]='\\a',[8]='\\b',[9]='\\t',[10]='\\n',[11]='\\v',[12]='\\f',[13]='\\r'}local
-EscapeString=function(str)if type(str)~='string'then str=FunctionLibrary.
+function __DARKLUA_BUNDLE_MODULES.h()local v=__DARKLUA_BUNDLE_MODULES.cache.h if
+not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.h=v end return v.c
+end end do local __modImpl=function()local byte=string.byte local sub=string.sub
+local lookupify=function(src,list)list=list or{}if type(src)=='string'then for i
+=1,#src do list[byte(src,i)]=true end elseif type(src)=='table'then for i=1,#src
+do list[src[i] ]=true end end return list end local base_ident=
+'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_'local base_digits=
+'0123456789'local base_operators='+-*/^%#'local chars={whitespace=lookupify(
+' \n\t\r'),validEscapes=lookupify('abfnrtv"\'\\'),ident=lookupify(base_ident..
+base_digits,{start=lookupify(base_ident)}),digits=lookupify(base_digits,{hex=
+lookupify(base_digits..'abcdefABCDEF')}),symbols=lookupify(base_operators..
+',{}[]();.:',{equality=lookupify('~=><'),operators=lookupify(base_operators)})}
+local keywords={structure=lookupify({'and','break','do','else','elseif','end',
+'for','function','goto','if','in','local','not','or','repeat','return','then',
+'until','while'}),values=lookupify({'true','false','nil'})}local NEWLINE=10
+local DASH=45 local SQUOTE=39 local DQUOTE=34 local BACKSLASH=92 local LBRACKET=
+91 local RBRACKET=93 local EQUALS=61 local DOT=46 local COLON=58 local ZERO=48
+local LOWER_X=120 local LOWER_E=101 local UPPER_E=69 return function(text)local
+pos=1 local start=1 local buffer={}local lines={}local look=function(delta)
+return byte(text,pos+(delta or 0))end local get=function()pos=pos+1 return byte(
+text,pos-1)end local getDataLevel=function()local num=0 while byte(text,pos+num)
+==EQUALS do num=num+1 end if byte(text,pos+num)==LBRACKET then pos=pos+num+1
+return num end end local getCurrentTokenText=function()return sub(text,start,pos
+-1)end local currentLineLength=0 local lineoffset=0 local pushToken=function(ty)
+local s=start local e=pos-1 local tlen=e-s+1 if tlen>0 then local tk=buffer[#
+buffer]if not tk or tk.type~=ty then buffer[#buffer+1]={type=ty,_s=s,_e=e,
+posFirst=s-lineoffset,posLast=e-lineoffset}else tk._e=e tk.posLast=tk.posLast+
+tlen end currentLineLength=currentLineLength+tlen end start=pos end local
+newline=function()lines[#lines+1]=buffer buffer={}get()pushToken('newline')
+buffer[1]=nil lineoffset=lineoffset+currentLineLength currentLineLength=0 end
+local getData=function(level,ty)while true do local char=get()if char==nil then
+return elseif char==NEWLINE then pos=pos-1 pushToken(ty)newline()elseif char==
+RBRACKET then local valid=true for _=1,level do if look()==EQUALS then pos=pos+1
+else valid=false break end end if valid and look()==RBRACKET then pos=pos-level-
+1 return end end end end local chompWhitespace=function()while true do local
+char=look()if char==NEWLINE then pushToken('whitespace')newline()elseif chars.
+whitespace[char]then pos=pos+1 else break end end pushToken('whitespace')end
+while true do chompWhitespace()local char=get()if char==nil then break elseif
+char==DASH and look()==DASH then pos=pos+1 if look()==LBRACKET then pos=pos+1
+local level=getDataLevel()if level then getData(level,'comment')pos=pos+level+2
+pushToken('comment')else while true do local char2=get()if char2==nil or char2==
+NEWLINE then pos=pos-1 pushToken('comment')if char2==NEWLINE then newline()end
+break end end end else while true do local char2=get()if char2==nil or char2==
+NEWLINE then pos=pos-1 pushToken('comment')if char2==NEWLINE then newline()end
+break end end end pushToken('comment')elseif char==SQUOTE or char==DQUOTE then
+pushToken('string_start')while true do local char2=get()if char2==BACKSLASH then
+pos=pos-1 pushToken('string')get()local char3=get()if chars.digits[char3]then
+for _=1,2 do if chars.digits[look()]then pos=pos+1 end end elseif char3==LOWER_X
+then if chars.digits.hex[look()]and chars.digits.hex[look(1)]then pos=pos+2 else
+pushToken('unidentified')end elseif char3==NEWLINE then pos=pos-1 pushToken(
+'escape')newline()elseif not chars.validEscapes[char3]then pushToken(
+'unidentified')end pushToken('escape')elseif char2==NEWLINE then pos=pos-1
+pushToken('string')newline()break elseif char2==char or char2==nil then pos=pos-
+1 pushToken('string')get()break end end pushToken('string_end')elseif chars.
+ident.start[char]then while chars.ident[look()]do pos=pos+1 end local word=
+getCurrentTokenText()if keywords.structure[word]then pushToken('keyword')elseif
+keywords.values[word]then pushToken('value')else pushToken('ident')end elseif
+chars.digits[char]or(char==DOT and chars.digits[look()])then if char==ZERO and
+look()==LOWER_X then pos=pos+1 while chars.digits.hex[look()]do pos=pos+1 end
+else while chars.digits[look()]do pos=pos+1 end if look()==DOT then pos=pos+1
+while chars.digits[look()]do pos=pos+1 end end local e=look()if e==LOWER_E or e
+==UPPER_E then pos=pos+1 if look()==DASH then pos=pos+1 end while chars.digits[
+look()]do pos=pos+1 end end end pushToken('number')elseif char==LBRACKET then
+local level=getDataLevel()if level then pushToken('string_start')getData(level,
+'string')pushToken('string')pos=pos+level+2 pushToken('string_end')else
+pushToken('symbol')end elseif char==DOT then if look()==DOT then pos=pos+1 if
+look()==DOT then pos=pos+1 end end if pos-start==3 then pushToken('vararg')else
+pushToken('symbol')end elseif char==COLON and look()==COLON then get()pushToken(
+'label_start')chompWhitespace()if chars.ident.start[look()]then get()while chars
+.ident[look()]do get()end pushToken('label')chompWhitespace()if look()==COLON
+and look(1)==COLON then get()get()pushToken('label_end')end end elseif chars.
+symbols.equality[char]then if look()==EQUALS then pos=pos+1 end pushToken(
+'operator')elseif chars.symbols[char]then if chars.symbols.operators[char]then
+pushToken('operator')else pushToken('symbol')end else pushToken('unidentified')
+end end lines[#lines+1]=buffer for li=1,#lines do local line=lines[li]for ti=1,#
+line do local tk=line[ti]tk.data=sub(text,tk._s,tk._e)tk._s=nil tk._e=nil end
+end return lines end end function __DARKLUA_BUNDLE_MODULES.i()local v=
+__DARKLUA_BUNDLE_MODULES.cache.i if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.i=v end return v.c end end do local __modImpl=
+function()local Data2Code={}local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.f()
+local Lex=__DARKLUA_BUNDLE_MODULES.i()local INDENT='    'local try=function(fn,
+fallback)local ok,res=xpcall(fn,function()return fallback end)if ok then return
+res end return fallback end local IsIdentifier=function(str)return type(str)==
+'string'and str:match('^[%a_][%w_]*$')~=nil end local ESCAPES={[34]='\\"',[92]=
+'\\\\',[7]='\\a',[8]='\\b',[9]='\\t',[10]='\\n',[11]='\\v',[12]='\\f',[13]='\\r'
+}local EscapeString=function(str)if type(str)~='string'then str=FunctionLibrary.
 SafeString(str)end local n=#str local out=table.create(n+2)out[1]='"'local len=1
 for i=1,n do local b=string.byte(str,i)local esc=ESCAPES[b]if esc then len=len+1
 out[len]=esc elseif b>=32 and b<=126 then len=len+1 out[len]=string.sub(str,i,i)
@@ -2263,22 +2358,24 @@ Offset))end,'"<UDim2>"')end,UDim=function(value)return try(function()return(
 end,'"<UDim>"')end,BrickColor=function(value)return try(function()return(
 'BrickColor.new(%s)'):format(EscapeString(value.Name))end,'"<BrickColor>"')end,
 RBXScriptConnection=function()return'"<RBXScriptConnection>"'end,RBXScriptSignal
-=function()return'"<RBXScriptSignal>"'end,['function']=function()return
-'"<function>"'end,thread=function()return'"<thread>"'end}local register=function
-(name,builder,fallback)SCALAR_HANDLERS[name]=function(value)return try(function(
-)return builder(value)end,fallback or('"<'..name..'>"'))end end register(
-'Vector3int16',function(v)return('Vector3int16.new(%s, %s, %s)'):format(
-FormatNumber(v.X),FormatNumber(v.Y),FormatNumber(v.Z))end)register(
-'Vector2int16',function(v)return('Vector2int16.new(%s, %s)'):format(
-FormatNumber(v.X),FormatNumber(v.Y))end)register('NumberRange',function(v)return
-('NumberRange.new(%s, %s)'):format(FormatNumber(v.Min),FormatNumber(v.Max))end)
-register('NumberSequenceKeypoint',function(v)return(
-'NumberSequenceKeypoint.new(%s, %s, %s)'):format(FormatNumber(v.Time),
-FormatNumber(v.Value),FormatNumber(v.Envelope))end)register('NumberSequence',
-function(v)local kps=v.Keypoints local parts={}for i=1,#kps do local kp=kps[i]
-parts[i]=('NumberSequenceKeypoint.new(%s, %s, %s)'):format(FormatNumber(kp.Time)
-,FormatNumber(kp.Value),FormatNumber(kp.Envelope))end return(
-'NumberSequence.new({%s})'):format(table.concat(parts,', '))end)register(
+=function()return'"<RBXScriptSignal>"'end,['function']=function(value)return
+try(function()local name,line=debug.info(value,'nl')name=(type(name)=='string'
+and name~='')and name or'?'return EscapeString(('<function %s@%s>'):format(name,
+tostring(line or'?')))end,'"<function>"')end,thread=function()return'"<thread>"'
+end}local register=function(name,builder,fallback)SCALAR_HANDLERS[name]=function
+(value)return try(function()return builder(value)end,fallback or('"<'..name..
+'>"'))end end register('Vector3int16',function(v)return(
+'Vector3int16.new(%s, %s, %s)'):format(FormatNumber(v.X),FormatNumber(v.Y),
+FormatNumber(v.Z))end)register('Vector2int16',function(v)return(
+'Vector2int16.new(%s, %s)'):format(FormatNumber(v.X),FormatNumber(v.Y))end)
+register('NumberRange',function(v)return('NumberRange.new(%s, %s)'):format(
+FormatNumber(v.Min),FormatNumber(v.Max))end)register('NumberSequenceKeypoint',
+function(v)return('NumberSequenceKeypoint.new(%s, %s, %s)'):format(FormatNumber(
+v.Time),FormatNumber(v.Value),FormatNumber(v.Envelope))end)register(
+'NumberSequence',function(v)local kps=v.Keypoints local parts={}for i=1,#kps do
+local kp=kps[i]parts[i]=('NumberSequenceKeypoint.new(%s, %s, %s)'):format(
+FormatNumber(kp.Time),FormatNumber(kp.Value),FormatNumber(kp.Envelope))end
+return('NumberSequence.new({%s})'):format(table.concat(parts,', '))end)register(
 'ColorSequenceKeypoint',function(v)return('ColorSequenceKeypoint.new(%s, %s)'):
 format(FormatNumber(v.Time),Color3Lit(v.Value))end)register('ColorSequence',
 function(v)local kps=v.Keypoints local parts={}for i=1,#kps do local kp=kps[i]
@@ -2315,24 +2412,25 @@ SerializeScalar=function(value)if value==nil then return'nil'end local vt=try(
 function()return typeof(value)end,'unknown')local handler=SCALAR_HANDLERS[vt]if
 handler then return handler(value)end local descriptor=try(function()return(
 FunctionLibrary.SafeString(value):gsub('[%c]',' '))end,'<'..FunctionLibrary.
-SafeString(vt)..'>')return EscapeString(('<%s: %s>'):format(vt,descriptor))end
-local SerializeRoot=function(root,pretty)local normalize=function(v)if try(
-function()return typeof(v)end,'')=='function'then return try(function()return
-FunctionLibrary.FunctionInfo(v)end,'<function>')end return v end root=normalize(
-root)if typeof(root)~='table'then return SerializeScalar(root)end local out={}
-local len=0 local visited={}local emit=function(s)len=len+1 out[len]=s end local
-buildEntries=function(t)local entries={}local ecount=0 local pure,arrayLen=try(
-function()return IsPureArray(t)end,false)arrayLen=arrayLen or rawlen(t)if pure
-then for idx=1,arrayLen do ecount=ecount+1 entries[ecount]={keyStr=nil,value=
-rawget(t,idx)}end return entries end local seen={}for idx=1,arrayLen do if
-rawget(t,idx)==nil then break end seen[idx]=true ecount=ecount+1 entries[ecount]
-={keyStr=nil,value=rawget(t,idx)}end local keyed={}local kcount=0 local key=
-next(t)while key~=nil do if not seen[key]then kcount=kcount+1 keyed[kcount]=key
-end key=next(t,key)end pcall(function()table.sort(keyed,function(a,b)local ta,tb
-=typeof(a),typeof(b)if ta=='string'and tb=='string'then return a<b end return
-FunctionLibrary.SafeString(ta)<FunctionLibrary.SafeString(tb)end)end)for i=1,
-kcount do local key=keyed[i]local keyStr if type(key)=='string'and IsIdentifier(
-key)then keyStr=key else keyStr='['..SerializeScalar(normalize(key))..']'end
+SafeString(vt)..'>')if string.sub(descriptor,1,#vt+1)==vt..':'then return
+EscapeString('<'..descriptor..'>')end return EscapeString(('<%s: %s>'):format(vt
+,descriptor))end local SerializeRoot=function(root,pretty)local normalize=
+function(v)if try(function()return typeof(v)end,'')=='function'then return try(
+function()return FunctionLibrary.FunctionInfo(v)end,'<function>')end return v
+end root=normalize(root)if typeof(root)~='table'then return SerializeScalar(root
+)end local out={}local len=0 local visited={}local emit=function(s)len=len+1 out
+[len]=s end local buildEntries=function(t)local entries={}local ecount=0 local
+pure,arrayLen=try(function()return IsPureArray(t)end,false)arrayLen=arrayLen or
+rawlen(t)if pure then for idx=1,arrayLen do ecount=ecount+1 entries[ecount]={
+keyStr=nil,value=rawget(t,idx)}end return entries end local seen={}for idx=1,
+arrayLen do if rawget(t,idx)==nil then break end seen[idx]=true ecount=ecount+1
+entries[ecount]={keyStr=nil,value=rawget(t,idx)}end local keyed={}local kcount=0
+local key=next(t)while key~=nil do if not seen[key]then kcount=kcount+1 keyed[
+kcount]=key end key=next(t,key)end pcall(function()table.sort(keyed,function(a,b
+)local ta,tb=typeof(a),typeof(b)if ta=='string'and tb=='string'then return a<b
+end return FunctionLibrary.SafeString(ta)<FunctionLibrary.SafeString(tb)end)end)
+for i=1,kcount do local key=keyed[i]local keyStr if type(key)=='string'and
+IsIdentifier(key)then keyStr=key else keyStr='['..SerializeScalar(key)..']'end
 ecount=ecount+1 entries[ecount]={keyStr=keyStr,value=rawget(t,key)}end return
 entries end local safeBuildEntries=function(t)return try(function()return
 buildEntries(t)end,{})end local sep=pretty and','or', 'visited[root]=true local
@@ -2349,51 +2447,67 @@ return typeof(rawValue)end,'')=='table'then if visited[rawValue]then emit(
 '"<cyclic table>"')emit(sep)else visited[rawValue]=true emit('{')depth=depth+1
 stack[depth]={entries=safeBuildEntries(rawValue),i=1,indent=nextIndent,tableRef=
 rawValue,sep=sep}end else emit(SerializeScalar(rawValue))emit(sep)end end return
-table.concat(out)end function Data2Code.Convert(data,pretty)local ok,result=
-xpcall(function()return SerializeRoot(data,pretty)end,function(err)return
-'--[[ Data2Code.Convert error: '..FunctionLibrary.SafeString(err)..' ]] nil'end)
-return result end return Data2Code end function __DARKLUA_BUNDLE_MODULES.h()
-local v=__DARKLUA_BUNDLE_MODULES.cache.h if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.h=v end return v.c end end do local __modImpl=
-function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.g()local ReGui=ReGuiTable.
-ReGui local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.e()local Data2Code=
-__DARKLUA_BUNDLE_MODULES.h()local ActorScripts=FunctionLibrary.GetActorScripts()
-local actorScriptKeys={}for _,entry in ActorScripts do if entry.key then
-actorScriptKeys[entry.key]=true end if entry.name then actorScriptKeys['name:'..
-entry.name]=true end end local AllScripts=FunctionLibrary.GetScripts(nil,
-actorScriptKeys)local Scripts={}local AntiCheatScripts={}local antiSeen={}local
-antiSeenName={}for _,entry in AllScripts do if entry.isAntiCheat then local ref=
-entry.script local nameKey do local okN,nm=pcall(function()return entry.script.
-Name end)nameKey=(okN and nm or'?')..'|'..tostring(entry.path or'')end if not(
-antiSeen[ref]or antiSeenName[nameKey])then antiSeen[ref]=true antiSeenName[
-nameKey]=true AntiCheatScripts[#AntiCheatScripts+1]=entry end else Scripts[#
-Scripts+1]=entry end end local knownHashCache local getKnownHashes=function()if
-knownHashCache then return knownHashCache end local merged={}local fold=function
-(into,from)for k in from do into[k]=true end end fold(merged,FunctionLibrary.
-BuildKnownScriptHashSet(Scripts))fold(merged,FunctionLibrary.
-BuildKnownScriptHashSet(AntiCheatScripts))fold(merged,FunctionLibrary.
-BuildKnownScriptHashSet(ActorScripts))knownHashCache=merged return merged end
-local IDE=loadstring(game:HttpGet(
+table.concat(out)end local Format=function(code)local lines=Lex(code)local toks=
+{}local n=0 for _,line in lines do for _,tk in line do local ty=tk.type if ty==
+'whitespace'or ty=='newline'then continue end if ty=='symbol'then local data=tk.
+data for c=1,#data do n=n+1 toks[n]={type='symbol',data=string.sub(data,c,c)}end
+else n=n+1 toks[n]=tk end end end local out={}local len=0 local indent=0 local
+stack={}local sp=0 local emit=function(s)len=len+1 out[len]=s end local newline=
+function()emit('\n'..string.rep(INDENT,indent))end local i=1 while i<=n do local
+tk=toks[i]local d=tk.data if d=='{'then local nxt=toks[i+1]if nxt and nxt.data==
+'}'then emit('{}')i=i+2 continue end emit('{')indent=indent+1 sp=sp+1 stack[sp]=
+'{'newline()elseif d=='}'then indent=indent-1 if stack[sp]=='{'then stack[sp]=
+nil sp=sp-1 end newline()emit('}')elseif d=='('then emit('(')sp=sp+1 stack[sp]=
+'('elseif d==')'then if stack[sp]=='('then stack[sp]=nil sp=sp-1 end emit(')')
+elseif d==','then local nxt=toks[i+1]if nxt and nxt.data=='}'then i=i+1 continue
+end emit(',')if stack[sp]=='{'then newline()else emit(' ')end elseif tk.type==
+'operator'and d=='='then emit(' = ')else emit(d)end i=i+1 end return table.
+concat(out)end Data2Code.Format=Format function Data2Code.Convert(data,pretty)
+local errHandler=function(err)return'--[[ Data2Code.Convert error: '..
+FunctionLibrary.SafeString(err)..' ]] nil'end local ok,compact=xpcall(function()
+return SerializeRoot(data,false)end,errHandler)if not ok then return compact end
+if not pretty then return compact end local fok,formatted=pcall(Format,compact)
+if fok and type(formatted)=='string'and formatted~=''then return formatted end
+local ok2,legacy=xpcall(function()return SerializeRoot(data,true)end,errHandler)
+if ok2 then return legacy end return compact end return Data2Code end function
+__DARKLUA_BUNDLE_MODULES.j()local v=__DARKLUA_BUNDLE_MODULES.cache.j if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.j=v end return v.c end end
+do local __modImpl=function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.h()local
+ReGui=ReGuiTable.ReGui local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.f()local
+Data2Code=__DARKLUA_BUNDLE_MODULES.j()local GcShared=__DARKLUA_BUNDLE_MODULES.e(
+)local ActorScripts=FunctionLibrary.GetActorScripts()local actorScriptKeys={}for
+_,entry in ActorScripts do if entry.key then actorScriptKeys[entry.key]=true end
+if entry.name then actorScriptKeys['name:'..entry.name]=true end end local
+AllScripts=FunctionLibrary.GetScripts(nil,actorScriptKeys)local Scripts={}local
+AntiCheatScripts={}local antiSeen={}local antiSeenName={}for _,entry in
+AllScripts do if entry.isAntiCheat then local ref=entry.script local nameKey do
+local okN,nm=pcall(function()return entry.script.Name end)nameKey=(okN and nm or
+'?')..'|'..tostring(entry.path or'')end if not(antiSeen[ref]or antiSeenName[
+nameKey])then antiSeen[ref]=true antiSeenName[nameKey]=true AntiCheatScripts[#
+AntiCheatScripts+1]=entry end else Scripts[#Scripts+1]=entry end end local
+knownHashCache local getKnownHashes=function()if knownHashCache then return
+knownHashCache end local merged={}local fold=function(into,from)for k in from do
+into[k]=true end end fold(merged,FunctionLibrary.BuildKnownScriptHashSet(Scripts
+))fold(merged,FunctionLibrary.BuildKnownScriptHashSet(AntiCheatScripts))fold(
+merged,FunctionLibrary.BuildKnownScriptHashSet(ActorScripts))knownHashCache=
+merged return merged end local IDE=loadstring(game:HttpGet(
 [[https://raw.githubusercontent.com/Awakenchan/Dear-ReGui/refs/heads/main/lib/ide.lua]]
 ))()local COLORS=FunctionLibrary.Colors()local SafeString=FunctionLibrary.
 SafeString local _=cloneref and cloneref(game:GetService('CoreGui'))or game:
 GetService('CoreGui')local openWindows={}local copyToClipboard=function(text)
 local setter=setclipboard or toclipboard if type(setter)~='function'then return
 false end return pcall(setter,text)end local safeGet=function(fn,ref)local ok,
-res=pcall(fn,ref)if ok then return res end return nil end local
-isExecClosureSafe=function(fn)if FunctionLibrary.IsExecutorClosure then local ok
-,res=pcall(FunctionLibrary.IsExecutorClosure,fn)return ok and res end if type(
-isexecutorclosure)=='function'then local ok,res=pcall(isexecutorclosure,fn)
-return ok and res end return false end local grabCandidates=function(target)
-local name=target.name and target.name~='(anonymous)'and target.name or nil
-local line=target.line local hash=target.hash if not hash and target.func and
-type(getfunctionhash)=='function'then hash=safeGet(getfunctionhash,target.func)
-end local list={}local add=function(label,template,runner,uniqueCheck)list[#list
-+1]={label=label,template=template,runner=runner,uniqueCheck=uniqueCheck}end
-local filterUnique=function(opts)local ok,all=pcall(filtergc,'function',opts,
-false)if not ok or type(all)~='table'then return false end local count=0 for _,f
-in all do if type(f)=='function'then count=count+1 end end return count==1 end
-if hash and type(filtergc)=='function'then add('filtergc by hash',(
+res=pcall(fn,ref)if ok then return res end return nil end local grabCandidates=
+function(target)local name=target.name and target.name~='(anonymous)'and target.
+name or nil local line=target.line local hash=target.hash if not hash and target
+.func and type(getfunctionhash)=='function'then hash=safeGet(getfunctionhash,
+target.func)end local list={}local add=function(label,template,runner,
+uniqueCheck)list[#list+1]={label=label,template=template,runner=runner,
+uniqueCheck=uniqueCheck}end local filterUnique=function(opts)local ok,all=pcall(
+filtergc,'function',opts,false)if not ok or type(all)~='table'then return false
+end local count=0 for _,f in all do if type(f)=='function'then count=count+1 end
+end return count==1 end if hash and type(filtergc)=='function'then add(
+'filtergc by hash',(
 [[filtergc("function", { Hash = %q, IgnoreExecutor = true }, true)]]):format(
 hash),function()return filtergc('function',{Hash=hash,IgnoreExecutor=true},true)
 end,function()return filterUnique({Hash=hash,IgnoreExecutor=true})end)end if
@@ -2419,12 +2533,42 @@ true})end)end if name and line then add('manual getgc (name + line)',(
         end
     end
 end)()]]
-):format(name,line),function()for _,o in getgc(true)do if type(o)=='function'and
-(not islclosure or islclosure(o))then local l,n=debug.info(o,'ln')if n==name and
-l==line then return o end end end return nil end,function()local count=0 for _,o
-in getgc(true)do if type(o)=='function'and(not islclosure or islclosure(o))then
+):format(name,line),function()local scanned=0 for _,o in getgc(true)do scanned=
+scanned+1 if scanned%3000==0 then task.wait()end if type(o)=='function'and(not
+islclosure or islclosure(o))then local l,n=debug.info(o,'ln')if n==name and l==
+line then return o end end end return nil end,function()local count=0 local
+scanned=0 for _,o in getgc(true)do scanned=scanned+1 if scanned%3000==0 then
+task.wait()end if type(o)=='function'and(not islclosure or islclosure(o))then
 local l,n=debug.info(o,'ln')if n==name and l==line then count=count+1 end end
-end return count==1 end)end if hash then add('manual getgc (hash)',(
+end return count==1 end)end if name and line and target.func and type(debug.
+getconstants)=='function'then local okc,consts=pcall(debug.getconstants,target.
+func)local np=target.numparams if okc and type(consts)=='table'and type(np)==
+'number'then local constCount=#consts add(
+'manual getgc (name + line + params + constants)',(
+[[(function()
+    for _, o in getgc(true) do
+        if type(o) == "function" and (not islclosure or islclosure(o)) then
+            local l, n = debug.info(o, "ln")
+            local np = debug.info(o, "a")
+            local ok, c = pcall(debug.getconstants, o)
+            if n == %q and l == %d and np == %d and ok and #c == %d then
+                return o
+            end
+        end
+    end
+end)()]]
+):format(name,line,np,constCount),function()local scanned=0 for _,o in getgc(
+true)do scanned=scanned+1 if scanned%3000==0 then task.wait()end if type(o)==
+'function'and(not islclosure or islclosure(o))then local l,n=debug.info(o,'ln')
+local onp=debug.info(o,'a')if n==name and l==line and onp==np then local ok,c=
+pcall(debug.getconstants,o)if ok and type(c)=='table'and#c==constCount then
+return o end end end end return nil end,function()local count=0 local scanned=0
+for _,o in getgc(true)do scanned=scanned+1 if scanned%3000==0 then task.wait()
+end if type(o)=='function'and(not islclosure or islclosure(o))then local l,n=
+debug.info(o,'ln')local onp=debug.info(o,'a')if n==name and l==line and onp==np
+then local ok,c=pcall(debug.getconstants,o)if ok and type(c)=='table'and#c==
+constCount then count=count+1 end end end end return count==1 end)end end if
+hash then add('manual getgc (hash)',(
 [[(function()
     for _, o in getgc(true) do
         if type(o) == "function" and not islclosure(0) and getfunctionhash and getfunctionhash(o) == %q then
@@ -2433,28 +2577,45 @@ end return count==1 end)end if hash then add('manual getgc (hash)',(
     end
 end)()]]
 ):format(hash),function()if type(getfunctionhash)~='function'then return nil end
-for _,o in getgc(true)do if type(o)=='function'and not islclosure(0)then local
-ok,h=pcall(getfunctionhash,o)if ok and h==hash then return o end end end return
-nil end,function()if type(getfunctionhash)~='function'then return false end
-local count=0 for _,o in getgc(true)do if type(o)=='function'and not islclosure(
-0)then local ok,h=pcall(getfunctionhash,o)if ok and h==hash then count=count+1
-end end end return count==1 end)end return list end local verifyGrabMethods=
-function(target,limit)limit=limit or 3 local func=target.func if typeof(func)~=
-'function'then return nil end local candidates=grabCandidates(target)local
-passed={}repeat task.wait()until candidates and#candidates>0 task.wait(1)for _,
-cand in candidates do local ok,got=pcall(cand.runner)if ok and got==func then
-local unique=true if cand.uniqueCheck then local uok,u=pcall(cand.uniqueCheck)
-unique=uok and u end if unique then passed[#passed+1]={label=cand.label,template
-=cand.template}end end end local out={}for i=1,math.min(limit,#passed)do out[i]=
-passed[i]end return out end local formatGrabMethods=function(methods)if not
-methods or#methods==0 then return
-[[-- No retrieval method could be verified for this function.
--- (line/name may be stripped, or it's not currently in the gc)]]
-end local parts={}for i,m in methods do parts[#parts+1]=(
-'-- Method %d: %s (verified)'):format(i,m.label)parts[#parts+1]='local fn = '..m
-.template parts[#parts+1]=''end return table.concat(parts,'\n')end local
-BASE_DIR='GcView@awakenkn'local BYTE_DIR=BASE_DIR..'/GcViewByteSaves'local
-DECOMP_DIR=BASE_DIR..'/GcViewDecompiled'local DISASM_DIR=BASE_DIR..
+local scanned=0 for _,o in getgc(true)do scanned=scanned+1 if scanned%3000==0
+then task.wait()end if type(o)=='function'and not islclosure(0)then local ok,h=
+pcall(getfunctionhash,o)if ok and h==hash then return o end end end return nil
+end,function()if type(getfunctionhash)~='function'then return false end local
+count=0 local scanned=0 for _,o in getgc(true)do scanned=scanned+1 if scanned%
+3000==0 then task.wait()end if type(o)=='function'and not islclosure(0)then
+local ok,h=pcall(getfunctionhash,o)if ok and h==hash then count=count+1 end end
+end return count==1 end)end return list end local GRAB_BUDGET=8 local
+verifyGrabMethods=function(target,limit)limit=limit or 3 local func=target.func
+if typeof(func)~='function'then return nil end local candidates=grabCandidates(
+target)local result={unique={},ambiguous={}}if type(candidates)~='table'or#
+candidates==0 then return result end local deadline=os.clock()+GRAB_BUDGET for _
+,cand in candidates do if#result.unique>=limit or os.clock()>deadline then break
+end local ok,got=pcall(cand.runner)if ok and got==func then local unique=true if
+cand.uniqueCheck then local uok,u=pcall(cand.uniqueCheck)unique=uok and u end
+local entry={label=cand.label,template=cand.template}if unique then result.
+unique[#result.unique+1]=entry else result.ambiguous[#result.ambiguous+1]=entry
+end end task.wait()end return result end local formatGrabMethods=function(result
+)local unique=(result and result.unique)or{}local ambiguous=(result and result.
+ambiguous)or{}local parts={}local emit=function(methods,suffix)for i,m in
+methods do parts[#parts+1]=('-- Method %d: %s%s'):format(i,m.label,suffix)parts[
+#parts+1]='local fn = '..m.template parts[#parts+1]=''end end if#unique>0 then
+emit(unique,' (uniquely identifies this function)')return table.concat(parts,
+'\n')end if#ambiguous>0 then parts[#parts+1]=
+[[-- No UNIQUE retrieval method exists for this function: it shares its]]parts[#
+parts+1]=
+[[-- name/line/signature with other closures, and no usable function hash]]parts
+[#parts+1]='-- is available on this executor.'parts[#parts+1]=
+[[-- The methods below DO return this function from the live GC, but the]]parts[
+#parts+1]=
+[[-- same query also matches other functions, so you may get a different one.]]
+parts[#parts+1]=''emit(ambiguous,' (ambiguous -- matches multiple functions)')
+return table.concat(parts,'\n')end return
+[[-- This function is in the GC (that's how it's listed here), but no
+-- filtergc/getgc query by name, line, signature or hash could re-fetch it.
+-- Its debug name/line are likely stripped, and getfunctionhash is
+-- unavailable on this executor, so there's no standalone way to target it.]]
+end local BASE_DIR='GcView@awakenkn'local BYTE_DIR=BASE_DIR..'/GcViewByteSaves'
+local DECOMP_DIR=BASE_DIR..'/GcViewDecompiled'local DISASM_DIR=BASE_DIR..
 '/GcViewDisassembled'local gameNameCache local getGameName=function()if
 gameNameCache then return gameNameCache end local name='UnknownGame'local ok,
 info=pcall(function()local MPS=cloneref and cloneref(game:GetService(
@@ -2492,8 +2653,8 @@ GLOBAL_ENVS={}do local capture=function(fn)local ok,e=pcall(fn)if ok and type(e)
 =='table'then GLOBAL_ENVS[e]=true end end if type(getrenv)=='function'then
 capture(getrenv)end if type(getgenv)=='function'then capture(getgenv)end
 capture(function()return getfenv(0)end)end local resolveFuncScript=function(func
-)local env=safeGet(getfenv,func)if type(env)~='table'then return nil end local s
-=rawget(env,'script')if isLuaSourceContainer(s)then return s end if GLOBAL_ENVS[
+)local env=GcShared.Fenv(func)if type(env)~='table'then return nil end local s=
+rawget(env,'script')if isLuaSourceContainer(s)then return s end if GLOBAL_ENVS[
 env]then return nil end local found pcall(function()local k,v=next(env)local n=0
 while k~=nil do if isLuaSourceContainer(v)then found=v return end n=n+1 if n>=64
 then return end k,v=next(env,k)end end)return found end local MAX_TABLE_SCAN=
@@ -2505,28 +2666,27 @@ return true end local checked=0 local k,v=next(tbl)while k~=nil do if
 isFuncInfoEntry(v)then return true end checked=checked+1 if checked>=8 then
 break end k,v=next(tbl,k)end return false end local gcTableBuckets local
 MAX_TOTAL_TABLES=200000 local YIELD_EVERY=2000 local scriptHashIndex local
-scriptPathCache local funcOwnerCache local execClosureCache local getScriptPath=
-function(scriptRef)if scriptPathCache[scriptRef]~=nil then return
-scriptPathCache[scriptRef]or nil end local path=false pcall(function()path=
-scriptRef:GetFullName()end)if type(path)~='string'then local nm=safeGet(function
-(s)return s.Name end,scriptRef)path=type(nm)=='string'and nm or false end
-scriptPathCache[scriptRef]=path return path or nil end local getScriptName=
-function(scriptRef)return safeGet(function(s)return s.Name end,scriptRef)end
-local buildHashIndex=function()if scriptHashIndex then return end
-scriptHashIndex={}scriptPathCache={}if type(getfunctionhash)~='function'then
-return end local index=function(entries)if type(entries)~='table'then return end
-for _,entry in entries do local s=entry.script if typeof(s)=='Instance'then
-local h=entry.hash if not h and typeof(entry.func)=='function'then h=safeGet(
-getfunctionhash,entry.func)end if h and scriptHashIndex[h]==nil then
+scriptPathCache local funcOwnerCache local getScriptPath=function(scriptRef)if
+scriptPathCache[scriptRef]~=nil then return scriptPathCache[scriptRef]or nil end
+local path=false pcall(function()path=scriptRef:GetFullName()end)if type(path)~=
+'string'then local nm=safeGet(function(s)return s.Name end,scriptRef)path=type(
+nm)=='string'and nm or false end scriptPathCache[scriptRef]=path return path or
+nil end local getScriptName=function(scriptRef)return safeGet(function(s)return
+s.Name end,scriptRef)end local buildHashIndex=function()if scriptHashIndex then
+return end scriptHashIndex={}scriptPathCache={}if type(getfunctionhash)~=
+'function'then return end local index=function(entries)if type(entries)~='table'
+then return end for _,entry in entries do local s=entry.script if typeof(s)==
+'Instance'then local h=entry.hash if not h and typeof(entry.func)=='function'
+then h=GcShared.Hash(entry.func)end if h and scriptHashIndex[h]==nil then
 scriptHashIndex[h]=s end end end end index(Scripts)index(AntiCheatScripts)index(
 ActorScripts)end local ownerOfFunc=function(fn)local cached=funcOwnerCache[fn]if
 cached~=nil then if cached then return cached[1],cached[2]end return nil end
 local owner=resolveFuncScript(fn)local reason='fenv'if owner==nil and
-scriptHashIndex then local h=safeGet(getfunctionhash,fn)if h then local hs=
-scriptHashIndex[h]if hs~=nil then owner=hs reason='hash'end end end if owner~=
-nil then funcOwnerCache[fn]={owner,reason}return owner,reason end funcOwnerCache
-[fn]=false return nil end local funcSourceMatches=function(func,targetPath)if
-not targetPath then return false end local src=safeGet(function(f)local s=debug.
+scriptHashIndex then local h=GcShared.Hash(fn)if h then local hs=scriptHashIndex
+[h]if hs~=nil then owner=hs reason='hash'end end end if owner~=nil then
+funcOwnerCache[fn]={owner,reason}return owner,reason end funcOwnerCache[fn]=
+false return nil end local funcSourceMatches=function(func,targetPath)if not
+targetPath then return false end local src=safeGet(function(f)local s=debug.
 info(f,'s')return s end,func)if type(src)~='string'then return false end src=src
 :gsub('^[=@]','')return src==targetPath or src:find(targetPath,1,true)~=nil end
 local SCORE_MIN=4 local scoreTableForScripts=function(funcsInTable,
@@ -2546,24 +2706,22 @@ bestScore then best,bestScore=scriptRef,sc end end if best and bestScore and
 bestScore>=SCORE_MIN then local why={}for k in reasons[best]do why[#why+1]=k end
 table.sort(why)return best,bestScore,table.concat(why,'+')end return nil end
 local scanGcTables=function(onProgress)if gcTableBuckets then return end
-gcTableBuckets={}funcOwnerCache={}execClosureCache={}buildHashIndex()local okGc,
-gc=pcall(getgc,true)if not okGc or type(gc)~='table'then return end local seen={
-}local skip={}skip[getgenv()]=true if _G then skip[_G]=true end if shared then
-skip[shared]=true end local processed=0 for _,tbl in gc do processed=processed+1
-if processed%YIELD_EVERY==0 then if onProgress then onProgress(processed)end
-task.wait()end if processed>MAX_TOTAL_TABLES then break end if type(tbl)~=
-'table'or seen[tbl]or skip[tbl]then continue end seen[tbl]=true local okShape,
-isOwn=pcall(isGcViewTable,tbl)if not okShape or isOwn then continue end local
-funcsInTable={}local scriptRefs={}local nameHits={}local count=0 local tainted=
-false local okWalk=pcall(function()local consider=function(x)local tx=type(x)if
-tx=='function'then local isExec=execClosureCache[x]if isExec==nil then isExec=
-isExecClosureSafe(x)execClosureCache[x]=isExec end if isExec then tainted=true
-return true end funcsInTable[#funcsInTable+1]=x elseif tx=='string'then nameHits
-[x]=true elseif tx=='userdata'and isLuaSourceContainer(x)then scriptRefs[#
-scriptRefs+1]=x end return false end local k,v=next(tbl)while k~=nil do count=
-count+1 if count>MAX_TABLE_SCAN then return end if consider(v)or consider(k)then
-return end k,v=next(tbl,k)end end)if not okWalk or tainted or#funcsInTable==0
-then continue end pcall(function()local owner,score,why=scoreTableForScripts(
+gcTableBuckets={}funcOwnerCache={}buildHashIndex()local gc=GcShared.Snapshot()
+local seen={}local skip={}skip[getgenv()]=true if _G then skip[_G]=true end if
+shared then skip[shared]=true end local processed=0 for _,tbl in gc do processed
+=processed+1 if processed%YIELD_EVERY==0 then if onProgress then onProgress(
+processed)end task.wait()end if processed>MAX_TOTAL_TABLES then break end if
+type(tbl)~='table'or seen[tbl]or skip[tbl]then continue end seen[tbl]=true local
+okShape,isOwn=pcall(isGcViewTable,tbl)if not okShape or isOwn then continue end
+local funcsInTable={}local scriptRefs={}local nameHits={}local count=0 local
+tainted=false local okWalk=pcall(function()local consider=function(x)local tx=
+type(x)if tx=='function'then if GcShared.IsExec(x)then tainted=true return true
+end funcsInTable[#funcsInTable+1]=x elseif tx=='string'then nameHits[x]=true
+elseif tx=='userdata'and isLuaSourceContainer(x)then scriptRefs[#scriptRefs+1]=x
+end return false end local k,v=next(tbl)while k~=nil do count=count+1 if count>
+MAX_TABLE_SCAN then return end if consider(v)or consider(k)then return end k,v=
+next(tbl,k)end end)if not okWalk or tainted or(#funcsInTable==0 and#scriptRefs==
+0)then continue end pcall(function()local owner,score,why=scoreTableForScripts(
 funcsInTable,scriptRefs,nameHits)if owner==nil then return end local info={value
 =tbl,count=count,address=SafeString(tbl),funcCount=#funcsInTable,origin=(
 '%d fn(s) | score %d | %s'):format(#funcsInTable,score,why)}local bucket=
@@ -2594,13 +2752,13 @@ CreateTab({Name='GC Tables'})local headerLabel=tab:Label({Text=
 TextXAlignment.Left})local listLabels={}local clearList=function()for _,obj in
 listLabels do pcall(function()obj:Destroy()end)end listLabels={}end local run
 tab:Button({Text='Rescan GC',Callback=function()gcTableBuckets=nil
-scriptHashIndex=nil scriptPathCache=nil clearList()run()end})tab:Separator()run=
-function()headerLabel.Text='Collecting GC tables...'headerLabel.TextColor3=
-COLORS.gray task.spawn(function()local ok,tables=pcall(collectScriptTables,
-scriptRef,entries,function(n)headerLabel.Text=('Scanning GC... %d objects'):
-format(n)end)if not ok or type(tables)~='table'then headerLabel.Text=
-'GC table collection failed: '..tostring(tables)headerLabel.TextColor3=COLORS.
-red return end headerLabel.Text=(
+scriptHashIndex=nil scriptPathCache=nil GcShared.Reset()clearList()run()end})tab
+:Separator()run=function()headerLabel.Text='Collecting GC tables...'headerLabel.
+TextColor3=COLORS.gray task.spawn(function()local ok,tables=pcall(
+collectScriptTables,scriptRef,entries,function(n)headerLabel.Text=(
+'Scanning GC... %d objects'):format(n)end)if not ok or type(tables)~='table'then
+headerLabel.Text='GC table collection failed: '..tostring(tables)headerLabel.
+TextColor3=COLORS.red return end headerLabel.Text=(
 "%d table(s) containing this script's functions"):format(#tables)headerLabel.
 TextColor3=Color3.fromRGB(200,200,200)local BATCH=15 local DELAY=0.03 for i,info
 in tables do local label=tab:Label({Text=('[%d entries] %s  (%s)'):format(info.
@@ -2637,36 +2795,40 @@ Editor:AppendText(t..'\n')end end Editor:AppendText('\n')end section('Constants'
 ,constLines)section('Upvalues',upvalLines)end tab:InputText({Label=
 'Search constants / upvalues',PlaceHolder='value to filter...',Value='',Callback
 =function(_,newValue)render(newValue)end})local row=tab:Row()row:Button({Text=
-'Copy All',Callback=function()copyToClipboard(Editor:GetText())end})row:Button({
-Text='Grab Function',Callback=function()local methods=verifyGrabMethods(entry,3)
-local code=formatGrabMethods(methods)Editor:ClearText()Editor:AppendText(code..
-'\n')copyToClipboard(code)end})row:Expand()tab:Separator()render('')if window.
-SetActiveTab then pcall(function()window:SetActiveTab(tabName)end)end return tab
-end local renderFunctionList=function(tab,window,parentClass,functions,
-headerText,headerColor)tab:Label({Text=headerText,TextColor3=headerColor or
-Color3.fromRGB(200,200,200),TextXAlignment=Enum.TextXAlignment.Left})local rows=
-{}local searchInput=tab:InputText({Label='Search functions (name / values)',
-PlaceHolder='filter functions...',Value='',Callback=function(_,newValue)local q=
-(newValue or''):lower():match('^%s*(.-)%s*$')for _,r in rows do local visible=q
-==''or r.nameLower:find(q,1,true)or r.valueIndex:find(q,1,true)if r.label then r
-.label.Visible=visible end if r.separator then r.separator.Visible=visible end
-end end})tab:Button({Text='Clear Search',Callback=function()searchInput.Value=''
-for _,r in rows do if r.label then r.label.Visible=true end if r.separator then
-r.separator.Visible=true end end end})local progressLabel=tab:Label({Text='',
-TextColor3=COLORS.gray,TextXAlignment=Enum.TextXAlignment.Left})tab:Separator()
-local ordered={}for _,entry in functions do ordered[#ordered+1]=entry end table.
-sort(ordered,function(a,b)local an=a.name and a.name~='(anonymous)'local bn=b.
-name and b.name~='(anonymous)'if an~=bn then return an end return(a.name or''):
-lower()<(b.name or''):lower()end)local CHUNK=15 local DELAY=0.03 local total=#
-ordered task.spawn(function()for i=1,total do local entry=ordered[i]local _=
-type(entry.constants)=='table'or type(entry.upvalues)=='table'local constants=
-entry.constants or(entry.func and safeGet(getconstants,entry.func))or{}local
-upvalues=entry.upvalues or(entry.func and safeGet(getupvalues,entry.func))or{}
-local lineText=('%s  |  line %s  |  params %s%s  |  C:%d U:%d'):format(entry.
-name,tostring(entry.line or'?'),tostring(entry.numparams or 0),entry.vargs and
-' +...'or'',#constants,#upvalues)local label=tab:Label({Text=lineText,TextColor3
-=Color3.fromRGB(180,200,230),TextXAlignment=Enum.TextXAlignment.Left})local sep=
-tab:Separator()local vIndex=entry.valueIndex if not vIndex then vIndex=
+'Copy All',Callback=function()copyToClipboard(Editor:GetText())end})local
+grabbing=false row:Button({Text='Grab Function',Callback=function()if grabbing
+then return end grabbing=true Editor:ClearText()Editor:AppendText(
+'-- Verifying retrieval methods (up to '..GRAB_BUDGET..'s)...\n')task.spawn(
+function()local ok,methods=pcall(verifyGrabMethods,entry,3)local code=
+formatGrabMethods(ok and methods or nil)Editor:ClearText()Editor:AppendText(code
+..'\n')copyToClipboard(code)grabbing=false end)end})row:Expand()tab:Separator()
+render('')if window.SetActiveTab then pcall(function()window:SetActiveTab(
+tabName)end)end return tab end local renderFunctionList=function(tab,window,
+parentClass,functions,headerText,headerColor)tab:Label({Text=headerText,
+TextColor3=headerColor or Color3.fromRGB(200,200,200),TextXAlignment=Enum.
+TextXAlignment.Left})local rows={}local searchInput=tab:InputText({Label=
+'Search functions (name / values)',PlaceHolder='filter functions...',Value='',
+Callback=function(_,newValue)local q=(newValue or''):lower():match(
+'^%s*(.-)%s*$')for _,r in rows do local visible=q==''or r.nameLower:find(q,1,
+true)or r.valueIndex:find(q,1,true)if r.label then r.label.Visible=visible end
+if r.separator then r.separator.Visible=visible end end end})tab:Button({Text=
+'Clear Search',Callback=function()searchInput.Value=''for _,r in rows do if r.
+label then r.label.Visible=true end if r.separator then r.separator.Visible=true
+end end end})local progressLabel=tab:Label({Text='',TextColor3=COLORS.gray,
+TextXAlignment=Enum.TextXAlignment.Left})tab:Separator()local ordered={}for _,
+entry in functions do ordered[#ordered+1]=entry end table.sort(ordered,function(
+a,b)local an=a.name and a.name~='(anonymous)'local bn=b.name and b.name~=
+'(anonymous)'if an~=bn then return an end return(a.name or''):lower()<(b.name or
+''):lower()end)local CHUNK=15 local DELAY=0.03 local total=#ordered task.spawn(
+function()for i=1,total do local entry=ordered[i]local _=type(entry.constants)==
+'table'or type(entry.upvalues)=='table'local constants=entry.constants or(entry.
+func and safeGet(getconstants,entry.func))or{}local upvalues=entry.upvalues or(
+entry.func and safeGet(getupvalues,entry.func))or{}local lineText=(
+'%s  |  line %s  |  params %s%s  |  C:%d U:%d'):format(entry.name,tostring(entry
+.line or'?'),tostring(entry.numparams or 0),entry.vargs and' +...'or'',#
+constants,#upvalues)local label=tab:Label({Text=lineText,TextColor3=Color3.
+fromRGB(180,200,230),TextXAlignment=Enum.TextXAlignment.Left})local sep=tab:
+Separator()local vIndex=entry.valueIndex if not vIndex then vIndex=
 buildValueIndex(constants,upvalues)end rows[#rows+1]={label=label,separator=sep,
 nameLower=(entry.name or''):lower(),valueIndex=vIndex}label.InputBegan:Connect(
 function(input)if input.UserInputType==Enum.UserInputType.MouseButton1 or input.
@@ -2867,8 +3029,8 @@ label=label,separator=sep,type=item.scriptType}label.InputBegan:Connect(function
 (input)if input.UserInputType==Enum.UserInputType.MouseButton1 or input.
 UserInputType==Enum.UserInputType.Touch then openActorWindow(entry)end end)end
 refreshActorFilter()return{ReGui=ReGui,OpenScriptWindow=openScriptWindow}end
-function __DARKLUA_BUNDLE_MODULES.i()local v=__DARKLUA_BUNDLE_MODULES.cache.i if
-not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.i=v end return v.c
+function __DARKLUA_BUNDLE_MODULES.k()local v=__DARKLUA_BUNDLE_MODULES.cache.k if
+not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.k=v end return v.c
 end end end __DARKLUA_BUNDLE_MODULES.a()__DARKLUA_BUNDLE_MODULES.b()
-__DARKLUA_BUNDLE_MODULES.g()__DARKLUA_BUNDLE_MODULES.i()__DARKLUA_BUNDLE_MODULES
-.h()
+__DARKLUA_BUNDLE_MODULES.h()__DARKLUA_BUNDLE_MODULES.k()__DARKLUA_BUNDLE_MODULES
+.j()

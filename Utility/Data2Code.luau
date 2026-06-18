@@ -1,5 +1,3 @@
---!early version
---!edited bundler version
 local Data2Code = {}
 local FunctionLibrary = {}
 FunctionLibrary.SafeString = function(Object)
@@ -28,6 +26,448 @@ FunctionLibrary.FunctionInfo = function(func)
         vargs = vargs,
     }
 end
+
+
+local byte = string.byte
+local sub = string.sub
+
+local function lookupify(src, list)
+    list = list or {}
+
+    if type(src) == "string" then
+        for i = 1, #src do
+            list[byte(src, i)] = true
+        end
+    elseif type(src) == "table" then
+        for i = 1, #src do
+            list[src[i]] = true
+        end
+    end
+
+    return list
+end
+
+local base_ident = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_"
+local base_digits = "0123456789"
+local base_operators = "+-*/^%#"
+
+local chars = {
+    whitespace = lookupify(" \n\t\r"),
+    validEscapes = lookupify("abfnrtv\"'\\"),
+    ident = lookupify(base_ident .. base_digits, {
+        start = lookupify(base_ident),
+    }),
+    digits = lookupify(base_digits, {
+        hex = lookupify(base_digits .. "abcdefABCDEF"),
+    }),
+    symbols = lookupify(base_operators .. ",{}[]();.:", {
+        equality = lookupify("~=><"),
+        operators = lookupify(base_operators),
+    }),
+}
+
+local keywords = {
+    structure = lookupify({
+        "and",
+        "break",
+        "do",
+        "else",
+        "elseif",
+        "end",
+        "for",
+        "function",
+        "goto",
+        "if",
+        "in",
+        "local",
+        "not",
+        "or",
+        "repeat",
+        "return",
+        "then",
+        "until",
+        "while",
+    }),
+    values = lookupify({ "true", "false", "nil" }),
+}
+
+local NEWLINE = 10
+local DASH = 45
+local SQUOTE = 39
+local DQUOTE = 34
+local BACKSLASH = 92
+local LBRACKET = 91
+local RBRACKET = 93
+local EQUALS = 61
+local DOT = 46
+local COLON = 58
+local ZERO = 48
+local LOWER_X = 120
+local LOWER_E = 101
+local UPPER_E = 69
+
+local Lex = function(text)
+    local pos = 1
+    local start = 1
+    local buffer = {}
+    local lines = {}
+
+    local function look(delta)
+        return byte(text, pos + (delta or 0))
+    end
+
+    local function get()
+        pos = pos + 1
+        return byte(text, pos - 1)
+    end
+
+    local function getDataLevel()
+        local num = 0
+
+        while byte(text, pos + num) == EQUALS do
+            num = num + 1
+        end
+
+        if byte(text, pos + num) == LBRACKET then
+            pos = pos + num + 1
+
+            return num
+        end
+    end
+
+    local function getCurrentTokenText()
+        return sub(text, start, pos - 1)
+    end
+
+    local currentLineLength = 0
+    local lineoffset = 0
+
+    local function pushToken(ty)
+        local s = start
+        local e = pos - 1
+        local tlen = e - s + 1
+
+        if tlen > 0 then
+            local tk = buffer[#buffer]
+
+            if not tk or tk.type ~= ty then
+                buffer[#buffer + 1] = {
+                    type = ty,
+                    _s = s,
+                    _e = e,
+                    posFirst = s - lineoffset,
+                    posLast = e - lineoffset,
+                }
+            else
+                tk._e = e
+                tk.posLast = tk.posLast + tlen
+            end
+
+            currentLineLength = currentLineLength + tlen
+        end
+
+        start = pos
+    end
+
+    local function newline()
+        lines[#lines + 1] = buffer
+        buffer = {}
+
+        get()
+        pushToken("newline")
+        buffer[1] = nil
+
+        lineoffset = lineoffset + currentLineLength
+        currentLineLength = 0
+    end
+
+    local function getData(level, ty)
+        while true do
+            local char = get()
+
+            if char == nil then
+                return
+            elseif char == NEWLINE then
+                pos = pos - 1
+                pushToken(ty)
+                newline()
+            elseif char == RBRACKET then
+                local valid = true
+
+                for _ = 1, level do
+                    if look() == EQUALS then
+                        pos = pos + 1
+                    else
+                        valid = false
+                        break
+                    end
+                end
+
+                if valid and look() == RBRACKET then
+                    pos = pos - level - 1
+
+                    return
+                end
+            end
+        end
+    end
+
+    local function chompWhitespace()
+        while true do
+            local char = look()
+
+            if char == NEWLINE then
+                pushToken("whitespace")
+                newline()
+            elseif chars.whitespace[char] then
+                pos = pos + 1
+            else
+                break
+            end
+        end
+
+        pushToken("whitespace")
+    end
+
+    while true do
+        chompWhitespace()
+
+        local char = get()
+
+        if char == nil then
+            break
+        elseif char == DASH and look() == DASH then
+            pos = pos + 1
+
+            if look() == LBRACKET then
+                pos = pos + 1
+
+                local level = getDataLevel()
+
+                if level then
+                    getData(level, "comment")
+
+                    pos = pos + level + 2
+                    pushToken("comment")
+                else
+                    while true do
+                        local char2 = get()
+
+                        if char2 == nil or char2 == NEWLINE then
+                            pos = pos - 1
+                            pushToken("comment")
+
+                            if char2 == NEWLINE then
+                                newline()
+                            end
+
+                            break
+                        end
+                    end
+                end
+            else
+                while true do
+                    local char2 = get()
+
+                    if char2 == nil or char2 == NEWLINE then
+                        pos = pos - 1
+                        pushToken("comment")
+
+                        if char2 == NEWLINE then
+                            newline()
+                        end
+
+                        break
+                    end
+                end
+            end
+
+            pushToken("comment")
+        elseif char == SQUOTE or char == DQUOTE then
+            pushToken("string_start")
+
+            while true do
+                local char2 = get()
+
+                if char2 == BACKSLASH then
+                    pos = pos - 1
+                    pushToken("string")
+                    get()
+
+                    local char3 = get()
+
+                    if chars.digits[char3] then
+                        for _ = 1, 2 do
+                            if chars.digits[look()] then
+                                pos = pos + 1
+                            end
+                        end
+                    elseif char3 == LOWER_X then
+                        if chars.digits.hex[look()] and chars.digits.hex[look(1)] then
+                            pos = pos + 2
+                        else
+                            pushToken("unidentified")
+                        end
+                    elseif char3 == NEWLINE then
+                        pos = pos - 1
+                        pushToken("escape")
+                        newline()
+                    elseif not chars.validEscapes[char3] then
+                        pushToken("unidentified")
+                    end
+
+                    pushToken("escape")
+                elseif char2 == NEWLINE then
+                    pos = pos - 1
+                    pushToken("string")
+                    newline()
+
+                    break
+                elseif char2 == char or char2 == nil then
+                    pos = pos - 1
+                    pushToken("string")
+                    get()
+
+                    break
+                end
+            end
+
+            pushToken("string_end")
+        elseif chars.ident.start[char] then
+            while chars.ident[look()] do
+                pos = pos + 1
+            end
+
+            local word = getCurrentTokenText()
+
+            if keywords.structure[word] then
+                pushToken("keyword")
+            elseif keywords.values[word] then
+                pushToken("value")
+            else
+                pushToken("ident")
+            end
+        elseif chars.digits[char] or (char == DOT and chars.digits[look()]) then
+            if char == ZERO and look() == LOWER_X then
+                pos = pos + 1
+
+                while chars.digits.hex[look()] do
+                    pos = pos + 1
+                end
+            else
+                while chars.digits[look()] do
+                    pos = pos + 1
+                end
+
+                if look() == DOT then
+                    pos = pos + 1
+
+                    while chars.digits[look()] do
+                        pos = pos + 1
+                    end
+                end
+
+                local e = look()
+                if e == LOWER_E or e == UPPER_E then
+                    pos = pos + 1
+
+                    if look() == DASH then
+                        pos = pos + 1
+                    end
+
+                    while chars.digits[look()] do
+                        pos = pos + 1
+                    end
+                end
+            end
+
+            pushToken("number")
+        elseif char == LBRACKET then
+            local level = getDataLevel()
+
+            if level then
+                pushToken("string_start")
+
+                getData(level, "string")
+                pushToken("string")
+
+                pos = pos + level + 2
+                pushToken("string_end")
+            else
+                pushToken("symbol")
+            end
+        elseif char == DOT then
+            if look() == DOT then
+                pos = pos + 1
+
+                if look() == DOT then
+                    pos = pos + 1
+                end
+            end
+
+            if pos - start == 3 then
+                pushToken("vararg")
+            else
+                pushToken("symbol")
+            end
+        elseif char == COLON and look() == COLON then
+            get()
+
+            pushToken("label_start")
+
+            chompWhitespace()
+
+            if chars.ident.start[look()] then
+                get()
+
+                while chars.ident[look()] do
+                    get()
+                end
+
+                pushToken("label")
+
+                chompWhitespace()
+
+                if look() == COLON and look(1) == COLON then
+                    get()
+                    get()
+
+                    pushToken("label_end")
+                end
+            end
+        elseif chars.symbols.equality[char] then
+            if look() == EQUALS then
+                pos = pos + 1
+            end
+
+            pushToken("operator")
+        elseif chars.symbols[char] then
+            if chars.symbols.operators[char] then
+                pushToken("operator")
+            else
+                pushToken("symbol")
+            end
+        else
+            pushToken("unidentified")
+        end
+    end
+
+    lines[#lines + 1] = buffer
+
+    for li = 1, #lines do
+        local line = lines[li]
+        for ti = 1, #line do
+            local tk = line[ti]
+            tk.data = sub(text, tk._s, tk._e)
+            tk._s = nil
+            tk._e = nil
+        end
+    end
+
+    return lines
+end
+
+
 local INDENT = "    "
 
 local function try(fn, fallback)
@@ -276,8 +716,12 @@ local SCALAR_HANDLERS = {
 	RBXScriptSignal = function()
 		return '"<RBXScriptSignal>"'
 	end,
-	["function"] = function()
-		return '"<function>"'
+	["function"] = function(value)
+		return try(function()
+			local name, line = debug.info(value, "nl")
+			name = (type(name) == "string" and name ~= "") and name or "?"
+			return EscapeString(("<function %s@%s>"):format(name, tostring(line or "?")))
+		end, '"<function>"')
 	end,
 	thread = function()
 		return '"<thread>"'
@@ -441,6 +885,9 @@ local function SerializeScalar(value)
 	local descriptor = try(function()
 		return (FunctionLibrary.SafeString(value):gsub("[%c]", " "))
 	end, "<" .. FunctionLibrary.SafeString(vt) .. ">")
+	if string.sub(descriptor, 1, #vt + 1) == vt .. ":" then
+		return EscapeString("<" .. descriptor .. ">")
+	end
 	return EscapeString(("<%s: %s>"):format(vt, descriptor))
 end
 
@@ -524,7 +971,7 @@ local function SerializeRoot(root, pretty)
 			if type(key) == "string" and IsIdentifier(key) then
 				keyStr = key
 			else
-				keyStr = "[" .. SerializeScalar(normalize(key)) .. "]"
+				keyStr = "[" .. SerializeScalar(key) .. "]"
 			end
 			ecount += 1
 			entries[ecount] = { keyStr = keyStr, value = rawget(t, key) }
@@ -606,13 +1053,132 @@ local function SerializeRoot(root, pretty)
 	return table.concat(out)
 end
 
-function Data2Code.Convert(data, pretty)
-	local ok, result = xpcall(function()
-		return SerializeRoot(data, pretty)
-	end, function(err)
-		return "--[[ Data2Code.Convert error: " .. FunctionLibrary.SafeString(err) .. " ]] nil"
-	end)
-	return result
+local function Format(code)
+	local lines = Lex(code)
+
+	local toks = {}
+	local n = 0
+	for _, line in lines do
+		for _, tk in line do
+			local ty = tk.type
+			if ty == "whitespace" or ty == "newline" then
+				continue
+			end
+			if ty == "symbol" then
+				local data = tk.data
+				for c = 1, #data do
+					n += 1
+					toks[n] = { type = "symbol", data = string.sub(data, c, c) }
+				end
+			else
+				n += 1
+				toks[n] = tk
+			end
+		end
+	end
+
+	local out = {}
+	local len = 0
+	local indent = 0
+	local stack = {}
+	local sp = 0
+
+	local function emit(s)
+		len += 1
+		out[len] = s
+	end
+
+	local function newline()
+		emit("\n" .. string.rep(INDENT, indent))
+	end
+
+	local i = 1
+	while i <= n do
+		local tk = toks[i]
+		local d = tk.data
+
+		if d == "{" then
+			local nxt = toks[i + 1]
+			if nxt and nxt.data == "}" then
+				emit("{}")
+				i += 2
+				continue
+			end
+			emit("{")
+			indent += 1
+			sp += 1
+			stack[sp] = "{"
+			newline()
+		elseif d == "}" then
+			indent -= 1
+			if stack[sp] == "{" then
+				stack[sp] = nil
+				sp -= 1
+			end
+			newline()
+			emit("}")
+		elseif d == "(" then
+			emit("(")
+			sp += 1
+			stack[sp] = "("
+		elseif d == ")" then
+			if stack[sp] == "(" then
+				stack[sp] = nil
+				sp -= 1
+			end
+			emit(")")
+		elseif d == "," then
+			local nxt = toks[i + 1]
+			if nxt and nxt.data == "}" then
+				i += 1
+				continue
+			end
+			emit(",")
+			if stack[sp] == "{" then
+				newline()
+			else
+				emit(" ")
+			end
+		elseif tk.type == "operator" and d == "=" then
+			emit(" = ")
+		else
+			emit(d)
+		end
+
+		i += 1
+	end
+
+	return table.concat(out)
 end
 
-return Data2Code
+Data2Code.Format = Format
+
+function Data2Code.Convert(data, pretty)
+	local errHandler = function(err)
+		return "--[[ Data2Code.Convert error: " .. FunctionLibrary.SafeString(err) .. " ]] nil"
+	end
+
+	local ok, compact = xpcall(function()
+		return SerializeRoot(data, false)
+	end, errHandler)
+	if not ok then
+		return compact
+	end
+
+	if not pretty then
+		return compact
+	end
+
+	local fok, formatted = pcall(Format, compact)
+	if fok and type(formatted) == "string" and formatted ~= "" then
+		return formatted
+	end
+
+	local ok2, legacy = xpcall(function()
+		return SerializeRoot(data, true)
+	end, errHandler)
+	if ok2 then
+		return legacy
+	end
+	return compact
+end

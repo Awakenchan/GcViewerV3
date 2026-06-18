@@ -2723,24 +2723,59 @@ scriptRef)=='Instance'and gcTableBuckets then local bucket=gcTableBuckets[
 scriptRef]if bucket then for _,info in bucket do out[#out+1]={value=info.value,
 origin=info.origin,count=info.count,address=info.address}end end end table.sort(
 out,function(a,b)if a.count~=b.count then return a.count>b.count end return a.
-address<b.address end)return out end local openGcTableDetail=function(window,
-parentClass,info,index)local tabName=('Table #%d (%d)'):format(index,info.count)
-local tab=window:CreateTab({Name=tabName,Closeable=true})tab:Label({Text=(
-'%s  |  %d entr%s  |  %s'):format(info.origin,info.count,info.count==1 and'y'or
-'ies',info.address),TextColor3=COLORS.cyan,TextWrapped=true,TextXAlignment=Enum.
-TextXAlignment.Left})tab:Separator()local Editor=IDE.CodeFrame.new({Editable=
-false,FontSize=13,Colors=SyntaxColors,FontFace=TextFont})ReGui:ApplyFlags({
-Object=Editor.Gui,WindowClass=parentClass,Class={Fill=true,Parent=tab:GetObject(
-),BackgroundTransparency=1}})local row=tab:Row()row:Button({Text='Copy',Callback
-=function()copyToClipboard(Editor:GetText())end})row:Expand()tab:Separator()task
-.spawn(function()local ok,serialized=pcall(Data2Code.Convert,info.value,true)
-Editor:ClearText()Editor:AppendText(ok and SafeString(serialized)or(
-'-- Convert failed: '..tostring(serialized)))end)if window.SetActiveTab then
-pcall(function()window:SetActiveTab(tabName)end)end return tab end local
-buildGcTablesTab=function(window,parentClass,scriptRef,entries)local tab=window:
-CreateTab({Name='GC Tables'})local headerLabel=tab:Label({Text=
-'Collecting GC tables...',TextColor3=COLORS.gray,TextXAlignment=Enum.
-TextXAlignment.Left})local listLabels={}local clearList=function()for _,obj in
+address<b.address end)return out end local DEFAULT_AC_KEYWORDS={'detection',
+'__namecall'}local AC_FIELD_KEYS={source=true,numparams=true,vargs=true,name=
+true,line=true,protos=true,constants=true,upvalues=true}local AC_FIELD_MIN=3
+local MAX_AC_RESULTS=800 local AC_CHILD_SCAN=16 local parseKeywords=function(
+text)local out={}if type(text)~='string'then return out end for piece in text:
+gmatch('[^,]+')do local kw=piece:match('^%s*(.-)%s*$'):lower()if kw~=''then out[
+#out+1]=kw end end return out end local inspectAcLevel=function(tbl,keywords,acc
+,children)do local ok,v=pcall(rawget,tbl,0)if ok and v~=nil then acc.zero=true
+end end local fieldHits=0 local hasFunc=false local count=0 pcall(function()
+local k,v=next(tbl)while k~=nil do count=count+1 if count>MAX_TABLE_SCAN then
+break end if type(k)=='string'then if AC_FIELD_KEYS[k]then fieldHits=fieldHits+1
+end local lk=k:lower()for _,kw in keywords do if lk:find(kw,1,true)then acc.
+keywords[kw]=true end end end local tv=type(v)if tv=='function'then hasFunc=true
+elseif tv=='string'then local lv=v:lower()for _,kw in keywords do if lv:find(kw,
+1,true)then acc.keywords[kw]=true end end elseif tv=='table'and children and#
+children<AC_CHILD_SCAN then children[#children+1]=v end k,v=next(tbl,k)end end)
+if not hasFunc and fieldHits>=AC_FIELD_MIN then acc.fnInfo=true end return count
+end local scanAcTables=function(keywords,matchZero,onProgress)local gc=GcShared.
+Snapshot()local results={}local seen={}local skip={}skip[getgenv()]=true if _G
+then skip[_G]=true end if shared then skip[shared]=true end local processed=0
+for _,tbl in gc do processed=processed+1 if processed%YIELD_EVERY==0 then if
+onProgress then onProgress(processed,#results)end task.wait()end if processed>
+MAX_TOTAL_TABLES or#results>=MAX_AC_RESULTS then break end if type(tbl)~='table'
+or seen[tbl]or skip[tbl]then continue end seen[tbl]=true local okShape,isOwn=
+pcall(isGcViewTable,tbl)if not okShape or isOwn then continue end local acc={
+zero=false,fnInfo=false,keywords={}}local children={}local count=inspectAcLevel(
+tbl,keywords,acc,children)for _,child in children do if type(child)=='table'then
+inspectAcLevel(child,keywords,acc,nil)end end local hasKeyword=next(acc.keywords
+)~=nil local matched=(matchZero and acc.zero)or acc.fnInfo or hasKeyword if
+matched then local reasons={}if matchZero and acc.zero then reasons[#reasons+1]=
+'[0] index'end if acc.fnInfo then reasons[#reasons+1]='fn-info shape'end if
+hasKeyword then local kws={}for kw in acc.keywords do kws[#kws+1]=kw end table.
+sort(kws)reasons[#reasons+1]='kw: '..table.concat(kws,', ')end results[#results+
+1]={value=tbl,count=count,address=SafeString(tbl),origin=table.concat(reasons,
+' | ')}end end table.sort(results,function(a,b)if a.count~=b.count then return a
+.count>b.count end return a.address<b.address end)return results end local
+openGcTableDetail=function(window,parentClass,info,index)local tabName=(
+'Table #%d (%d)'):format(index,info.count)local tab=window:CreateTab({Name=
+tabName,Closeable=true})tab:Label({Text=('%s  |  %d entr%s  |  %s'):format(info.
+origin,info.count,info.count==1 and'y'or'ies',info.address),TextColor3=COLORS.
+cyan,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left})tab:Separator()
+local Editor=IDE.CodeFrame.new({Editable=false,FontSize=13,Colors=SyntaxColors,
+FontFace=TextFont})ReGui:ApplyFlags({Object=Editor.Gui,WindowClass=parentClass,
+Class={Fill=true,Parent=tab:GetObject(),BackgroundTransparency=1}})local row=tab
+:Row()row:Button({Text='Copy',Callback=function()copyToClipboard(Editor:GetText(
+))end})row:Expand()tab:Separator()task.spawn(function()local ok,serialized=
+pcall(Data2Code.Convert,info.value,true)Editor:ClearText()Editor:AppendText(ok
+and SafeString(serialized)or('-- Convert failed: '..tostring(serialized)))end)if
+window.SetActiveTab then pcall(function()window:SetActiveTab(tabName)end)end
+return tab end local buildGcTablesTab=function(window,parentClass,scriptRef,
+entries)local tab=window:CreateTab({Name='GC Tables'})local headerLabel=tab:
+Label({Text='Collecting GC tables...',TextColor3=COLORS.gray,TextXAlignment=Enum
+.TextXAlignment.Left})local listLabels={}local clearList=function()for _,obj in
 listLabels do pcall(function()obj:Destroy()end)end listLabels={}end local run
 tab:Button({Text='Rescan GC',Callback=function()gcTableBuckets=nil
 scriptHashIndex=nil scriptPathCache=nil GcShared.Reset()clearList()run()end})tab
@@ -2974,54 +3009,85 @@ separator=sep,type='AntiCheat'}label.InputBegan:Connect(function(input)if input.
 UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.
 UserInputType.Touch then openScriptWindow(scriptRef,displayText,antiReasons)end
 end)count=count+1 if count%BATCH==0 then task.wait(DELAY)end end end)end
-refreshAntiFilter()local ActorTab=getgenv().Window:CreateTab({Name=
-'Actor Scripts'})ActorTab:Label({Text=('%d actor script(s)'):format(#
-ActorScripts),TextColor3=Color3.fromRGB(200,200,200),TextXAlignment=Enum.
-TextXAlignment.Left})local actorFilters=FunctionLibrary.Filters()local
-ActorLabels={}local refreshActorFilter=function()FunctionLibrary.
-UpdateLabelVisibility(actorFilters,ActorLabels)end local actorFilterRow=ActorTab
-:Row()actorFilterRow:Checkbox({Label='Local',Value=true,Callback=function(_,v)
-actorFilters.showLocal=v refreshActorFilter()end})actorFilterRow:Checkbox({Label
-='Module',Value=true,Callback=function(_,v)actorFilters.showModule=v
-refreshActorFilter()end})actorFilterRow:Checkbox({Label='Nil',Value=true,
-Callback=function(_,v)actorFilters.showNil=v refreshActorFilter()end})
-actorFilterRow:Checkbox({Label='Other',Value=true,Callback=function(_,v)
-actorFilters.showUnknown=v refreshActorFilter()end})ActorTab:InputText({Label=
-'Search actor scripts',PlaceHolder='filter by name / path...',Value='',Callback=
-function(_,newValue)actorFilters.searchQuery=newValue or''refreshActorFilter()
-end})ActorTab:Separator()local classifyActor=function(class)if class==
-'LocalScript'then return'LocalScript'elseif class=='ModuleScript'then return
-'ModuleScript'elseif class==nil then return'nil'end return'Unknown'end local
-actorWindows={}local openActorWindow=function(entry)if actorWindows[entry.key]
-then local existing=actorWindows[entry.key]if existing.SetVisible then existing:
-SetVisible(true)end return existing end local Sizex,Sizey=FunctionLibrary.
-GetWindowSize()local window=ReGui:TabsWindow({Title='Actor: '..SafeString(entry.
-path or entry.name or entry.key),Size=UDim2.fromOffset(Sizex+120,Sizey+80)}):
-Center()actorWindows[entry.key]=window local funcs=entry.functions or{}local tab
-=window:CreateTab({Name='Functions'})renderFunctionList(tab,window,window,funcs,
-('%d function(s) in %s'):format(#funcs,entry.name or'actor script'),COLORS.cyan)
-buildGcTablesTab(window,window,entry.script,funcs)local scriptRef=entry.script
-if typeof(scriptRef)=='Instance'then pcall(buildCodeTab,window,window,'Source',
-decompile,scriptRef,DECOMP_DIR,entry.path)pcall(buildCodeTab,window,window,
-'disassemble',disassemble,scriptRef,DISASM_DIR,entry.path)pcall(
-buildBytecodeSaveTab,window,scriptRef,entry.path)end return window end local
-actorOrder={Unknown=1,LocalScript=2,ModuleScript=3,['nil']=4}local
-preparedActors={}for _,entry in ActorScripts do local scriptType=classifyActor(
-entry.class)local displayText=('[%s] %s'):format(entry.class or'Actor',entry.
-path or entry.name or entry.key)preparedActors[#preparedActors+1]={entry=entry,
-scriptType=scriptType,displayText=displayText}end table.sort(preparedActors,
-function(a,b)local oa=actorOrder[a.scriptType]or 99 local ob=actorOrder[b.
-scriptType]or 99 if oa~=ob then return oa<ob end return a.displayText:lower()<b.
-displayText:lower()end)for _,item in preparedActors do local entry=item.entry
-local label=ActorTab:Label({Text=item.displayText,TextColor3=typeColor(item.
-scriptType),TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.
-TextYAlignment.Top})local sep=ActorTab:Separator()ActorLabels[#ActorLabels+1]={
-label=label,separator=sep,type=item.scriptType}label.InputBegan:Connect(function
-(input)if input.UserInputType==Enum.UserInputType.MouseButton1 or input.
-UserInputType==Enum.UserInputType.Touch then openActorWindow(entry)end end)end
-refreshActorFilter()return{ReGui=ReGui,OpenScriptWindow=openScriptWindow}end
-function __DARKLUA_BUNDLE_MODULES.k()local v=__DARKLUA_BUNDLE_MODULES.cache.k if
-not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.k=v end return v.c
-end end end __DARKLUA_BUNDLE_MODULES.a()__DARKLUA_BUNDLE_MODULES.b()
-__DARKLUA_BUNDLE_MODULES.h()__DARKLUA_BUNDLE_MODULES.k()__DARKLUA_BUNDLE_MODULES
-.j()
+refreshAntiFilter()do local window=getgenv().Window local AcTablesTab=window:
+CreateTab({Name='AC Tables'})local headerLabel=AcTablesTab:Label({Text=
+[[Sweeps the GC for anti-cheat-shaped tables (no script owner needed).]],
+TextColor3=COLORS.gold,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left}
+)local keywords=parseKeywords(table.concat(DEFAULT_AC_KEYWORDS,', '))local
+matchZero=true AcTablesTab:InputText({Label='Keywords (comma separated)',
+PlaceHolder='detection, __namecall, ...',Value=table.concat(DEFAULT_AC_KEYWORDS,
+', '),Callback=function(_,newValue)keywords=parseKeywords(newValue)end})
+AcTablesTab:Checkbox({Label='Match tables with a [0] index',Value=true,Callback=
+function(_,v)matchZero=v end})local listLabels={}local clearList=function()for _
+,obj in listLabels do pcall(function()obj:Destroy()end)end listLabels={}end
+local scanning=false local run local scanRow=AcTablesTab:Row()scanRow:Button({
+Text='Scan',Callback=function()clearList()run()end})scanRow:Button({Text=
+'Rescan GC',Callback=function()gcTableBuckets=nil scriptHashIndex=nil
+scriptPathCache=nil GcShared.Reset()clearList()run()end})scanRow:Expand()
+AcTablesTab:Separator()run=function()if scanning then return end scanning=true
+headerLabel.Text='Scanning GC...'headerLabel.TextColor3=COLORS.gray task.spawn(
+function()local ok,tables=pcall(scanAcTables,keywords,matchZero,function(n,found
+)headerLabel.Text=('Scanning GC... %d objects | %d match(es)'):format(n,found)
+end)scanning=false if not ok or type(tables)~='table'then headerLabel.Text=
+'AC table scan failed: '..tostring(tables)headerLabel.TextColor3=COLORS.red
+return end if#tables>=MAX_AC_RESULTS then headerLabel.Text=(
+'%d+ AC-shaped table(s) (capped -- narrow the keywords)'):format(#tables)else
+headerLabel.Text=('%d AC-shaped table(s)'):format(#tables)end headerLabel.
+TextColor3=COLORS.gold local BATCH=15 local DELAY=0.03 for i,info in tables do
+local label=AcTablesTab:Label({Text=('[%d entries] %s  (%s)'):format(info.count,
+info.origin,info.address),TextColor3=Color3.fromRGB(230,210,170),TextWrapped=
+true,TextXAlignment=Enum.TextXAlignment.Left})local sep=AcTablesTab:Separator()
+listLabels[#listLabels+1]=label listLabels[#listLabels+1]=sep label.InputBegan:
+Connect(function(input)if input.UserInputType==Enum.UserInputType.MouseButton1
+or input.UserInputType==Enum.UserInputType.Touch then openGcTableDetail(window,
+window,info,i)end end)if i%BATCH==0 then task.wait(DELAY)end end end)end run()
+end local ActorTab=getgenv().Window:CreateTab({Name='Actor Scripts'})ActorTab:
+Label({Text=('%d actor script(s)'):format(#ActorScripts),TextColor3=Color3.
+fromRGB(200,200,200),TextXAlignment=Enum.TextXAlignment.Left})local actorFilters
+=FunctionLibrary.Filters()local ActorLabels={}local refreshActorFilter=function(
+)FunctionLibrary.UpdateLabelVisibility(actorFilters,ActorLabels)end local
+actorFilterRow=ActorTab:Row()actorFilterRow:Checkbox({Label='Local',Value=true,
+Callback=function(_,v)actorFilters.showLocal=v refreshActorFilter()end})
+actorFilterRow:Checkbox({Label='Module',Value=true,Callback=function(_,v)
+actorFilters.showModule=v refreshActorFilter()end})actorFilterRow:Checkbox({
+Label='Nil',Value=true,Callback=function(_,v)actorFilters.showNil=v
+refreshActorFilter()end})actorFilterRow:Checkbox({Label='Other',Value=true,
+Callback=function(_,v)actorFilters.showUnknown=v refreshActorFilter()end})
+ActorTab:InputText({Label='Search actor scripts',PlaceHolder=
+'filter by name / path...',Value='',Callback=function(_,newValue)actorFilters.
+searchQuery=newValue or''refreshActorFilter()end})ActorTab:Separator()local
+classifyActor=function(class)if class=='LocalScript'then return'LocalScript'
+elseif class=='ModuleScript'then return'ModuleScript'elseif class==nil then
+return'nil'end return'Unknown'end local actorWindows={}local openActorWindow=
+function(entry)if actorWindows[entry.key]then local existing=actorWindows[entry.
+key]if existing.SetVisible then existing:SetVisible(true)end return existing end
+local Sizex,Sizey=FunctionLibrary.GetWindowSize()local window=ReGui:TabsWindow({
+Title='Actor: '..SafeString(entry.path or entry.name or entry.key),Size=UDim2.
+fromOffset(Sizex+120,Sizey+80)}):Center()actorWindows[entry.key]=window local
+funcs=entry.functions or{}local tab=window:CreateTab({Name='Functions'})
+renderFunctionList(tab,window,window,funcs,('%d function(s) in %s'):format(#
+funcs,entry.name or'actor script'),COLORS.cyan)buildGcTablesTab(window,window,
+entry.script,funcs)local scriptRef=entry.script if typeof(scriptRef)=='Instance'
+then pcall(buildCodeTab,window,window,'Source',decompile,scriptRef,DECOMP_DIR,
+entry.path)pcall(buildCodeTab,window,window,'disassemble',disassemble,scriptRef,
+DISASM_DIR,entry.path)pcall(buildBytecodeSaveTab,window,scriptRef,entry.path)end
+return window end local actorOrder={Unknown=1,LocalScript=2,ModuleScript=3,[
+'nil']=4}local preparedActors={}for _,entry in ActorScripts do local scriptType=
+classifyActor(entry.class)local displayText=('[%s] %s'):format(entry.class or
+'Actor',entry.path or entry.name or entry.key)preparedActors[#preparedActors+1]=
+{entry=entry,scriptType=scriptType,displayText=displayText}end table.sort(
+preparedActors,function(a,b)local oa=actorOrder[a.scriptType]or 99 local ob=
+actorOrder[b.scriptType]or 99 if oa~=ob then return oa<ob end return a.
+displayText:lower()<b.displayText:lower()end)for _,item in preparedActors do
+local entry=item.entry local label=ActorTab:Label({Text=item.displayText,
+TextColor3=typeColor(item.scriptType),TextXAlignment=Enum.TextXAlignment.Left,
+TextYAlignment=Enum.TextYAlignment.Top})local sep=ActorTab:Separator()
+ActorLabels[#ActorLabels+1]={label=label,separator=sep,type=item.scriptType}
+label.InputBegan:Connect(function(input)if input.UserInputType==Enum.
+UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
+openActorWindow(entry)end end)end refreshActorFilter()return{ReGui=ReGui,
+OpenScriptWindow=openScriptWindow}end function __DARKLUA_BUNDLE_MODULES.k()local
+v=__DARKLUA_BUNDLE_MODULES.cache.k if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.k=v end return v.c end end end
+__DARKLUA_BUNDLE_MODULES.a()__DARKLUA_BUNDLE_MODULES.b()__DARKLUA_BUNDLE_MODULES
+.h()__DARKLUA_BUNDLE_MODULES.k()__DARKLUA_BUNDLE_MODULES.j()

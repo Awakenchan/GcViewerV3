@@ -1182,3 +1182,4 @@ function Data2Code.Convert(data, pretty)
 	end
 	return compact
 end
+return Data2Code

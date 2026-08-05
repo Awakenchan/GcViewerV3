@@ -1,0 +1,1135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>GcView</title>
+<style>
+    :root {
+        --bg: #09090b;
+        --panel: #0d0d10;
+        --panel-2: #131317;
+        --raised: #17171b;
+        --border: #1f1f23;
+        --border-2: #26262c;
+        --text: #ededf0;
+        --muted: #9a9aa3;
+        --dim: #6b6b74;
+        --accent: #a78bfa;
+        --green: #7ee787;
+        --gold: #e3b341;
+        --red: #f2708a;
+        --cyan: #56d4dd;
+        --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+        --sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+        margin: 0;
+        height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    body { display: flex; flex-direction: column; }
+
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+        background: var(--border-2);
+        border-radius: 8px;
+        border: 2px solid transparent;
+        background-clip: content-box;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: #3a3a44; background-clip: content-box; }
+    ::-webkit-scrollbar-corner { background: transparent; }
+    * { scrollbar-width: thin; scrollbar-color: var(--border-2) transparent; }
+
+    .topbar {
+        display: flex;
+        align-items: center;
+        height: 64px;
+        padding: 0 24px;
+        flex: 0 0 auto;
+        gap: 18px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-weight: 600;
+        font-size: 15px;
+        letter-spacing: -0.015em;
+        width: 220px;
+        flex: 0 0 auto;
+    }
+
+    .bolt {
+        width: 26px; height: 26px;
+        display: grid; place-items: center;
+        font-size: 15px;
+        color: var(--text);
+    }
+
+    .searchwrap { flex: 1 1 auto; display: flex; justify-content: center; }
+
+    .search {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        width: 100%;
+        max-width: 560px;
+        background: var(--panel-2);
+        border: 1px solid var(--border-2);
+        border-radius: 9px;
+        padding: 0 8px 0 13px;
+        height: 38px;
+    }
+
+    .search:focus-within { border-color: #33333d; }
+    .search svg { flex: 0 0 auto; opacity: 0.5; }
+
+    .search input {
+        flex: 1 1 auto;
+        background: none;
+        border: none;
+        outline: none;
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        min-width: 0;
+    }
+
+    kbd {
+        font-family: var(--sans);
+        font-size: 11px;
+        color: var(--muted);
+        background: var(--raised);
+        border: 1px solid var(--border-2);
+        border-radius: 5px;
+        padding: 2px 7px;
+        cursor: pointer;
+    }
+    kbd:hover { color: var(--text); border-color: #3a3a44; }
+
+    .right { width: 220px; flex: 0 0 auto; display: flex; align-items: center; justify-content: flex-end; gap: 9px; }
+
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
+    .dot.on { background: var(--green); }
+    .dot.err { background: var(--red); }
+    .status { font-size: 12px; color: var(--muted); }
+
+    nav.rail {
+        display: flex;
+        align-items: center;
+        gap: 26px;
+        padding: 0 22px;
+        height: 44px;
+        border-bottom: 1px solid var(--border);
+        flex: 0 0 auto;
+    }
+
+    .navtab {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        height: 100%;
+        font-size: 13.5px;
+        color: var(--muted);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+        white-space: nowrap;
+    }
+    .navtab:hover { color: var(--text); }
+    .navtab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+    .navtab .count { font-size: 11px; color: var(--dim); font-family: var(--mono); }
+
+    main { flex: 1 1 auto; display: flex; min-height: 0; }
+
+    aside {
+        width: 320px;
+        flex: 0 0 auto;
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        padding-top: 18px;
+    }
+
+    .grouplabel {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+        color: var(--dim);
+        font-weight: 600;
+        padding: 0 22px 10px;
+    }
+
+    .types { display: flex; gap: 5px; padding: 0 18px 12px; flex-wrap: wrap; }
+    .type {
+        border: 1px solid var(--border-2);
+        background: transparent;
+        color: var(--dim);
+        border-radius: 6px;
+        padding: 3px 9px;
+        font-size: 11px;
+        font-family: var(--mono);
+        cursor: pointer;
+    }
+    .type:hover { color: var(--muted); }
+    .type.on { color: var(--text); border-color: #3a3a44; background: var(--raised); }
+
+    .filter { padding: 0 18px 14px; }
+    .filter input {
+        width: 100%;
+        background: var(--panel-2);
+        border: 1px solid var(--border-2);
+        border-radius: 8px;
+        padding: 8px 11px;
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 12px;
+        outline: none;
+    }
+    .filter input:focus { border-color: #33333d; }
+
+    .list { overflow-y: auto; flex: 1 1 auto; padding: 0 12px 24px; }
+
+    .item {
+        padding: 8px 10px;
+        border-radius: 7px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .item:hover { background: var(--panel); }
+    .item.active { background: var(--raised); }
+
+    .item .path {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        word-break: break-all;
+        line-height: 1.5;
+    }
+    .item.active .path { color: var(--text); }
+
+    .meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+    .badge {
+        font-size: 10px;
+        font-family: var(--mono);
+        padding: 1.5px 6px;
+        border-radius: 4px;
+        background: var(--raised);
+        border: 1px solid var(--border);
+        color: var(--muted);
+    }
+    .badge.local { color: var(--green); }
+    .badge.module { color: var(--accent); }
+    .badge.actor { color: var(--cyan); }
+    .badge.nil { color: var(--red); }
+    .badge.ac { color: var(--gold); }
+
+    section.content { flex: 1 1 auto; display: flex; min-width: 0; min-height: 0; }
+    .doc { flex: 1 1 auto; overflow-y: auto; min-width: 0; padding: 40px 48px 100px; }
+    .doc > * { max-width: 900px; }
+
+    h1 {
+        margin: 0 0 14px;
+        font-size: 34px;
+        font-weight: 700;
+        letter-spacing: -0.03em;
+        word-break: break-all;
+        line-height: 1.18;
+    }
+
+    h2 {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin: 38px 0 14px;
+    }
+
+    .subline { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; margin-bottom: 22px; }
+
+    .tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--border); margin-bottom: 26px; }
+    .tab {
+        padding: 0 0 11px;
+        font-size: 13.5px;
+        color: var(--muted);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -1px;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+
+    pre {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.7;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        padding: 18px 20px;
+        overflow-x: auto;
+        white-space: pre;
+        tab-size: 4;
+    }
+
+    .tok-kw { color: #f86d7c; }
+    .tok-str { color: #acf094; }
+    .tok-num { color: #ffc600; }
+    .tok-com { color: #666672; font-style: italic; }
+    .tok-glob { color: #56d4dd; }
+    .tok-fn { color: #d2a8ff; }
+
+    .tablewrap {
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        overflow: hidden;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th {
+        text-align: left;
+        padding: 12px 16px;
+        background: var(--panel);
+        color: var(--text);
+        font-weight: 600;
+        font-size: 13px;
+        border-bottom: 1px solid var(--border);
+    }
+    thead th + th { border-left: 1px solid var(--border); }
+    tbody td {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border);
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 12px;
+        vertical-align: top;
+    }
+    tbody td + td { border-left: 1px solid var(--border); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody td.name, .valtext { color: var(--text); }
+    tbody tr.clickable { cursor: pointer; }
+    tbody tr.clickable:hover td { background: var(--panel); color: var(--text); }
+
+    td pre {
+        border: none;
+        background: transparent;
+        padding: 0;
+        border-radius: 0;
+        font-size: 12px;
+        line-height: 1.6;
+        max-height: 340px;
+        overflow: auto;
+    }
+
+    .chipcode {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        background: var(--raised);
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 2px 7px;
+        color: var(--text);
+    }
+
+    .codewrap { position: relative; }
+
+    .copybtn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: var(--panel-2);
+        border: 1px solid var(--border-2);
+        color: var(--muted);
+        border-radius: 7px;
+        padding: 5px 9px;
+        font-family: var(--sans);
+        font-size: 11.5px;
+        cursor: pointer;
+        line-height: 1;
+    }
+    .copybtn:hover { color: var(--text); border-color: #3a3a44; background: var(--raised); }
+    .copybtn.done { color: var(--green); border-color: #2c4634; }
+
+    .codewrap .copybtn {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        opacity: 0;
+        transition: opacity 0.12s;
+    }
+    .codewrap:hover .copybtn, .codewrap .copybtn.done { opacity: 1; }
+
+    .h2row { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 34px 0 14px; }
+    .h2row h2 { margin: 0; }
+
+    .setting {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        padding: 16px 18px;
+        border: 1px solid var(--border);
+        border-radius: 11px;
+        margin-bottom: 10px;
+        background: var(--panel);
+    }
+    .setting .body { flex: 1 1 auto; min-width: 0; }
+    .setting .title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .setting .desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+    .toggle {
+        flex: 0 0 auto;
+        width: 42px; height: 24px;
+        border-radius: 999px;
+        border: 1px solid var(--border-2);
+        background: var(--panel-2);
+        position: relative;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+    }
+    .toggle::after {
+        content: "";
+        position: absolute;
+        top: 3px; left: 3px;
+        width: 16px; height: 16px;
+        border-radius: 50%;
+        background: var(--dim);
+        transition: transform 0.15s, background 0.15s;
+    }
+    .toggle.on { background: #2b2350; border-color: var(--accent); }
+    .toggle.on::after { transform: translateX(18px); background: var(--accent); }
+
+    .settingrow { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+    .settingrow input {
+        flex: 1 1 auto;
+        background: var(--panel-2);
+        border: 1px solid var(--border-2);
+        border-radius: 8px;
+        padding: 9px 12px;
+        color: var(--text);
+        font-family: var(--mono);
+        font-size: 12.5px;
+        outline: none;
+    }
+    .settingrow input:focus { border-color: #33333d; }
+
+    .toc { width: 244px; flex: 0 0 auto; padding: 40px 24px; }
+    .toc .head { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 14px; }
+    .toc .links { border-left: 1px solid var(--border); }
+    .toc a {
+        display: block;
+        font-size: 13.5px;
+        color: var(--muted);
+        text-decoration: none;
+        padding: 6px 0 6px 14px;
+        margin-left: -1px;
+        border-left: 1px solid transparent;
+        cursor: pointer;
+    }
+    .toc a:hover { color: var(--text); }
+    .toc a.active { color: var(--text); border-left-color: var(--text); }
+
+    .empty { color: var(--dim); font-size: 13px; padding: 44px 0; }
+    .back { color: var(--muted); font-size: 12.5px; cursor: pointer; margin-bottom: 16px; display: inline-block; }
+    .back:hover { color: var(--text); }
+    .reasons { margin-top: 16px; color: var(--gold); font-family: var(--mono); font-size: 12px; line-height: 1.7; }
+
+    @media (max-width: 1180px) { .toc { display: none; } }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+    <div class="brand"><span class="bolt">&#9889;</span> GcView</div>
+    <div class="searchwrap">
+        <div class="search">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
+                <circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" />
+            </svg>
+            <input type="text" id="url" value="ws://127.0.0.1:8765" spellcheck="false" />
+            <kbd id="connect">Connect</kbd>
+        </div>
+    </div>
+    <div class="right">
+        <span class="dot" id="dot"></span>
+        <span class="status" id="status">disconnected</span>
+    </div>
+</div>
+
+<nav class="rail" id="sections"></nav>
+
+<main>
+    <aside>
+        <div class="grouplabel" id="grouplabel">Scripts</div>
+        <div class="types" id="types"></div>
+        <div class="filter"><input type="text" id="filter" placeholder="filter by path or name" spellcheck="false" /></div>
+        <div class="list" id="list"><div class="empty" style="padding-left:10px">not connected</div></div>
+    </aside>
+
+    <section class="content">
+        <div class="doc" id="doc">
+            <h1 id="title">No script selected</h1>
+            <div class="subline" id="subtitle"></div>
+            <div class="empty">Connect to the relay, then pick a script from the sidebar.</div>
+        </div>
+        <div class="toc" id="toc"></div>
+    </section>
+</main>
+
+<script>
+(function () {
+    const SECTIONS = [
+        { id: "scripts", label: "Scripts" },
+        { id: "anticheat", label: "Anti-Cheat" },
+        { id: "actors", label: "Actors" },
+        { id: "unknown", label: "Unknown" },
+        { id: "settings", label: "Settings" },
+    ];
+    const TABS = ["Source", "Functions", "Info"];
+    const TYPES = [
+        { id: "local", label: "LocalScript" },
+        { id: "module", label: "ModuleScript" },
+        { id: "actor", label: "Actor" },
+        { id: "nil", label: "nil" },
+        { id: "other", label: "other" },
+    ];
+
+    const KEYWORDS = new Set(["and","break","do","else","elseif","end","false","for","function","if","in",
+        "local","nil","not","or","repeat","return","then","true","until","while","continue","export","type"]);
+    const GLOBALS = new Set(["game","workspace","script","shared","math","string","table","task","os","coroutine",
+        "debug","bit32","utf8","buffer","Instance","Vector3","Vector2","CFrame","Color3","UDim2","UDim","Enum",
+        "print","warn","error","pcall","xpcall","select","typeof","type","tostring","tonumber","next","pairs",
+        "ipairs","setmetatable","getmetatable","rawget","rawset","rawequal","rawlen","unpack","require","assert","tick"]);
+
+    const el = (id) => document.getElementById(id);
+    const dot = el("dot"), statusEl = el("status"), listEl = el("list"), docEl = el("doc");
+
+    let socket = null, nextId = 1;
+    const waiting = new Map();
+
+    let section = "scripts";
+    let tab = "Source";
+    let entries = [];
+    let selected = null;
+    let counts = {};
+    let activeTypes = new Set(TYPES.map((t) => t.id));
+    let fnDetail = null;
+
+    function esc(s) {
+        return String(s === undefined || s === null ? "" : s)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function highlight(src) {
+        let out = "", i = 0;
+        const n = src.length;
+
+        const isName = (c) => /[A-Za-z0-9_]/.test(c);
+        const push = (cls, text) => { out += cls ? '<span class="' + cls + '">' + esc(text) + "</span>" : esc(text); };
+
+        while (i < n) {
+            const c = src[i];
+
+            if (c === "-" && src[i + 1] === "-") {
+                let j = i + 2;
+                if (src[j] === "[" && src[j + 1] === "[") {
+                    const close = src.indexOf("]]", j);
+                    j = close === -1 ? n : close + 2;
+                } else {
+                    while (j < n && src[j] !== "\n") j++;
+                }
+                push("tok-com", src.slice(i, j)); i = j; continue;
+            }
+
+            if (c === "[" && (src[i + 1] === "[" || src[i + 1] === "=")) {
+                const m = /^\[(=*)\[/.exec(src.slice(i));
+                if (m) {
+                    const close = "]" + m[1] + "]";
+                    const at = src.indexOf(close, i + m[0].length);
+                    const j = at === -1 ? n : at + close.length;
+                    push("tok-str", src.slice(i, j)); i = j; continue;
+                }
+            }
+
+            if (c === '"' || c === "'") {
+                let j = i + 1;
+                while (j < n) {
+                    if (src[j] === "\\") { j += 2; continue; }
+                    if (src[j] === c || src[j] === "\n") { j++; break; }
+                    j++;
+                }
+                push("tok-str", src.slice(i, j)); i = j; continue;
+            }
+
+            if (/[0-9]/.test(c) || (c === "." && /[0-9]/.test(src[i + 1] || ""))) {
+                let j = i;
+                while (j < n && /[0-9a-fA-FxX.eE_+-]/.test(src[j])) {
+                    if ((src[j] === "+" || src[j] === "-") && !/[eE]/.test(src[j - 1])) break;
+                    j++;
+                }
+                push("tok-num", src.slice(i, j)); i = j; continue;
+            }
+
+            if (isName(c) && !/[0-9]/.test(c)) {
+                let j = i;
+                while (j < n && isName(src[j])) j++;
+                const word = src.slice(i, j);
+                let k = j;
+                while (k < n && /\s/.test(src[k])) k++;
+                if (KEYWORDS.has(word)) push("tok-kw", word);
+                else if (src[k] === "(" || src[k] === '"' || src[k] === "'") push("tok-fn", word);
+                else if (GLOBALS.has(word)) push("tok-glob", word);
+                else push(null, word);
+                i = j; continue;
+            }
+
+            push(null, c); i++;
+        }
+        return out;
+    }
+
+    function setStatus(text, state) {
+        statusEl.textContent = text;
+        dot.className = "dot" + (state ? " " + state : "");
+    }
+
+    function send(payload) {
+        if (!socket || socket.readyState !== WebSocket.OPEN) return Promise.reject(new Error("not connected"));
+        return new Promise((resolve, reject) => {
+            const id = nextId++;
+            waiting.set(id, { resolve, reject });
+            socket.send(JSON.stringify(Object.assign({ type: "request", id }, payload)));
+            setTimeout(() => {
+                if (waiting.has(id)) { waiting.delete(id); reject(new Error("timed out")); }
+            }, 25000);
+        });
+    }
+
+    function connect() {
+        const url = el("url").value.trim();
+        if (!url) return;
+        try { socket = new WebSocket(url); } catch (err) { setStatus(String(err), "err"); return; }
+        setStatus("connecting", null);
+
+        socket.onopen = () => {
+            setStatus("connected", "on");
+            socket.send(JSON.stringify({ type: "hello", role: "web" }));
+            refresh();
+        };
+        socket.onclose = () => setStatus("disconnected", null);
+        socket.onerror = () => setStatus("connection error", "err");
+
+        socket.onmessage = (event) => {
+            let msg;
+            try { msg = JSON.parse(event.data); } catch (err) { return; }
+
+            if (msg.type === "hello" && msg.info) {
+                counts = msg.info.counts || {};
+                setStatus(msg.info.executor + " · " + (msg.info.placeName || msg.info.placeId), "on");
+                renderSections();
+                return;
+            }
+            if (msg.type === "response") {
+                const pending = waiting.get(msg.id);
+                if (!pending) return;
+                waiting.delete(msg.id);
+                if (msg.ok) pending.resolve(msg.data); else pending.reject(new Error(msg.error || "failed"));
+            }
+        };
+    }
+
+    function renderSections() {
+        const box = el("sections");
+        box.innerHTML = "";
+        SECTIONS.forEach((s) => {
+            const t = document.createElement("div");
+            t.className = "navtab" + (s.id === section ? " active" : "");
+            const n = counts[s.id];
+            t.innerHTML = esc(s.label) + (typeof n === "number" ? ' <span class="count">' + n + "</span>" : "");
+            t.onclick = () => {
+                section = s.id; selected = null; fnDetail = null;
+                el("grouplabel").textContent = s.label;
+                renderSections();
+                if (s.id !== "settings") renderDoc();
+                loadList();
+            };
+            box.appendChild(t);
+        });
+    }
+
+    function renderTypes() {
+        const box = el("types");
+        box.innerHTML = "";
+        if (section === "unknown") return;
+        TYPES.forEach((t) => {
+            const b = document.createElement("button");
+            b.className = "type" + (activeTypes.has(t.id) ? " on" : "");
+            b.textContent = t.label;
+            b.onclick = () => {
+                if (activeTypes.has(t.id)) activeTypes.delete(t.id); else activeTypes.add(t.id);
+                renderTypes(); renderList();
+            };
+            box.appendChild(b);
+        });
+    }
+
+    function typeOf(entry) {
+        if (!entry.parented) return "nil";
+        const ctx = (entry.context || "").toLowerCase();
+        if (ctx.indexOf("local") === 0) return "local";
+        if (ctx.indexOf("module") === 0) return "module";
+        if (ctx.indexOf("actor") === 0) return "actor";
+        return "other";
+    }
+
+    function labelOf(entry) {
+        const t = typeOf(entry);
+        if (t === "nil") return ["nil", "nil"];
+        if (t === "local") return ["local", "LocalScript"];
+        if (t === "module") return ["module", "ModuleScript"];
+        if (t === "actor") return ["actor", "Actor"];
+        return ["", entry.context || "Unknown"];
+    }
+
+    function renderList() {
+        const q = el("filter").value.trim().toLowerCase();
+        listEl.innerHTML = "";
+
+        if (section === "unknown") {
+            const rows = entries.filter((f) => !q || (f.name + " " + f.source).toLowerCase().indexOf(q) !== -1);
+            if (!rows.length) { listEl.innerHTML = '<div class="empty" style="padding-left:10px">no orphan functions</div>'; return; }
+            rows.forEach((fn) => {
+                const row = document.createElement("div");
+                row.className = "item";
+                row.innerHTML = '<div class="path">' + esc(fn.name) + '</div><div class="meta">'
+                    + '<span class="badge">line ' + fn.line + '</span><span class="badge">params ' + fn.numparams + '</span></div>';
+                listEl.appendChild(row);
+            });
+            return;
+        }
+
+        const rows = entries.filter((e) => activeTypes.has(typeOf(e))
+            && (!q || (e.path + " " + e.name).toLowerCase().indexOf(q) !== -1));
+
+        if (!rows.length) { listEl.innerHTML = '<div class="empty" style="padding-left:10px">nothing matches</div>'; return; }
+
+        rows.forEach((entry) => {
+            const row = document.createElement("div");
+            row.className = "item" + (selected && selected.key === entry.key ? " active" : "");
+            const [cls, label] = labelOf(entry);
+            row.innerHTML = '<div class="path">' + esc(entry.path) + '</div><div class="meta">'
+                + '<span class="badge ' + cls + '">' + esc(label) + "</span>"
+                + (entry.isAntiCheat ? '<span class="badge ac">anti-cheat</span>' : "") + "</div>";
+            row.onclick = () => { selected = entry; fnDetail = null; renderList(); renderDoc(); loadTab(); };
+            listEl.appendChild(row);
+        });
+    }
+
+    function renderToc() {
+        const box = el("toc");
+        if (!selected) { box.innerHTML = ""; return; }
+        let html = '<div class="head"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+            + '<path d="M4 6h16M4 12h16M4 18h10"/></svg> On this page</div><div class="links">';
+        TABS.forEach((name) => {
+            html += '<a data-tab="' + name + '" class="' + (name === tab ? "active" : "") + '">' + name + "</a>";
+        });
+        box.innerHTML = html + "</div>";
+        Array.prototype.forEach.call(box.querySelectorAll("a"), (a) => {
+            a.onclick = () => { tab = a.getAttribute("data-tab"); fnDetail = null; renderDoc(); loadTab(); };
+        });
+    }
+
+    function renderDoc(body) {
+        docEl.innerHTML = "";
+        copyBuffers = {};
+
+        const h1 = document.createElement("h1");
+        h1.textContent = selected ? selected.path : "No script selected";
+        docEl.appendChild(h1);
+
+        const sub = document.createElement("div");
+        sub.className = "subline";
+        if (selected) {
+            const [cls, label] = labelOf(selected);
+            sub.innerHTML = '<span class="badge ' + cls + '">' + esc(label) + "</span>"
+                + (selected.isAntiCheat ? '<span class="badge ac">anti-cheat</span>' : "")
+                + '<span class="badge">' + esc(selected.key) + "</span>"
+                + copyButton(selected.path, "Copy path");
+        }
+        docEl.appendChild(sub);
+        wireCopy(sub);
+
+        if (selected) {
+            const tabs = document.createElement("div");
+            tabs.className = "tabs";
+            TABS.forEach((name) => {
+                const t = document.createElement("div");
+                t.className = "tab" + (name === tab ? " active" : "");
+                t.textContent = name;
+                t.onclick = () => { tab = name; fnDetail = null; renderDoc(); loadTab(); };
+                tabs.appendChild(t);
+            });
+            docEl.appendChild(tabs);
+        }
+
+        const holder = document.createElement("div");
+        holder.id = "pane";
+        holder.innerHTML = body || (selected ? '<div class="empty">loading</div>'
+            : '<div class="empty">Connect to the relay, then pick a script from the sidebar.</div>');
+        docEl.appendChild(holder);
+
+        renderToc();
+    }
+
+    const COPY_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
+        + '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+
+    let copyBuffers = {};
+    let copySeq = 0;
+
+    function copyButton(text, label) {
+        const id = "c" + ++copySeq;
+        copyBuffers[id] = text;
+        return '<button class="copybtn" data-copy="' + id + '">' + COPY_ICON + (label ? " " + esc(label) : "") + "</button>";
+    }
+
+    function writeClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            return navigator.clipboard.writeText(text);
+        }
+        return new Promise((resolve, reject) => {
+            const area = document.createElement("textarea");
+            area.value = text;
+            area.style.position = "fixed";
+            area.style.opacity = "0";
+            document.body.appendChild(area);
+            area.select();
+            let ok = false;
+            try { ok = document.execCommand("copy"); } catch (err) { ok = false; }
+            document.body.removeChild(area);
+            ok ? resolve() : reject(new Error("copy blocked"));
+        });
+    }
+
+    function wireCopy(root) {
+        Array.prototype.forEach.call((root || document).querySelectorAll("[data-copy]"), (btn) => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const text = copyBuffers[btn.getAttribute("data-copy")] || "";
+                const original = btn.innerHTML;
+                writeClipboard(text).then(() => {
+                    btn.classList.add("done");
+                    btn.innerHTML = COPY_ICON + " Copied";
+                    setTimeout(() => { btn.classList.remove("done"); btn.innerHTML = original; }, 1300);
+                }).catch(() => {
+                    btn.innerHTML = COPY_ICON + " Failed";
+                    setTimeout(() => { btn.innerHTML = original; }, 1300);
+                });
+            };
+        });
+    }
+
+    function codeBlock(raw) {
+        return '<div class="codewrap">' + copyButton(raw) + "<pre>" + highlight(raw) + "</pre></div>";
+    }
+
+    function safeFileName(name, ext) {
+        return String(name || "script").replace(/[\\/:*?"<>|\r\n]+/g, "_").slice(0, 90) + ext;
+    }
+
+    function downloadBlob(name, blob) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+    }
+
+    function humanBytes(n) {
+        if (n < 1024) return n + " B";
+        if (n < 1048576) return (n / 1024).toFixed(1) + " KB";
+        return (n / 1048576).toFixed(2) + " MB";
+    }
+
+    function fetchChunked(action, key, field, onProgress) {
+        let out = "";
+        let offset = 1;
+
+        function step() {
+            return send({ action: action, key: key, offset: offset, limit: 262144 }).then((data) => {
+                const piece = data[field] || "";
+                out += piece;
+
+                if (typeof data.total !== "number") return out;
+
+                if (onProgress) onProgress(out.length, data.total);
+                offset = data.nextOffset || offset + piece.length;
+                if (data.done || piece.length === 0 || out.length >= data.total) return out;
+                return step();
+            });
+        }
+        return step();
+    }
+
+    function setPane(html) {
+        const pane = el("pane");
+        if (!pane) return;
+        pane.innerHTML = html;
+        wireCopy(pane);
+    }
+
+    function renderSettings() {
+        docEl.innerHTML = "";
+        copyBuffers = {};
+        el("toc").innerHTML = "";
+
+        const h1 = document.createElement("h1");
+        h1.textContent = "Settings";
+        docEl.appendChild(h1);
+
+        const holder = document.createElement("div");
+        holder.id = "pane";
+        holder.innerHTML = '<div class="empty">loading</div>';
+        docEl.appendChild(holder);
+
+        send({ action: "config" }).then((data) => {
+            const cfg = data.config || {};
+            let html = '<div class="h2row"><h2>Plugins</h2></div>';
+
+            (data.plugins || []).forEach((p) => {
+                html += '<div class="setting"><div class="body"><div class="title">' + esc(p.title)
+                    + '</div><div class="desc">' + esc(p.description) + "</div></div>"
+                    + '<div class="toggle' + (p.enabled ? " on" : "") + '" data-key="' + esc(p.key) + '"></div></div>';
+            });
+
+            html += '<div class="h2row"><h2>Relay</h2></div>'
+                + '<div class="settingrow"><input type="text" id="cfgurl" value="' + esc(cfg.RelayUrl || "")
+                + '" spellcheck="false" /><button class="copybtn" id="saveurl">Save</button></div>'
+                + '<div class="h2row"><h2>Bridge server</h2></div>'
+                + '<div class="setting"><div class="body"><div class="title">Download node server</div>'
+                + '<div class="desc">Writes relay.js, index.html and package.json into the executor workspace so you '
+                + 'can run <span class="chipcode">npm i</span> then <span class="chipcode">node relay.js</span>.</div></div>'
+                + '<button class="copybtn" id="dlbridge">Download</button></div>'
+                + '<div class="empty" id="cfgnote" style="padding:6px 0"></div>';
+
+            setPane(html);
+
+            const note = el("cfgnote");
+            const say = (text, ok) => {
+                if (!note) return;
+                note.textContent = text;
+                note.style.color = ok === false ? "var(--red)" : ok ? "var(--green)" : "var(--dim)";
+            };
+
+            Array.prototype.forEach.call(document.querySelectorAll(".toggle"), (t) => {
+                t.onclick = () => {
+                    const key = t.getAttribute("data-key");
+                    const next = !t.classList.contains("on");
+                    send({ action: "setconfig", key: key, value: next }).then(() => {
+                        t.classList.toggle("on", next);
+                        say(key + " " + (next ? "enabled" : "disabled") + " — applies on next load", true);
+                    }).catch((err) => say(err.message, false));
+                };
+            });
+
+            const saveUrl = el("saveurl");
+            if (saveUrl) {
+                saveUrl.onclick = () => {
+                    const value = el("cfgurl").value.trim();
+                    send({ action: "setconfig", key: "RelayUrl", value: value })
+                        .then(() => say("relay url saved", true))
+                        .catch((err) => say(err.message, false));
+                };
+            }
+
+            const dl = el("dlbridge");
+            if (dl) {
+                dl.onclick = () => {
+                    say("downloading...");
+                    send({ action: "downloadbridge" })
+                        .then((d) => say(d.note + " → " + d.folder, true))
+                        .catch((err) => say(err.message, false));
+                };
+            }
+        }).catch((err) => setPane('<div class="empty">' + esc(err.message) + "</div>"));
+    }
+
+    function loadList() {
+        if (section === "settings") {
+            listEl.innerHTML = '<div class="empty" style="padding-left:10px">no list for settings</div>';
+            el("types").innerHTML = "";
+            renderSettings();
+            return;
+        }
+        renderTypes();
+        listEl.innerHTML = '<div class="empty" style="padding-left:10px">loading</div>';
+        send({ action: section }).then((data) => {
+            entries = section === "unknown" ? (data.functions || []) : (data.entries || []);
+            renderList();
+        }).catch((err) => {
+            listEl.innerHTML = '<div class="empty" style="padding-left:10px">' + esc(err.message) + "</div>";
+        });
+    }
+
+    function valueTable(title, rows) {
+        if (!rows || !rows.length) {
+            return '<div class="h2row"><h2>' + title + "</h2></div>"
+                + '<div class="empty" style="padding:14px 0">none</div>';
+        }
+        const raw = rows.map((r) => "[" + r.index + "] = " + r.value).join("\n");
+        let html = '<div class="h2row"><h2>' + title + "</h2>" + copyButton(raw, "Copy") + "</div>"
+            + '<div class="tablewrap"><table><thead><tr><th style="width:70px">#</th><th>value</th></tr></thead><tbody>';
+        rows.forEach((r) => {
+            const cell = r.code
+                ? "<pre>" + highlight(r.value) + "</pre>" + copyButton(r.value, "Copy")
+                : '<span class="valtext">' + highlight(r.value) + "</span>";
+            html += "<tr><td>" + r.index + "</td><td>" + cell + "</td></tr>";
+        });
+        return html + "</tbody></table></div>";
+    }
+
+    function showFunctionDetail(index) {
+        setPane('<div class="empty">loading</div>');
+        send({ action: "funcdetail", key: selected.key, index: index }).then((data) => {
+            fnDetail = data;
+            const i = data.info;
+            let html = '<span class="back" id="back">&larr; back to functions</span>'
+                + '<div class="subline"><span class="chipcode">' + esc(i.name) + "</span>"
+                + '<span class="badge">line ' + i.line + "</span>"
+                + '<span class="badge">params ' + i.numparams + "</span>"
+                + '<span class="badge">vargs ' + (i.vargs ? "yes" : "no") + "</span>"
+                + (i.hash ? '<span class="badge">' + esc(i.hash.slice(0, 18)) + "</span>" : "") + "</div>"
+                + valueTable("Constants", data.constants)
+                + valueTable("Upvalues", data.upvalues);
+            setPane(html);
+            const back = el("back");
+            if (back) back.onclick = () => { fnDetail = null; loadTab(); };
+        }).catch((err) => {
+            const hint = err.message === "unknown action"
+                ? "this build of the tool has no funcdetail action &mdash; re-run bundled.luau in the executor"
+                : esc(err.message);
+            setPane('<span class="back" id="back">&larr; back to functions</span>'
+                + '<div class="empty">' + hint + "</div>");
+            const back = el("back");
+            if (back) back.onclick = () => { fnDetail = null; loadTab(); };
+        });
+    }
+
+    function loadTab() {
+        if (!selected) return;
+
+        if (tab === "Info") {
+            const rows = [["path", selected.path], ["name", selected.name], ["context", selected.context],
+                ["class", selected.class || "-"], ["parented", String(selected.parented)], ["key", selected.key]];
+            const raw = rows.map((r) => r[0] + ": " + r[1]).join("\n");
+            let html = '<div class="h2row"><h2>Details</h2>' + copyButton(raw, "Copy") + "</div>"
+                + '<div class="tablewrap"><table><thead><tr><th style="width:180px">field</th><th>value</th></tr></thead><tbody>';
+            rows.forEach((r) => { html += "<tr><td>" + esc(r[0]) + '</td><td class="name">' + esc(r[1]) + "</td></tr>"; });
+            html += "</tbody></table></div>";
+            if (selected.reasons && selected.reasons.length) {
+                html += '<div class="reasons">' + selected.reasons.map(esc).join("<br>") + "</div>";
+            }
+            html += '<div class="h2row"><h2>Bytecode</h2>'
+                + '<button class="copybtn" id="dlbc">' + COPY_ICON + " Download .luac</button></div>"
+                + '<div class="empty" id="bcnote" style="padding:0">not fetched</div>';
+            setPane(html);
+
+            const key = selected.key;
+            const name = selected.path;
+            const bc = el("dlbc");
+            if (bc) {
+                bc.onclick = () => {
+                    const note = el("bcnote");
+                    if (note) note.textContent = "fetching";
+                    fetchChunked("bytecode", key, "base64", (got, total) => {
+                        if (note) note.textContent = "fetching " + humanBytes(got) + " / " + humanBytes(total);
+                    }).then((b64) => {
+                        const bin = atob(b64);
+                        const bytes = new Uint8Array(bin.length);
+                        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+                        downloadBlob(safeFileName(name, ".luac"), new Blob([bytes], { type: "application/octet-stream" }));
+                        if (note) note.textContent = humanBytes(bytes.length) + " downloaded";
+                    }).catch((err) => { if (note) note.textContent = err.message; });
+                };
+            }
+            return;
+        }
+
+        setPane('<div class="empty">loading</div>');
+
+        if (tab === "Source") {
+            const key = selected.key;
+            const name = selected.path;
+            fetchChunked("source", key, "source", (got, total) => {
+                setPane('<div class="empty">loading ' + humanBytes(got) + " / " + humanBytes(total) + "</div>");
+            }).then((code) => {
+                if (!selected || selected.key !== key) return;
+                setPane('<div class="h2row"><h2>' + humanBytes(code.length) + "</h2>"
+                    + '<span style="display:flex;gap:8px">'
+                    + copyButton(code, "Copy")
+                    + '<button class="copybtn" id="dl">' + COPY_ICON + " Download</button></span></div>"
+                    + codeBlock(code));
+                const dl = el("dl");
+                if (dl) {
+                    dl.onclick = () => downloadBlob(safeFileName(name, ".luau"),
+                        new Blob([code], { type: "text/plain;charset=utf-8" }));
+                }
+            }).catch((err) => setPane('<div class="empty">' + esc(err.message) + "</div>"));
+            return;
+        }
+
+        send({ action: "functions", key: selected.key }).then((data) => {
+            const fns = data.functions || [];
+            if (!fns.length) { setPane('<div class="empty">no functions resolved</div>'); return; }
+            const raw = fns.map((f) => f.name + " | line " + f.line + " | params " + f.numparams
+                + " | vargs " + (f.vargs ? "yes" : "no") + (f.hash ? " | " + f.hash : "")).join("\n");
+            let html = '<div class="h2row"><h2>' + fns.length + " function(s)</h2>" + copyButton(raw, "Copy") + "</div>"
+                + '<div class="tablewrap"><table><thead><tr><th>name</th><th style="width:90px">line</th><th style="width:90px">params</th>'
+                + '<th style="width:90px">vargs</th><th style="width:180px">hash</th></tr></thead><tbody>';
+            fns.forEach((f) => {
+                html += '<tr class="clickable" data-index="' + f.index + '"><td class="name">' + esc(f.name)
+                    + "</td><td>" + f.line + "</td><td>" + f.numparams + "</td><td>" + (f.vargs ? "yes" : "no")
+                    + "</td><td>" + esc((f.hash || "").slice(0, 18)) + "</td></tr>";
+            });
+            setPane(html + "</tbody></table></div>");
+            Array.prototype.forEach.call(document.querySelectorAll("tr.clickable"), (tr) => {
+                tr.onclick = () => showFunctionDetail(Number(tr.getAttribute("data-index")));
+            });
+        }).catch((err) => setPane('<div class="empty">' + esc(err.message) + "</div>"));
+    }
+
+    function refresh() {
+        send({ action: "info" }).then((info) => {
+            counts = info.counts || {};
+            renderSections(); loadList();
+        }).catch(() => loadList());
+    }
+
+    el("connect").onclick = connect;
+    el("filter").oninput = renderList;
+    el("url").onkeydown = (e) => { if (e.key === "Enter") connect(); };
+
+    renderSections();
+    renderTypes();
+    renderDoc();
+})();
+</script>
+</body>
+</html>

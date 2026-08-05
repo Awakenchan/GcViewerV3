@@ -453,32 +453,37 @@ BaseCamera=true,ClassicCamera=true,OrbitalCamera=true,FollowCamera=true,
 PopperCamera=true,ZoomController=true,TransparencyController=true,CameraUtils=
 true,CameraInput=true,Gamepad=true,Keyboard=true,TouchThumbstick=true,
 DynamicThumbstick=true,VehicleCamera=true}local CORE_SCRIPT_PATH_FRAGS={
-'PlayerModule','CameraModule','ControlModule','PlayerScriptsLoader'}local
-STARTER_PLAYER_FRAGS={'StarterPlayer.StarterPlayerScripts',
-'StarterPlayer.StarterCharacterScripts','StarterPlayerScripts',
-'StarterCharacterScripts'}local isCoreScript=function(inst,knownPath,knownName)
-local okCls,cls=pcall(function()return inst.ClassName end)if okCls and cls==
-'CoreScript'then return true end if knownName and CORE_SCRIPT_NAMES[knownName]
-then return true end if type(knownPath)=='string'then for _,frag in
-CORE_SCRIPT_PATH_FRAGS do if string.find(knownPath,frag,1,true)then return true
-end end end return false end local isStarterPlayerScript=function(inst,knownPath
-)if type(knownPath)=='string'then for _,frag in STARTER_PLAYER_FRAGS do if
-string.find(knownPath,frag,1,true)then return true end end end local okAnc,anc=
-pcall(function()return inst:FindFirstAncestorOfClass('StarterPlayerScripts')or
-inst:FindFirstAncestorOfClass('StarterCharacterScripts')end)if okAnc and anc
-then return true end return false end local SCRIPT_CONTAINERS={
-'ReplicatedStorage','ReplicatedFirst','StarterGui','StarterPack','Lighting',
-'SoundService','TextChatService','MaterialService','Chat'}local YIELD_EVERY=2000
-local safeName=function(inst)local ok,name=pcall(function()return inst.Name end)
-if ok and type(name)=='string'then return name end return nil end local
-fullNameOf=function(inst,knownName)local ok,path=pcall(function()return inst:
-GetFullName()end)if ok and type(path)=='string'and path~=''then return path end
-return knownName or'?'end local isReachable=function(inst)local ok,reachable=
-pcall(function()return inst:IsDescendantOf(game)end)return ok and reachable==
-true end local scriptFingerprint=function(inst,hashFn)if hashFn then local ok,h=
-pcall(hashFn,inst)if ok and type(h)=='string'and h~=''then return h end end if
-Caps.getscriptbytecode then local ok,bc=pcall(getscriptbytecode,inst)if ok and
-type(bc)=='string'and bc~=''then return bc end end return nil end local
+'PlayerModule','CameraModule','ControlModule','PlayerScriptsLoader','CoreGui',
+'CorePackages','RobloxGui','RobloxLocalization'}local STARTER_PLAYER_FRAGS={
+'StarterPlayer.StarterPlayerScripts','StarterPlayer.StarterCharacterScripts',
+'StarterPlayerScripts','StarterCharacterScripts'}local isCoreScript=function(
+inst,knownPath,knownName)local okCls,cls=pcall(function()return inst.ClassName
+end)if okCls and cls=='CoreScript'then return true end if knownName and
+CORE_SCRIPT_NAMES[knownName]then return true end if type(knownPath)=='string'
+then for _,frag in CORE_SCRIPT_PATH_FRAGS do if string.find(knownPath,frag,1,
+true)then return true end end end return false end FunctionLibrary.IsCoreScript=
+function(inst,knownPath,knownName)local name=knownName if name==nil then local
+ok,value=pcall(function()return inst.Name end)name=ok and value or nil end local
+path=knownPath if type(path)~='string'then local ok,value=pcall(function()return
+inst:GetFullName()end)path=ok and value or nil end return isCoreScript(inst,path
+,name)end local isStarterPlayerScript=function(inst,knownPath)if type(knownPath)
+=='string'then for _,frag in STARTER_PLAYER_FRAGS do if string.find(knownPath,
+frag,1,true)then return true end end end local okAnc,anc=pcall(function()return
+inst:FindFirstAncestorOfClass('StarterPlayerScripts')or inst:
+FindFirstAncestorOfClass('StarterCharacterScripts')end)if okAnc and anc then
+return true end return false end local SCRIPT_CONTAINERS={'ReplicatedStorage',
+'ReplicatedFirst','StarterGui','StarterPack','Lighting','SoundService',
+'TextChatService','MaterialService','Chat'}local YIELD_EVERY=2000 local safeName
+=function(inst)local ok,name=pcall(function()return inst.Name end)if ok and
+type(name)=='string'then return name end return nil end local fullNameOf=
+function(inst,knownName)local ok,path=pcall(function()return inst:GetFullName()
+end)if ok and type(path)=='string'and path~=''then return path end return
+knownName or'?'end local isReachable=function(inst)local ok,reachable=pcall(
+function()return inst:IsDescendantOf(game)end)return ok and reachable==true end
+local scriptFingerprint=function(inst,hashFn)if hashFn then local ok,h=pcall(
+hashFn,inst)if ok and type(h)=='string'and h~=''then return h end end if Caps.
+getscriptbytecode then local ok,bc=pcall(getscriptbytecode,inst)if ok and type(
+bc)=='string'and bc~=''then return bc end end return nil end local
 scriptChunkName=function(inst)if not Caps.getscriptclosure then return nil end
 local okCl,cl=pcall(getscriptclosure,inst)if not okCl or type(cl)~='function'
 then return nil end local okSrc,src=pcall(function()return debug.info(cl,'s')end
@@ -629,15 +634,71 @@ RunService.Heartbeat:Wait()end end table.sort(list,function(a,b)return(a.line or
 0)<(b.line or 0)end)return list end return FunctionLibrary end function
 __DARKLUA_BUNDLE_MODULES.h()local v=__DARKLUA_BUNDLE_MODULES.cache.h if not v
 then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.h=v end return v.c end end
-do local __modImpl=function()local Constants=__DARKLUA_BUNDLE_MODULES.c()local
-Services=__DARKLUA_BUNDLE_MODULES.a()local PlayerRefs=__DARKLUA_BUNDLE_MODULES.
-b()local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.h()local Executor=
-__DARKLUA_BUNDLE_MODULES.f()local Source=__DARKLUA_BUNDLE_MODULES.g()local
-RunService=Services.RunService local SourceFile=Constants.SAFE_SOURCE_FILE local
-SourceUrl=Constants.SAFE_SOURCE_URL local SourceGlobal=Constants.
-SAFE_SOURCE_GLOBAL local CaptureMarker=Constants.SAFE_CAPTURE_MARKER local
-CaptureDir=Constants.SAFE_CAPTURE_DIR local CapturePrefix=CaptureDir..'/'local
-MaxNameLength=90 local YieldEvery=25 local SettleSeconds=2 local SafeMode={}
+do local __modImpl=function()local Source=__DARKLUA_BUNDLE_MODULES.g()local
+Services=__DARKLUA_BUNDLE_MODULES.a()local RunService=Services.RunService local
+PlaceSave={}local FLUSH_EVERY=40 local YIELD_EVERY=25 local HasFunction=function
+(Value)return type(Value)=='function'end local XmlEscape=function(Text)Text=
+tostring(Text or''):gsub('[%z\1-\b\v\f\14-\31]','')return(Text:gsub('&','&amp;')
+:gsub('<','&lt;'):gsub('>','&gt;'):gsub('"','&quot;'))end local CData=function(
+Text)Text=tostring(Text or''):gsub('[%z\1-\b\v\f\14-\31]',''):gsub('%]%]>',
+']]]]><![CDATA[>')return'<![CDATA['..Text..']]>'end local ClassOf=function(
+Instance_)local Ok,Class=pcall(function()return Instance_.ClassName end)return(
+Ok and Class)or'Folder'end local NameOf=function(Instance_)local Ok,Name=pcall(
+function()return Instance_.Name end)return(Ok and Name)or'Unknown'end local
+ScriptClasses={Script=true,LocalScript=true,ModuleScript=true}function PlaceSave
+.Save(Entries,Path,OnProgress)if not HasFunction(writefile)then return nil,
+'writefile unsupported'end if type(Entries)~='table'or#Entries==0 then return
+nil,'no scripts to save'end local Keep={}local NilRoots={}local NilSeen={}for _,
+Entry in Entries do local Node=Entry.Script if typeof(Node)=='Instance'then
+local Walker=Node local Root=Node while Walker do Keep[Walker]=true local
+OkParent,Parent=pcall(function()return Walker.Parent end)if not OkParent or
+Parent==nil or Parent==game then Root=Walker break end Walker=Parent Root=Walker
+end local OkInGame,InGame=pcall(function()return Node:IsDescendantOf(game)end)if
+not(OkInGame and InGame)and not NilSeen[Root]then NilSeen[Root]=true NilRoots[#
+NilRoots+1]=Root end end end local Buffer={}local CanAppend=HasFunction(
+appendfile)local Started=false local WriteError=nil local Flush=function(Force)
+if#Buffer==0 then return end if not Force and(not CanAppend or#Buffer<
+FLUSH_EVERY)then return end local Text=table.concat(Buffer,'\n')..'\n'Buffer={}
+local Ok,Err if not Started then Started=true Ok,Err=pcall(writefile,Path,Text)
+else Ok,Err=pcall(appendfile,Path,Text)end if not Ok then WriteError=tostring(
+Err)end end local Put=function(Line)Buffer[#Buffer+1]=Line Flush(false)end Put(
+'<roblox version="4">')local Referent=0 local Saved,Failed=0,0 local Processed=0
+local function Emit(Node,Depth)local Class=ClassOf(Node)local Name=NameOf(Node)
+local Indent=string.rep('\t',Depth+1)Referent=Referent+1 if ScriptClasses[Class]
+then local Text=Source.Decompile(Node)if type(Text)~='string'or Text==''then
+Text='-- [GcView] source unavailable for '..Name Failed=Failed+1 else Saved=
+Saved+1 end Put(Indent..'<Item class="'..XmlEscape(Class)..'" referent="RBX'..
+Referent..'">')Put(Indent..'\t<Properties>')Put(Indent..
+'\t\t<string name="Name">'..XmlEscape(Name)..'</string>')Put(Indent..
+'\t\t<ProtectedString name="Source">'..CData(Text)..'</ProtectedString>')Put(
+Indent..'\t</Properties>')Put(Indent..'</Item>')if OnProgress then pcall(
+OnProgress,Saved+Failed,#Entries)end else Put(Indent..
+'<Item class="Folder" referent="RBX'..Referent..'">')Put(Indent..
+'\t<Properties>')Put(Indent..'\t\t<string name="Name">'..XmlEscape(Name)..
+'</string>')Put(Indent..'\t</Properties>')local OkChildren,Children=pcall(
+function()return Node:GetChildren()end)if OkChildren and type(Children)=='table'
+then for _,Child in Children do if Keep[Child]then Emit(Child,Depth+1)end end
+end Put(Indent..'</Item>')end Processed=Processed+1 if Processed%YIELD_EVERY==0
+then RunService.Heartbeat:Wait()end end local OkServices,GameChildren=pcall(
+function()return game:GetChildren()end)if OkServices and type(GameChildren)==
+'table'then for _,Service in GameChildren do if Keep[Service]then Emit(Service,0
+)end end end if#NilRoots>0 then Referent=Referent+1 Put(
+'\t<Item class="Folder" referent="RBX'..Referent..'">')Put('\t\t<Properties>')
+Put('\t\t\t<string name="Name">Nil</string>')Put('\t\t</Properties>')for _,Root
+in NilRoots do if Keep[Root]then Emit(Root,1)end end Put('\t</Item>')end Put(
+'</roblox>')Flush(true)if WriteError then return nil,WriteError end return Path,
+nil,Saved,Failed end return PlaceSave end function __DARKLUA_BUNDLE_MODULES.i()
+local v=__DARKLUA_BUNDLE_MODULES.cache.i if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.i=v end return v.c end end do local __modImpl=
+function()local Constants=__DARKLUA_BUNDLE_MODULES.c()local Services=
+__DARKLUA_BUNDLE_MODULES.a()local PlayerRefs=__DARKLUA_BUNDLE_MODULES.b()local
+FunctionLibrary=__DARKLUA_BUNDLE_MODULES.h()local Executor=
+__DARKLUA_BUNDLE_MODULES.f()__DARKLUA_BUNDLE_MODULES.g()local PlaceSave=
+__DARKLUA_BUNDLE_MODULES.i()local _=Services.RunService local SourceFile=
+Constants.SAFE_SOURCE_FILE local SourceUrl=Constants.SAFE_SOURCE_URL local
+SourceGlobal=Constants.SAFE_SOURCE_GLOBAL local CaptureMarker=Constants.
+SAFE_CAPTURE_MARKER local CaptureDir=Constants.SAFE_CAPTURE_DIR local _=
+CaptureDir..'/'local MaxNameLength=90 local SettleSeconds=2 local SafeMode={}
 local SandboxConnection=nil local HasFunction=function(Value)return type(Value)
 =='function'end local EnsureFolder=function(Path)if not(HasFunction(isfolder)and
 HasFunction(makefolder))then return false end local Ok,Exists=pcall(isfolder,
@@ -714,47 +775,52 @@ ScriptRef.Name end)return(Ok and Name)or'Script'end local GetScriptPath=function
 and type(Path)=='string'and Path~=''then return Path end return GetScriptName(
 ScriptRef)end local SanitizeName=function(Name)local Clean=tostring(Name or
 'Script'):gsub('[\\/:*?"<>|\r\n]','_')if#Clean>MaxNameLength then Clean=Clean:
-sub(1,MaxNameLength)end return Clean end local DumpScript=function(ScriptRef,
-Path,Index)local BaseName=('%s_%d'):format(SanitizeName(Path),Index)local Wrote=
-false local Bytecode=Source.Bytecode(ScriptRef)if Bytecode then if pcall(
-writefile,CapturePrefix..BaseName..'.luac',Bytecode)then Wrote=true end end
-local Decompiled=Source.Decompile(ScriptRef)if type(Decompiled)=='string'and
-Decompiled~=''then if pcall(writefile,CapturePrefix..BaseName..'.luau',
-Decompiled)then Wrote=true end end return Wrote end local CollectScripts=
-function()local Results={}local Seen={}local Consider=function(Item)if typeof(
-Item)~='Instance'or Seen[Item]then return end Seen[Item]=true local Ok,IsSource=
-pcall(function()return Item:IsA('LuaSourceContainer')end)if not(Ok and IsSource)
-then return end local Path=GetScriptPath(Item)if FunctionLibrary.
-IsExecutorScript(Item,Path)then return end Results[#Results+1]={Script=Item,Path
-=Path}end local OkDesc,Descendants=pcall(function()return game:GetDescendants()
-end)if OkDesc and type(Descendants)=='table'then for _,Item in Descendants do
-Consider(Item)end end local Getters=table.pack(getscripts,getloadedmodules,
-getmodules,getrunningscripts,getnilinstances)for Index=1,Getters.n do local
-Getter=Getters[Index]if HasFunction(Getter)then local Ok,List=pcall(Getter)if Ok
-and type(List)=='table'then for _,Item in List do Consider(Item)local OkChildren
-,Children=pcall(function()return Item:GetDescendants()end)if OkChildren and
-type(Children)=='table'then for _,Child in Children do Consider(Child)end end
-end end end end return Results end function SafeMode.Capture()getgenv()[
+sub(1,MaxNameLength)end return Clean end function SafeMode.GameFolder()local
+Name='place'local Ok,Info=pcall(function()return game:GetService(
+'MarketplaceService'):GetProductInfo(game.PlaceId)end)if Ok and type(Info)==
+'table'and type(Info.Name)=='string'and Info.Name~=''then Name=Info.Name end
+return('%s/%s_%s'):format(CaptureDir,SanitizeName(Name),tostring(game.PlaceId))
+end local CollectScripts=function(IncludeCore)local Results={}local Seen={}local
+Consider=function(Item)if typeof(Item)~='Instance'or Seen[Item]then return end
+Seen[Item]=true local Ok,IsSource=pcall(function()return Item:IsA(
+'LuaSourceContainer')end)if not(Ok and IsSource)then return end local Path=
+GetScriptPath(Item)if FunctionLibrary.IsExecutorScript(Item,Path)then return end
+if not IncludeCore and FunctionLibrary.IsCoreScript(Item,Path)then return end
+Results[#Results+1]={Script=Item,Path=Path}end local OkDesc,Descendants=pcall(
+function()return game:GetDescendants()end)if OkDesc and type(Descendants)==
+'table'then for _,Item in Descendants do Consider(Item)end end local Getters=
+table.pack(getscripts,getloadedmodules,getmodules,getrunningscripts,
+getnilinstances)for Index=1,Getters.n do local Getter=Getters[Index]if
+HasFunction(Getter)then local Ok,List=pcall(Getter)if Ok and type(List)=='table'
+then for _,Item in List do Consider(Item)local OkChildren,Children=pcall(
+function()return Item:GetDescendants()end)if OkChildren and type(Children)==
+'table'then for _,Child in Children do Consider(Child)end end end end end end
+return Results end local Captured=nil function SafeMode.Captured()return
+Captured end function SafeMode.Collect(IncludeCore)return CollectScripts(
+IncludeCore==true)end function SafeMode.SaveAll(IncludeCore,OnProgress)local
+Entries=Captured if not Entries or#Entries==0 or IncludeCore then Entries=
+CollectScripts(IncludeCore==true)end if#Entries==0 then return nil,
+'no scripts to save'end EnsureFolder(Constants.CONFIG_DIR)EnsureFolder(
+CaptureDir)local Folder=SafeMode.GameFolder()EnsureFolder(Folder)local FileName=
+('%s/scripts_%s.rbxmx'):format(Folder,tostring(os.time()))local Path,Err,Saved,
+Failed=PlaceSave.Save(Entries,FileName,OnProgress)if not Path then return nil,
+Err or'save failed'end print(('[GcView] Saved %d script(s)%s to %s'):format(
+Saved or 0,(Failed or 0)>0 and(', %d without source'):format(Failed)or'',Path))
+return Path,nil,Saved,Failed end function SafeMode.Capture()getgenv()[
 CaptureMarker]=nil SafeMode.Hook()local Sandboxed,Blocked=SafeMode.SandboxAll()
 print(('[GcView] Safe mode sandboxed %d script(s)%s'):format(Sandboxed,Blocked>0
 and(', %d blocked'):format(Blocked)or''))task.wait(SettleSeconds)local Late=
 SafeMode.SandboxAll()if Late>Sandboxed then print((
-'[GcView] Safe mode sandboxed %d after settling'):format(Late))end if not
-HasFunction(writefile)then warn(
-[[[GcView] Safe mode capture needs writefile, the game is sandboxed but nothing was saved.]]
-)return 0,0 end EnsureFolder(Constants.CONFIG_DIR)EnsureFolder(CaptureDir)local
-Entries=CollectScripts()local Scanned,Dumped=0,0 for _,Entry in Entries do
-Scanned=Scanned+1 local Ok,Wrote=pcall(DumpScript,Entry.Script,Entry.Path,
-Scanned)if Ok and Wrote then Dumped=Dumped+1 end if Scanned%YieldEvery==0 then
-RunService.Heartbeat:Wait()end end print((
-[[[GcView] Safe mode capture complete: %d/%d scripts saved to %s]]):format(
-Dumped,Scanned,CaptureDir))return Dumped,Scanned end return SafeMode end
-function __DARKLUA_BUNDLE_MODULES.i()local v=__DARKLUA_BUNDLE_MODULES.cache.i if
-not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.i=v end return v.c
-end end do local __modImpl=function()local byte=string.byte local sub=string.sub
-local lookupify=function(src,list)list=list or{}if type(src)=='string'then for i
-=1,#src do list[byte(src,i)]=true end elseif type(src)=='table'then for i=1,#src
-do list[src[i] ]=true end end return list end local base_ident=
+'[GcView] Safe mode sandboxed %d after settling'):format(Late))end Captured=
+CollectScripts(false)print((
+[[[GcView] Safe mode found %d script(s), nothing written until you save]]):
+format(#Captured))return Captured end return SafeMode end function
+__DARKLUA_BUNDLE_MODULES.j()local v=__DARKLUA_BUNDLE_MODULES.cache.j if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.j=v end return v.c end end
+do local __modImpl=function()local byte=string.byte local sub=string.sub local
+lookupify=function(src,list)list=list or{}if type(src)=='string'then for i=1,#
+src do list[byte(src,i)]=true end elseif type(src)=='table'then for i=1,#src do
+list[src[i] ]=true end end return list end local base_ident=
 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_'local base_digits=
 '0123456789'local base_operators='+-*/^%#'local chars={whitespace=lookupify(
 ' \n\t\r'),validEscapes=lookupify('abfnrtv"\'\\'),ident=lookupify(base_ident..
@@ -825,11 +891,11 @@ symbols.equality[char]then if look()==EQUALS then pos=pos+1 end pushToken(
 pushToken('operator')else pushToken('symbol')end else pushToken('unidentified')
 end end lines[#lines+1]=buffer for li=1,#lines do local line=lines[li]for ti=1,#
 line do local tk=line[ti]tk.data=sub(text,tk._s,tk._e)tk._s=nil tk._e=nil end
-end return lines end end function __DARKLUA_BUNDLE_MODULES.j()local v=
-__DARKLUA_BUNDLE_MODULES.cache.j if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.j=v end return v.c end end do local __modImpl=
+end return lines end end function __DARKLUA_BUNDLE_MODULES.k()local v=
+__DARKLUA_BUNDLE_MODULES.cache.k if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.k=v end return v.c end end do local __modImpl=
 function()local Data2Code={}local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.h()
-local Lex=__DARKLUA_BUNDLE_MODULES.j()local INDENT='    'local try=function(fn,
+local Lex=__DARKLUA_BUNDLE_MODULES.k()local INDENT='    'local try=function(fn,
 fallback)local ok,res=xpcall(fn,function()return fallback end)if ok then return
 res end return fallback end local IsIdentifier=function(str)return type(str)==
 'string'and str:match('^[%a_][%w_]*$')~=nil end local ESCAPES={[34]='\\"',[92]=
@@ -1000,8 +1066,8 @@ if not pretty then return compact end local fok,formatted=pcall(Format,compact)
 if fok and type(formatted)=='string'and formatted~=''then return formatted end
 local ok2,legacy=xpcall(function()return SerializeRoot(data,true)end,errHandler)
 if ok2 then return legacy end return compact end return Data2Code end function
-__DARKLUA_BUNDLE_MODULES.k()local v=__DARKLUA_BUNDLE_MODULES.cache.k if not v
-then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.k=v end return v.c end end
+__DARKLUA_BUNDLE_MODULES.l()local v=__DARKLUA_BUNDLE_MODULES.cache.l if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.l=v end return v.c end end
 do local __modImpl=function()local Config=__DARKLUA_BUNDLE_MODULES.d()local
 Executor=__DARKLUA_BUNDLE_MODULES.f()local Constants=__DARKLUA_BUNDLE_MODULES.c(
 )local Plugins={}local BRIDGE_DIR=Constants.CONFIG_DIR..'/bridge'local
@@ -1042,14 +1108,14 @@ Failed[#Failed+1]=Name end end if Written==0 then return false,
 'nothing downloaded ('..table.concat(Failed,', ')..')'end if#Failed>0 then
 return true,('%d/%d written, failed: %s'):format(Written,#BRIDGE_FILES,table.
 concat(Failed,', '))end return true,('%d files written to %s'):format(Written,
-BRIDGE_DIR)end return Plugins end function __DARKLUA_BUNDLE_MODULES.l()local v=
-__DARKLUA_BUNDLE_MODULES.cache.l if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.l=v end return v.c end end do local __modImpl=
+BRIDGE_DIR)end return Plugins end function __DARKLUA_BUNDLE_MODULES.m()local v=
+__DARKLUA_BUNDLE_MODULES.cache.m if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.m=v end return v.c end end do local __modImpl=
 function()local Services=__DARKLUA_BUNDLE_MODULES.a()local FunctionLibrary=
 __DARKLUA_BUNDLE_MODULES.h()local Executor=__DARKLUA_BUNDLE_MODULES.f()local
 GcShared=__DARKLUA_BUNDLE_MODULES.e()local Source=__DARKLUA_BUNDLE_MODULES.g()
-local Data2Code=__DARKLUA_BUNDLE_MODULES.k()local Config=
-__DARKLUA_BUNDLE_MODULES.d()local Plugins=__DARKLUA_BUNDLE_MODULES.l()local
+local Data2Code=__DARKLUA_BUNDLE_MODULES.l()local Config=
+__DARKLUA_BUNDLE_MODULES.d()local Plugins=__DARKLUA_BUNDLE_MODULES.m()local
 HttpService=Services.HttpService local WebBridge={}local Socket=nil local
 SocketUrl=nil local Connected=false local LogSink=nil local StatusSink=nil local
 DefaultChunk=262144 local MaxChunk=1048576 local MaxListEntries=5000 local
@@ -1136,55 +1202,61 @@ type(Values)~='table'then if type(Request.key)~='string'then return nil,
 'expected values or key'end Values={[Request.key]=Request.value}end local Ok,
 Changed=Config.Apply(Values)if not Ok then return nil,tostring(Changed)end
 return{changed=Changed,config=Config.All(),plugins=Plugins.List()}end Actions.
-downloadbridge=function()local Ok,Note=Plugins.DownloadBridge()if not Ok then
-return nil,tostring(Note)end return{note=tostring(Note),folder=Plugins.
-BridgeDir()}end Actions.scripts=function()return{entries=SerializeList(Sources.
-scripts)}end Actions.anticheat=function()return{entries=SerializeList(Sources.
-anticheat)}end Actions.actors=function()return{entries=SerializeList(Sources.
-actors)}end Actions.unknown=function()local Out={}for Index,Record in Sources.
-unknown do if type(Record)=='table'then Out[#Out+1]=SerializeFunction(Record,
-Index)end end return{functions=Out}end Actions.functions=function(Request)local
+saveall=function(Request)local SafeMode=__DARKLUA_BUNDLE_MODULES.j()local Path,
+Err,Saved,Failed=SafeMode.SaveAll(Request.includeCore==true)if not Path then
+return nil,tostring(Err)end return{path=Path,saved=Saved or 0,failed=Failed or 0
+,folder=SafeMode.GameFolder()}end Actions.sandbox=function()local SafeMode=
+__DARKLUA_BUNDLE_MODULES.j()local Done,Blocked=SafeMode.Sandbox()return{
+sandboxed=Done,blocked=Blocked}end Actions.downloadbridge=function()local Ok,
+Note=Plugins.DownloadBridge()if not Ok then return nil,tostring(Note)end return{
+note=tostring(Note),folder=Plugins.BridgeDir()}end Actions.scripts=function()
+return{entries=SerializeList(Sources.scripts)}end Actions.anticheat=function()
+return{entries=SerializeList(Sources.anticheat)}end Actions.actors=function()
+return{entries=SerializeList(Sources.actors)}end Actions.unknown=function()local
+Out={}for Index,Record in Sources.unknown do if type(Record)=='table'then Out[#
+Out+1]=SerializeFunction(Record,Index)end end return{functions=Out}end Actions.
+functions=function(Request)local Entry=FindEntry(Request.key)if not Entry then
+return nil,'unknown script key'end return{key=Request.key,functions=
+CollectFunctions(Entry,Request.key)}end Actions.funcdetail=function(Request)
+local Entry=FindEntry(Request.key)if not Entry then return nil,
+'unknown script key'end local Records=RecordsFor(Entry,Request.key)local Record=
+Records[tonumber(Request.index)or 0]if type(Record)~='table'then return nil,
+'unknown function index'end local Constants,Upvalues if type(Record.constants)==
+'table'then Constants=DecodeList(Record.constants)end if type(Record.upvalues)==
+'table'then Upvalues=DecodeList(Record.upvalues)end local Fn=Record.func if
+type(Fn)=='function'then if not Constants then local Ok,Values=pcall(debug.
+getconstants,Fn)Constants=Ok and DecodeList(Values)or{}end if not Upvalues then
+local Ok,Values=pcall(debug.getupvalues,Fn)Upvalues=Ok and DecodeList(Values)or{
+}end end return{key=Request.key,info=SerializeFunction(Record,tonumber(Request.
+index)or 0),constants=Constants or{},upvalues=Upvalues or{}}end local Chunked=
+function(Key,Text,Request)local Total=#Text local Offset=tonumber(Request.offset
+)or 1 if Offset<1 then Offset=1 end local Limit=tonumber(Request.limit)or
+DefaultChunk if Limit<1 then Limit=DefaultChunk elseif Limit>MaxChunk then Limit
+=MaxChunk end local Chunk=Text:sub(Offset,Offset+Limit-1)local NextOffset=Offset
++#Chunk return{key=Key,offset=Offset,total=Total,nextOffset=NextOffset,done=
+NextOffset>Total,chunk=Chunk}end Actions.source=function(Request)local Entry=
+FindEntry(Request.key)if not Entry then return nil,'unknown script key'end local
+Text,Reason=DecompileEntry(Entry)if not Text then return nil,Reason or
+'decompile failed'end local Payload=Chunked(Request.key,Text,Request)Payload.
+source=Payload.chunk return Payload end Actions.bytecode=function(Request)local
 Entry=FindEntry(Request.key)if not Entry then return nil,'unknown script key'end
-return{key=Request.key,functions=CollectFunctions(Entry,Request.key)}end Actions
-.funcdetail=function(Request)local Entry=FindEntry(Request.key)if not Entry then
-return nil,'unknown script key'end local Records=RecordsFor(Entry,Request.key)
-local Record=Records[tonumber(Request.index)or 0]if type(Record)~='table'then
-return nil,'unknown function index'end local Constants,Upvalues if type(Record.
-constants)=='table'then Constants=DecodeList(Record.constants)end if type(Record
-.upvalues)=='table'then Upvalues=DecodeList(Record.upvalues)end local Fn=Record.
-func if type(Fn)=='function'then if not Constants then local Ok,Values=pcall(
-debug.getconstants,Fn)Constants=Ok and DecodeList(Values)or{}end if not Upvalues
-then local Ok,Values=pcall(debug.getupvalues,Fn)Upvalues=Ok and DecodeList(
-Values)or{}end end return{key=Request.key,info=SerializeFunction(Record,
-tonumber(Request.index)or 0),constants=Constants or{},upvalues=Upvalues or{}}end
-local Chunked=function(Key,Text,Request)local Total=#Text local Offset=tonumber(
-Request.offset)or 1 if Offset<1 then Offset=1 end local Limit=tonumber(Request.
-limit)or DefaultChunk if Limit<1 then Limit=DefaultChunk elseif Limit>MaxChunk
-then Limit=MaxChunk end local Chunk=Text:sub(Offset,Offset+Limit-1)local
-NextOffset=Offset+#Chunk return{key=Key,offset=Offset,total=Total,nextOffset=
-NextOffset,done=NextOffset>Total,chunk=Chunk}end Actions.source=function(Request
-)local Entry=FindEntry(Request.key)if not Entry then return nil,
-'unknown script key'end local Text,Reason=DecompileEntry(Entry)if not Text then
-return nil,Reason or'decompile failed'end local Payload=Chunked(Request.key,Text
-,Request)Payload.source=Payload.chunk return Payload end Actions.bytecode=
-function(Request)local Entry=FindEntry(Request.key)if not Entry then return nil,
-'unknown script key'end local Encoded,Note=BytecodeEntry(Entry)if not Encoded
-then return nil,Note or'no bytecode'end local Payload=Chunked(Request.key,
-Encoded,Request)Payload.base64=Payload.chunk return Payload end local Send=
-function(Payload)if not Socket or not Connected then return false end local Text
-=Encode(Payload)if not Text then return false end local Ok=pcall(function()
-Socket:Send(Text)end)return Ok end local HandleRequest=function(Request)local
-Action=Actions[Request.action]if not Action then Send({type='response',id=
-Request.id,ok=false,error='unknown action'})return end local Ok,Data,Err=pcall(
-Action,Request)if not Ok then Send({type='response',id=Request.id,ok=false,error
-=SafeText(Data)})return end if Data==nil then Send({type='response',id=Request.
-id,ok=false,error=SafeText(Err or'failed')})return end Send({type='response',id=
-Request.id,ok=true,action=Request.action,data=Data})end function WebBridge.
-Handle(RawMessage)local Message=Decode(RawMessage)if not Message then return end
-if Message.type=='request'then Log(('request: %s'):format(SafeText(Message.
-action)))task.spawn(HandleRequest,Message)return end if Message.type=='hello'
-then Log('peer connected')return end end function WebBridge.Publish(Name,List)if
-type(Name)~='string'or type(List)~='table'then return end Sources[Name]=List
+local Encoded,Note=BytecodeEntry(Entry)if not Encoded then return nil,Note or
+'no bytecode'end local Payload=Chunked(Request.key,Encoded,Request)Payload.
+base64=Payload.chunk return Payload end local Send=function(Payload)if not
+Socket or not Connected then return false end local Text=Encode(Payload)if not
+Text then return false end local Ok=pcall(function()Socket:Send(Text)end)return
+Ok end local HandleRequest=function(Request)local Action=Actions[Request.action]
+if not Action then Send({type='response',id=Request.id,ok=false,error=
+'unknown action'})return end local Ok,Data,Err=pcall(Action,Request)if not Ok
+then Send({type='response',id=Request.id,ok=false,error=SafeText(Data)})return
+end if Data==nil then Send({type='response',id=Request.id,ok=false,error=
+SafeText(Err or'failed')})return end Send({type='response',id=Request.id,ok=true
+,action=Request.action,data=Data})end function WebBridge.Handle(RawMessage)local
+Message=Decode(RawMessage)if not Message then return end if Message.type==
+'request'then Log(('request: %s'):format(SafeText(Message.action)))task.spawn(
+HandleRequest,Message)return end if Message.type=='hello'then Log(
+'peer connected')return end end function WebBridge.Publish(Name,List)if type(
+Name)~='string'or type(List)~='table'then return end Sources[Name]=List
 RebuildIndex()end function WebBridge.SetLogSink(Sink)LogSink=Sink end function
 WebBridge.SetStatusSink(Sink)StatusSink=Sink end function WebBridge.IsConnected(
 )return Connected end function WebBridge.Url()return SocketUrl end function
@@ -1209,11 +1281,11 @@ SetStatus('disconnected')Log('socket closed')end)end)RebuildIndex()Send({type=
 'connected')return true end function WebBridge.Disconnect()if not Socket then
 return false,'not connected'end pcall(function()Socket:Close()end)Connected=
 false Socket=nil SetStatus('disconnected')Log('closed by user')return true end
-return WebBridge end function __DARKLUA_BUNDLE_MODULES.m()local v=
-__DARKLUA_BUNDLE_MODULES.cache.m if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.m=v end return v.c end end do local __modImpl=
+return WebBridge end function __DARKLUA_BUNDLE_MODULES.n()local v=
+__DARKLUA_BUNDLE_MODULES.cache.n if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.n=v end return v.c end end do local __modImpl=
 function()local Config=__DARKLUA_BUNDLE_MODULES.d()local WebBridge=
-__DARKLUA_BUNDLE_MODULES.m()local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.h()
+__DARKLUA_BUNDLE_MODULES.n()local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.h()
 local Headless={}local RETRY_DELAY=3 local MAX_ATTEMPTS=3 function Headless.
 Start()if not WebBridge.Supported()then warn(
 [[[GcView] Web only mode needs WebSocket support, falling back to the in-game UI.]]
@@ -1230,9 +1302,9 @@ AntiCheat)WebBridge.Publish('actors',FunctionLibrary.GetActorScripts())print((
 '[GcView] bridge connect failed (%d/%d): %s'):format(Attempt,MAX_ATTEMPTS,
 tostring(Err)))if Attempt<MAX_ATTEMPTS then task.wait(RETRY_DELAY)end end warn(
 [[[GcView] web only mode could not reach the relay, falling back to the in-game UI.]]
-)return false end return Headless end function __DARKLUA_BUNDLE_MODULES.n()local
-v=__DARKLUA_BUNDLE_MODULES.cache.n if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.n=v end return v.c end end do local __modImpl=
+)return false end return Headless end function __DARKLUA_BUNDLE_MODULES.o()local
+v=__DARKLUA_BUNDLE_MODULES.cache.o if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.o=v end return v.c end end do local __modImpl=
 function()return{CONFIG_DIR='GcView@awakenkn',CONFIG_EXT='.json',
 DEFAULT_CONFIG_NAME='default',REPO_OWNER='Awakenchan',REPO_NAME='GcViewerV3',
 REPO_BRANCH='main',ASSETS_DIR_NAME='GcViwerV2@Assets',ASSETS_PATH=
@@ -1241,10 +1313,10 @@ REPO_BRANCH='main',ASSETS_DIR_NAME='GcViwerV2@Assets',ASSETS_PATH=
 'GcView@awakenkn/GcViewv4Source.luau',SAFE_CAPTURE_DIR=
 'GcView@awakenkn/GcViewSafeCapture',SAFE_SOURCE_URL=
 [[https://raw.githubusercontent.com/Awakenchan/GcViewerV3/refs/heads/main/GcViewV4/bundled.luau]]
-}end function __DARKLUA_BUNDLE_MODULES.o()local v=__DARKLUA_BUNDLE_MODULES.cache
-.o if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.o=v end return
+}end function __DARKLUA_BUNDLE_MODULES.p()local v=__DARKLUA_BUNDLE_MODULES.cache
+.p if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.p=v end return
 v.c end end do local __modImpl=function()local Constants=
-__DARKLUA_BUNDLE_MODULES.o()local PlayerRefs=__DARKLUA_BUNDLE_MODULES.b()local
+__DARKLUA_BUNDLE_MODULES.p()local PlayerRefs=__DARKLUA_BUNDLE_MODULES.b()local
 Executor=__DARKLUA_BUNDLE_MODULES.f()local HttpService=Services.HttpService
 local ASSET_PATH=Constants.ASSETS_PATH local httpReq=Executor.Request()local
 assertExploitFunctions=function()local required=table.pack(identifyexecutor,
@@ -1269,8 +1341,8 @@ localPath=localBase..'/'..entry.name if entry.type=='dir'then walk(entry.path,
 localPath)elseif entry.type=='file'and entry.download_url then downloadFile(
 entry,localPath)end end end local Assets={}function Assets.Download()
 assertExploitFunctions()walk(Constants.ASSETS_DIR_NAME,ASSET_PATH)end return
-Assets end function __DARKLUA_BUNDLE_MODULES.p()local v=__DARKLUA_BUNDLE_MODULES
-.cache.p if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.p=v end
+Assets end function __DARKLUA_BUNDLE_MODULES.q()local v=__DARKLUA_BUNDLE_MODULES
+.cache.q if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.q=v end
 return v.c end end do local __modImpl=function()local FunctionLibrary=
 __DARKLUA_BUNDLE_MODULES.h()local a a={cache={},load=function(b)if not a.cache[b
 ]then a.cache[b]={c=a[b]()}end return a.cache[b].c end}do function a.a()local b,
@@ -3075,16 +3147,16 @@ NoButtons=true})m('InputInt4','InputInt',4,{NoButtons=true})m('SliderInt2',
 'DragFloat4','DragFloat',4)n('InputColor3','InputInt3')n('SliderColor3',
 'SliderInt3')n('DragColor3','DragInt3')o('InputCFrame','InputInt3')o(
 'SliderCFrame','SliderInt3')o('DragCFrame','DragInt3')return aa end function
-__DARKLUA_BUNDLE_MODULES.q()local v=__DARKLUA_BUNDLE_MODULES.cache.q if not v
-then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.q=v end return v.c end end
+__DARKLUA_BUNDLE_MODULES.r()local v=__DARKLUA_BUNDLE_MODULES.cache.r if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.r=v end return v.c end end
 do local __modImpl=function()local Source=__DARKLUA_BUNDLE_MODULES.g()getgenv().
 decompile=function(scr)local text,reason=Source.Decompile(scr)if text then
 return text end return Source.Comment(reason)end getgenv().disassemble=function(
 scr)local text,reason=Source.Disassemble(scr)if text then return text end return
-Source.Comment(reason)end local Assets=__DARKLUA_BUNDLE_MODULES.p()Assets.
+Source.Comment(reason)end local Assets=__DARKLUA_BUNDLE_MODULES.q()Assets.
 Download()local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.h()local Sizex,Sizey=
 FunctionLibrary.GetSize()local isActor=getactors and#getactors()>0 or false
-local ReGui=__DARKLUA_BUNDLE_MODULES.q()local THEME_NAME='Cherry'ReGui:
+local ReGui=__DARKLUA_BUNDLE_MODULES.r()local THEME_NAME='Cherry'ReGui:
 DefineTheme(THEME_NAME,{TitleAlign=Enum.TextXAlignment.Center,TextDisabled=
 Color3.fromRGB(120,100,120),Text=Color3.fromRGB(200,180,200),FrameBg=Color3.
 fromRGB(25,20,25),FrameBgTransparency=0.4,FrameBgActive=Color3.fromRGB(120,100,
@@ -3098,13 +3170,13 @@ fromRGB(50,45,50),RegionBgTransparency=1})getgenv().Window=ReGui:TabsWindow({
 Title='GCViewV4 by @awakenkn | Exe: '..identifyexecutor()..' | Actor: '..
 FunctionLibrary.SafeString(isActor),Size=UDim2.fromOffset(Sizex,Sizey),Theme=
 THEME_NAME}):Center()return{ReGui=ReGui,Theme=THEME_NAME}end function
-__DARKLUA_BUNDLE_MODULES.r()local v=__DARKLUA_BUNDLE_MODULES.cache.r if not v
-then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.r=v end return v.c end end
-do local __modImpl=function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.r()local
+__DARKLUA_BUNDLE_MODULES.s()local v=__DARKLUA_BUNDLE_MODULES.cache.s if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.s=v end return v.c end end
+do local __modImpl=function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.s()local
 ReGui=ReGuiTable.ReGui local THEME=ReGuiTable.Theme local FunctionLibrary=
-__DARKLUA_BUNDLE_MODULES.h()local Data2Code=__DARKLUA_BUNDLE_MODULES.k()local
+__DARKLUA_BUNDLE_MODULES.h()local Data2Code=__DARKLUA_BUNDLE_MODULES.l()local
 GcShared=__DARKLUA_BUNDLE_MODULES.e()local Source=__DARKLUA_BUNDLE_MODULES.g()
-local WebBridge=__DARKLUA_BUNDLE_MODULES.m()local ActorScripts=FunctionLibrary.
+local WebBridge=__DARKLUA_BUNDLE_MODULES.n()local ActorScripts=FunctionLibrary.
 GetActorScripts()local actorScriptKeys={}for _,entry in ActorScripts do if entry
 .key then actorScriptKeys[entry.key]=true end if entry.name then actorScriptKeys
 ['name:'..entry.name]=true end end local AllScripts=FunctionLibrary.GetScripts(
@@ -3736,12 +3808,12 @@ ActorLabels[#ActorLabels+1]={label=label,separator=sep,type=item.scriptType}
 label.InputBegan:Connect(function(input)if input.UserInputType==Enum.
 UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
 openActorWindow(entry)end end)end refreshActorFilter()return{ReGui=ReGui,
-OpenScriptWindow=openScriptWindow}end function __DARKLUA_BUNDLE_MODULES.s()local
-v=__DARKLUA_BUNDLE_MODULES.cache.s if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.s=v end return v.c end end do local __modImpl=
-function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.r()local _=ReGuiTable.ReGui
+OpenScriptWindow=openScriptWindow}end function __DARKLUA_BUNDLE_MODULES.t()local
+v=__DARKLUA_BUNDLE_MODULES.cache.t if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.t=v end return v.c end end do local __modImpl=
+function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.s()local _=ReGuiTable.ReGui
 local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.h()local WebBridge=
-__DARKLUA_BUNDLE_MODULES.m()local COLORS=FunctionLibrary.Colors()local
+__DARKLUA_BUNDLE_MODULES.n()local COLORS=FunctionLibrary.Colors()local
 DEFAULT_URL='ws://127.0.0.1:8765'local MAX_LOG_LINES=12 local WebTab=getgenv().
 Window:CreateTab({Name='Web'})local supported=WebBridge.Supported()WebTab:Label(
 {Text=supported and'Bridge a browser front-end to this session over WebSocket.'
@@ -3778,12 +3850,12 @@ tostring(err),COLORS.orange)end end})buttonRow:Button({Text='Copy URL',Callback=
 function()local setter=setclipboard or toclipboard if type(setter)=='function'
 then pcall(setter,currentUrl())pushLog('copied relay url')end end})pushLog(
 'run the relay, then Connect')return WebTab end function
-__DARKLUA_BUNDLE_MODULES.t()local v=__DARKLUA_BUNDLE_MODULES.cache.t if not v
-then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.t=v end return v.c end end
-do local __modImpl=function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.r()local
+__DARKLUA_BUNDLE_MODULES.u()local v=__DARKLUA_BUNDLE_MODULES.cache.u if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.u=v end return v.c end end
+do local __modImpl=function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.s()local
 _=ReGuiTable.ReGui local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.h()local
-Config=__DARKLUA_BUNDLE_MODULES.d()local Plugins=__DARKLUA_BUNDLE_MODULES.l()
-local SafeMode=__DARKLUA_BUNDLE_MODULES.i()local COLORS=FunctionLibrary.Colors()
+Config=__DARKLUA_BUNDLE_MODULES.d()local Plugins=__DARKLUA_BUNDLE_MODULES.m()
+local SafeMode=__DARKLUA_BUNDLE_MODULES.j()local COLORS=FunctionLibrary.Colors()
 local PluginTab=getgenv().Window:CreateTab({Name='Plugins'})PluginTab:Label({
 Text='Changes are saved to '..Config.Path()..' and apply on the next load.',
 TextColor3=COLORS.gray,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left}
@@ -3813,21 +3885,35 @@ setStatus('copied '..Plugins.BridgeDir(),COLORS.green)end end})actionRow:Button(
 actionRow:Button({Text='Sandbox now',Callback=function()task.spawn(function()
 local done,blocked=SafeMode.Sandbox()setStatus(('sandboxed %d script(s)%s'):
 format(done,blocked>0 and(', %d blocked'):format(blocked)or''),blocked>0 and
-COLORS.yellow or COLORS.green)end)end})return PluginTab end function
-__DARKLUA_BUNDLE_MODULES.u()local v=__DARKLUA_BUNDLE_MODULES.cache.u if not v
-then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.u=v end return v.c end end
+COLORS.yellow or COLORS.green)end)end})local saveRow=PluginTab:Row()local
+includeCore=false saveRow:Checkbox({Label='Include core scripts',Value=false,
+Callback=function(_,value)includeCore=value end})saveRow:Button({Text=
+'Save all scripts (.rbxmx)',Callback=function()setStatus('collecting scripts...'
+,COLORS.yellow)task.spawn(function()local path,err,saved,failed=SafeMode.
+SaveAll(includeCore,function(done,total)if done%25==0 or done==total then
+setStatus(('saving %d/%d'):format(done,total),COLORS.yellow)end end)if path then
+setStatus(('saved %d script(s)%s to %s'):format(saved or 0,(failed or 0)>0 and(
+', %d without source'):format(failed)or'',path),COLORS.green)else setStatus(
+tostring(err),COLORS.red)end end)end})return PluginTab end function
+__DARKLUA_BUNDLE_MODULES.v()local v=__DARKLUA_BUNDLE_MODULES.cache.v if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.v=v end return v.c end end
 end __DARKLUA_BUNDLE_MODULES.a()__DARKLUA_BUNDLE_MODULES.b()local Constants=
 __DARKLUA_BUNDLE_MODULES.c()local Config=__DARKLUA_BUNDLE_MODULES.d()local
-SafeMode=__DARKLUA_BUNDLE_MODULES.i()local Globals=getgenv()local ForceUi=
-Globals.gcviewui==true local Captured=false if Globals[Constants.
-SAFE_CAPTURE_MARKER]then SafeMode.Hook()SafeMode.Capture()Captured=true end if
-not Captured then local Requested=Globals[Constants.SAFE_GLOBAL]==true local
-Automatic=Config.Get('SafeMode')and Config.Get('AutoSafeMode')and not ForceUi if
-Requested or Automatic then SafeMode.Rejoin()return end end if Config.Get(
-'WebOnly')and Config.Get('Bridge')and not ForceUi then local Headless=
-__DARKLUA_BUNDLE_MODULES.n()if Headless.Start()then return end end
-__DARKLUA_BUNDLE_MODULES.r()__DARKLUA_BUNDLE_MODULES.k()if Config.Get(
-'ScriptTools')then __DARKLUA_BUNDLE_MODULES.s()end if Config.Get('Bridge')then
-__DARKLUA_BUNDLE_MODULES.t()end __DARKLUA_BUNDLE_MODULES.u()
+FunctionLibrary=__DARKLUA_BUNDLE_MODULES.h()local SafeMode=
+__DARKLUA_BUNDLE_MODULES.j()local Globals=getgenv()local ForceUi=Globals.
+gcviewui==true local Captured=false if Globals[Constants.SAFE_CAPTURE_MARKER]
+then SafeMode.Hook()local Found=SafeMode.Capture()Captured=true if Config.Get(
+'Bridge')and type(Found)=='table'then local WebBridge=__DARKLUA_BUNDLE_MODULES.
+n()local Entries={}for _,Entry in Found do Entries[#Entries+1]={script=Entry.
+Script,path=Entry.Path,context='SafeMode',key=FunctionLibrary.ScriptKey(Entry.
+Script)}end WebBridge.Publish('scripts',Entries)end end if not Captured then
+local Requested=Globals[Constants.SAFE_GLOBAL]==true local Automatic=Config.Get(
+'SafeMode')and Config.Get('AutoSafeMode')and not ForceUi if Requested or
+Automatic then SafeMode.Rejoin()return end end if Config.Get('WebOnly')and
+Config.Get('Bridge')and not ForceUi then local Headless=__DARKLUA_BUNDLE_MODULES
+.o()if Headless.Start()then return end end __DARKLUA_BUNDLE_MODULES.s()
+__DARKLUA_BUNDLE_MODULES.l()if Config.Get('ScriptTools')then
+__DARKLUA_BUNDLE_MODULES.t()end if Config.Get('Bridge')then
+__DARKLUA_BUNDLE_MODULES.u()end __DARKLUA_BUNDLE_MODULES.v()
 ]=]
 loadstring(getgenv()["__GcViewSource"], "GcView")()

@@ -607,15 +607,18 @@
         dot.className = "dot" + (state ? " " + state : "");
     }
 
+    const SLOW_ACTIONS = { saveall: 900000, downloadbridge: 120000, sandbox: 120000 };
+
     function send(payload) {
         if (!socket || socket.readyState !== WebSocket.OPEN) return Promise.reject(new Error("not connected"));
         return new Promise((resolve, reject) => {
             const id = nextId++;
             waiting.set(id, { resolve, reject });
             socket.send(JSON.stringify(Object.assign({ type: "request", id }, payload)));
+            const limit = SLOW_ACTIONS[payload.action] || 25000;
             setTimeout(() => {
                 if (waiting.has(id)) { waiting.delete(id); reject(new Error("timed out")); }
-            }, 25000);
+            }, limit);
         });
     }
 
@@ -927,6 +930,15 @@
                 + '<div class="desc">Writes relay.js, index.html and package.json into the executor workspace so you '
                 + 'can run <span class="chipcode">npm i</span> then <span class="chipcode">node relay.js</span>.</div></div>'
                 + '<button class="copybtn" id="dlbridge">Download</button></div>'
+                + '<div class="h2row"><h2>Safe mode</h2></div>'
+                + '<div class="setting"><div class="body"><div class="title">Sandbox now</div>'
+                + '<div class="desc">Set <span class="chipcode">Sandboxed</span> on every LuaSourceContainer so the '
+                + "game's scripts stop running. Does not rejoin.</div></div>"
+                + '<button class="copybtn" id="sandbox">Sandbox</button></div>'
+                + '<div class="setting"><div class="body"><div class="title">Save all scripts</div>'
+                + '<div class="desc">Write every collected script into one <span class="chipcode">.rbxmx</span> '
+                + 'model inside the per-game folder. Nothing is written until you press this.</div></div>'
+                + '<button class="copybtn" id="saveall">Save .rbxmx</button></div>'
                 + '<div class="empty" id="cfgnote" style="padding:6px 0"></div>';
 
             setPane(html);
@@ -965,6 +977,28 @@
                     say("downloading...");
                     send({ action: "downloadbridge" })
                         .then((d) => say(d.note + " → " + d.folder, true))
+                        .catch((err) => say(err.message, false));
+                };
+            }
+
+            const sb = el("sandbox");
+            if (sb) {
+                sb.onclick = () => {
+                    say("sandboxing...");
+                    send({ action: "sandbox" })
+                        .then((d) => say("sandboxed " + d.sandboxed + " script(s)"
+                            + (d.blocked ? ", " + d.blocked + " blocked" : ""), true))
+                        .catch((err) => say(err.message, false));
+                };
+            }
+
+            const sa = el("saveall");
+            if (sa) {
+                sa.onclick = () => {
+                    say("saving, this can take a while...");
+                    send({ action: "saveall" })
+                        .then((d) => say("saved " + d.saved + " script(s)"
+                            + (d.failed ? ", " + d.failed + " without source" : "") + " → " + d.path, true))
                         .catch((err) => say(err.message, false));
                 };
             }

@@ -6,22 +6,34 @@
 <title>GcView</title>
 <style>
     :root {
-        --bg: #09090b;
-        --panel: #0d0d10;
-        --panel-2: #131317;
-        --raised: #17171b;
-        --border: #1f1f23;
-        --border-2: #26262c;
-        --text: #ededf0;
-        --muted: #9a9aa3;
-        --dim: #6b6b74;
-        --accent: #a78bfa;
-        --green: #7ee787;
-        --gold: #e3b341;
-        --red: #f2708a;
-        --cyan: #56d4dd;
-        --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-        --sans: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        --v-accent: #c7c7c7;
+        --v-accent-hover: #e5e5e5;
+        --v-accent-soft: rgba(255, 255, 255, 0.09);
+        --v-bg: #111111;
+        --v-surface: #171717;
+        --v-raised: #242424;
+        --v-hover: #292929;
+        --v-contrast: #141416;
+        --v-border: #262626;
+        --v-border-strong: #363636;
+        --v-border-subtle: rgba(255, 255, 255, 0.06);
+        --v-text: #cccccc;
+        --v-text-2: #a3a3a3;
+        --v-text-muted: #737373;
+        --v-success: #10b981;
+        --v-warning: #eab308;
+        --v-error: #ef4444;
+        --v-info: #3b82f6;
+        --v-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+        --v-mono: "JetBrains Mono", "SF Mono", "Cascadia Code", ui-monospace, Consolas, monospace;
+        --v-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", system-ui, sans-serif;
+        --tk-kw: #c586c0;
+        --tk-var: #9cdcfe;
+        --tk-fn: #dcdcaa;
+        --tk-str: #ce9178;
+        --tk-com: #5e6878;
+        --tk-cl: #569cd6;
+        --tk-num: #b5cea8;
     }
 
     * { box-sizing: border-box; }
@@ -29,475 +41,812 @@
     html, body {
         margin: 0;
         height: 100%;
-        background: var(--bg);
-        color: var(--text);
-        font-family: var(--sans);
-        font-size: 14px;
+        background: var(--v-bg);
+        color: var(--v-text);
+        font-family: var(--v-sans);
+        font-size: 13px;
         -webkit-font-smoothing: antialiased;
+        overflow: hidden;
     }
-
-    body { display: flex; flex-direction: column; }
 
     ::-webkit-scrollbar { width: 10px; height: 10px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb {
-        background: var(--border-2);
+        background: #3a3a3a;
         border-radius: 8px;
         border: 2px solid transparent;
         background-clip: content-box;
     }
-    ::-webkit-scrollbar-thumb:hover { background: #3a3a44; background-clip: content-box; }
+    ::-webkit-scrollbar-thumb:hover { background: #4a4a4a; background-clip: content-box; }
     ::-webkit-scrollbar-corner { background: transparent; }
-    * { scrollbar-width: thin; scrollbar-color: var(--border-2) transparent; }
+    * { scrollbar-width: thin; scrollbar-color: #3a3a3a transparent; }
 
-    .topbar {
+    button, input { font-family: inherit; }
+
+    .vwin {
+        position: relative;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        background: var(--v-surface);
+        overflow: hidden;
+    }
+
+    .vwin-bar {
         display: flex;
         align-items: center;
-        height: 64px;
-        padding: 0 24px;
+        gap: 8px;
+        height: 32px;
         flex: 0 0 auto;
-        gap: 18px;
-        border-bottom: 1px solid var(--border);
+        padding-left: 12px;
+        background: var(--v-surface);
+        border-bottom: 1px solid var(--v-border-subtle);
+        -webkit-user-select: none;
+        user-select: none;
     }
+    .vwin-bar .logo { width: 20px; height: 20px; color: var(--v-text); flex: 0 0 auto; }
+    .vwin-title { font-size: 12px; color: var(--v-text); opacity: 0.78; }
+    .vwin-right { margin-left: auto; display: flex; align-items: center; gap: 8px; padding-right: 12px; }
 
-    .brand {
+    .vwin-inst {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        height: 22px;
+        padding: 0 10px;
+        border-radius: 5px;
+        border: 1px solid var(--v-border);
+        background: var(--v-raised);
+        font-size: 11.5px;
+        color: var(--v-text-2);
+        white-space: nowrap;
+        max-width: 280px;
+    }
+    .vwin-inst .st { overflow: hidden; text-overflow: ellipsis; }
+    .dt { width: 7px; height: 7px; border-radius: 999px; background: var(--v-text-muted); flex: 0 0 auto; }
+    .dt.on { background: var(--v-success); }
+    .dt.wait { background: var(--v-warning); animation: blink 1.4s ease-in-out infinite; }
+    .dt.err { background: var(--v-error); }
+    .dt.demo { background: var(--v-info); }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+    .demobtn {
+        height: 22px;
+        padding: 0 9px;
+        border-radius: 5px;
+        border: 1px solid var(--v-border);
+        background: var(--v-raised);
+        color: var(--v-text-2);
+        font-size: 11.5px;
+        cursor: pointer;
+    }
+    .demobtn:hover { background: var(--v-hover); color: var(--v-text); }
+    .demobtn.on { border-color: rgba(59, 130, 246, 0.5); color: #93c5fd; background: rgba(59, 130, 246, 0.12); }
+
+    .urlbox {
         display: flex;
         align-items: center;
-        gap: 9px;
-        font-weight: 600;
-        font-size: 15px;
-        letter-spacing: -0.015em;
-        width: 220px;
-        flex: 0 0 auto;
+        height: 22px;
+        border-radius: 5px;
+        border: 1px solid var(--v-border);
+        background: var(--v-raised);
+        padding-left: 8px;
+        overflow: hidden;
     }
-
-    .bolt {
-        width: 26px; height: 26px;
-        display: grid; place-items: center;
-        font-size: 15px;
-        color: var(--text);
-    }
-
-    .searchwrap { flex: 1 1 auto; display: flex; justify-content: center; }
-
-    .search {
-        display: flex;
-        align-items: center;
-        gap: 9px;
-        width: 100%;
-        max-width: 560px;
-        background: var(--panel-2);
-        border: 1px solid var(--border-2);
-        border-radius: 9px;
-        padding: 0 8px 0 13px;
-        height: 38px;
-    }
-
-    .search:focus-within { border-color: #33333d; }
-    .search svg { flex: 0 0 auto; opacity: 0.5; }
-
-    .search input {
-        flex: 1 1 auto;
+    .urlbox input {
+        width: 168px;
         background: none;
         border: none;
         outline: none;
-        color: var(--text);
-        font-family: var(--mono);
-        font-size: 12.5px;
-        min-width: 0;
-    }
-
-    kbd {
-        font-family: var(--sans);
+        color: var(--v-text-2);
+        font-family: var(--v-mono);
         font-size: 11px;
-        color: var(--muted);
-        background: var(--raised);
-        border: 1px solid var(--border-2);
-        border-radius: 5px;
-        padding: 2px 7px;
+    }
+    .urlbox input:focus { color: var(--v-text); }
+    .urlbox button {
+        height: 22px;
+        border: none;
+        border-left: 1px solid var(--v-border);
+        background: transparent;
+        color: var(--v-text-2);
+        font-size: 11.5px;
+        font-weight: 500;
+        padding: 0 10px;
         cursor: pointer;
     }
-    kbd:hover { color: var(--text); border-color: #3a3a44; }
+    .urlbox button:hover { background: var(--v-hover); color: var(--v-text); }
+    .urlbox button.live { color: var(--v-text); }
 
-    .right { width: 220px; flex: 0 0 auto; display: flex; align-items: center; justify-content: flex-end; gap: 9px; }
+    .vwin-body { flex: 1 1 auto; display: flex; min-height: 0; }
 
-    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--dim); }
-    .dot.on { background: var(--green); }
-    .dot.err { background: var(--red); }
-    .status { font-size: 12px; color: var(--muted); }
-
-    nav.rail {
-        display: flex;
-        align-items: center;
-        gap: 26px;
-        padding: 0 22px;
-        height: 44px;
-        border-bottom: 1px solid var(--border);
+    .ide-side {
+        width: 262px;
         flex: 0 0 auto;
-    }
-
-    .navtab {
-        display: flex;
-        align-items: center;
-        gap: 7px;
-        height: 100%;
-        font-size: 13.5px;
-        color: var(--muted);
-        cursor: pointer;
-        border-bottom: 2px solid transparent;
-        margin-bottom: -1px;
-        white-space: nowrap;
-    }
-    .navtab:hover { color: var(--text); }
-    .navtab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
-    .navtab .count { font-size: 11px; color: var(--dim); font-family: var(--mono); }
-
-    main { flex: 1 1 auto; display: flex; min-height: 0; }
-
-    aside {
-        width: 320px;
-        flex: 0 0 auto;
-        border-right: 1px solid var(--border);
+        background: var(--v-surface);
+        border-right: 1px solid var(--v-border-subtle);
         display: flex;
         flex-direction: column;
         min-height: 0;
-        padding-top: 18px;
     }
 
-    .grouplabel {
-        font-size: 11px;
-        text-transform: uppercase;
-        letter-spacing: 0.09em;
-        color: var(--dim);
-        font-weight: 600;
-        padding: 0 22px 10px;
-    }
-
-    .types { display: flex; gap: 5px; padding: 0 18px 12px; flex-wrap: wrap; }
-    .type {
-        border: 1px solid var(--border-2);
-        background: transparent;
-        color: var(--dim);
-        border-radius: 6px;
-        padding: 3px 9px;
-        font-size: 11px;
-        font-family: var(--mono);
-        cursor: pointer;
-    }
-    .type:hover { color: var(--muted); }
-    .type.on { color: var(--text); border-color: #3a3a44; background: var(--raised); }
-
-    .filter { padding: 0 18px 14px; }
-    .filter input {
-        width: 100%;
-        background: var(--panel-2);
-        border: 1px solid var(--border-2);
-        border-radius: 8px;
-        padding: 8px 11px;
-        color: var(--text);
-        font-family: var(--mono);
-        font-size: 12px;
-        outline: none;
-    }
-    .filter input:focus { border-color: #33333d; }
-
-    .list { overflow-y: auto; flex: 1 1 auto; padding: 0 12px 24px; }
-
-    .item {
-        padding: 8px 10px;
-        border-radius: 7px;
-        cursor: pointer;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-    }
-    .item:hover { background: var(--panel); }
-    .item.active { background: var(--raised); }
-
-    .item .path {
-        font-family: var(--mono);
-        font-size: 11.5px;
-        color: var(--muted);
-        word-break: break-all;
-        line-height: 1.5;
-    }
-    .item.active .path { color: var(--text); }
-
-    .meta { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-
-    .badge {
-        font-size: 10px;
-        font-family: var(--mono);
-        padding: 1.5px 6px;
-        border-radius: 4px;
-        background: var(--raised);
-        border: 1px solid var(--border);
-        color: var(--muted);
-    }
-    .badge.local { color: var(--green); }
-    .badge.module { color: var(--accent); }
-    .badge.actor { color: var(--cyan); }
-    .badge.nil { color: var(--red); }
-    .badge.ac { color: var(--gold); }
-
-    section.content { flex: 1 1 auto; display: flex; min-width: 0; min-height: 0; }
-    .doc { flex: 1 1 auto; overflow-y: auto; min-width: 0; padding: 40px 48px 100px; }
-    .doc > * { max-width: 900px; }
-
-    h1 {
-        margin: 0 0 14px;
-        font-size: 34px;
-        font-weight: 700;
-        letter-spacing: -0.03em;
-        word-break: break-all;
-        line-height: 1.18;
-    }
-
-    h2 {
-        font-size: 22px;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-        margin: 38px 0 14px;
-    }
-
-    .subline { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; margin-bottom: 22px; }
-
-    .tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--border); margin-bottom: 26px; }
-    .tab {
-        padding: 0 0 11px;
-        font-size: 13.5px;
-        color: var(--muted);
-        cursor: pointer;
-        border-bottom: 2px solid transparent;
-        margin-bottom: -1px;
-    }
-    .tab:hover { color: var(--text); }
-    .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
-
-    pre {
-        margin: 0;
-        font-family: var(--mono);
-        font-size: 12.5px;
-        line-height: 1.7;
-        background: var(--panel);
-        border: 1px solid var(--border);
-        border-radius: 11px;
-        padding: 18px 20px;
-        overflow-x: auto;
-        white-space: pre;
-        tab-size: 4;
-    }
-
-    .tok-kw { color: #f86d7c; }
-    .tok-str { color: #acf094; }
-    .tok-num { color: #ffc600; }
-    .tok-com { color: #666672; font-style: italic; }
-    .tok-glob { color: #56d4dd; }
-    .tok-fn { color: #d2a8ff; }
-
-    .tablewrap {
-        border: 1px solid var(--border);
-        border-radius: 11px;
-        overflow: hidden;
-    }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    thead th {
-        text-align: left;
-        padding: 12px 16px;
-        background: var(--panel);
-        color: var(--text);
-        font-weight: 600;
-        font-size: 13px;
-        border-bottom: 1px solid var(--border);
-    }
-    thead th + th { border-left: 1px solid var(--border); }
-    tbody td {
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--border);
-        color: var(--muted);
-        font-family: var(--mono);
-        font-size: 12px;
-        vertical-align: top;
-    }
-    tbody td + td { border-left: 1px solid var(--border); }
-    tbody tr:last-child td { border-bottom: none; }
-    tbody td.name, .valtext { color: var(--text); }
-    tbody tr.clickable { cursor: pointer; }
-    tbody tr.clickable:hover td { background: var(--panel); color: var(--text); }
-
-    td pre {
+    .ide-act { display: flex; align-items: center; gap: 2px; padding: 6px 8px; flex: 0 0 auto; }
+    .ide-act .ab {
+        display: flex; align-items: center; justify-content: center;
+        width: 28px; height: 28px;
+        border-radius: 5px;
         border: none;
         background: transparent;
-        padding: 0;
-        border-radius: 0;
+        color: var(--v-text-2);
+        cursor: pointer;
+        position: relative;
+    }
+    .ide-act .ab svg { width: 16px; height: 16px; }
+    .ide-act .ab:hover { color: var(--v-text); background: var(--v-accent-soft); }
+    .ide-act .ab.active { color: var(--v-text); background: var(--v-hover); }
+    .ide-act .ab .n { position: absolute; top: 2px; right: 1px; width: 6px; height: 6px; border-radius: 999px; background: var(--v-text-muted); }
+    .ide-act .ab.active .n { background: var(--v-accent); }
+
+    .ide-search { padding: 8px; flex: 0 0 auto; border-bottom: 1px solid var(--v-border-subtle); }
+    .ide-search .box { position: relative; display: flex; align-items: center; }
+    .ide-search .box svg { position: absolute; left: 10px; width: 14px; height: 14px; color: var(--v-text-2); pointer-events: none; }
+    .ide-search input {
+        width: 100%;
+        height: 30px;
+        border-radius: 6px;
+        border: 1px solid var(--v-border);
+        background: var(--v-raised);
+        padding: 0 10px 0 31px;
         font-size: 12px;
-        line-height: 1.6;
-        max-height: 340px;
-        overflow: auto;
+        color: var(--v-text);
+        outline: none;
     }
+    .ide-search input::placeholder { color: var(--v-text-muted); }
+    .ide-search input:focus { border-color: var(--v-border-strong); }
 
-    .chipcode {
-        font-family: var(--mono);
-        font-size: 11.5px;
-        background: var(--raised);
-        border: 1px solid var(--border);
+    .ide-types { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 8px 6px; flex: 0 0 auto; }
+    .ide-types:empty { display: none; }
+    .ide-types .ty {
+        height: 21px;
+        padding: 0 8px;
         border-radius: 5px;
-        padding: 2px 7px;
-        color: var(--text);
+        border: 1px solid var(--v-border);
+        background: transparent;
+        color: var(--v-text-muted);
+        font-size: 11px;
+        font-family: var(--v-mono);
+        cursor: pointer;
     }
+    .ide-types .ty:hover { color: var(--v-text-2); border-color: var(--v-border-strong); }
+    .ide-types .ty.on { background: var(--v-accent-soft); border-color: var(--v-border-strong); color: var(--v-text); }
 
-    .codewrap { position: relative; }
+    .ide-sec {
+        display: flex; align-items: center;
+        height: 32px;
+        margin: 2px 6px;
+        padding: 0 8px;
+        border-radius: 6px;
+        flex: 0 0 auto;
+    }
+    .ide-sec .cv { width: 14px; height: 14px; color: var(--v-text-muted); flex: 0 0 auto; }
+    .ide-sec .nm { margin-left: 6px; font-size: 12px; font-weight: 500; color: var(--v-text-2); }
+    .ide-sec .ct { margin-left: 6px; font-size: 11px; color: var(--v-text-muted); font-family: var(--v-mono); }
+    .ide-sec .secact { margin-left: auto; display: flex; gap: 4px; color: var(--v-text-2); }
+    .ide-sec .secact button {
+        display: grid; place-items: center;
+        width: 20px; height: 20px;
+        border: none; background: transparent; border-radius: 4px;
+        color: inherit; cursor: pointer;
+    }
+    .ide-sec .secact button:hover { background: var(--v-hover); color: var(--v-text); }
+    .ide-sec .secact svg { width: 14px; height: 14px; display: block; }
+    .ide-sec .secact button.spin svg { animation: spin 0.6s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .copybtn {
+    .ide-tree { flex: 1 1 auto; overflow-y: auto; padding: 2px 0 14px; min-height: 0; }
+
+    .ide-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        height: 26px;
+        margin: 0 6px;
+        padding: 0 8px;
+        font-size: 12.5px;
+        color: var(--v-text-2);
+        border-radius: 6px;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .ide-row .ic { width: 14px; height: 14px; flex: 0 0 auto; color: var(--v-text); }
+    .ide-row .nm { flex: 0 0 auto; max-width: 60%; overflow: hidden; text-overflow: ellipsis; }
+    .ide-row .pt {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        color: var(--v-text-muted);
+        font-size: 11px;
+        text-align: right;
+        direction: rtl;
+    }
+    .ide-row .tg { flex: 0 0 auto; font-size: 10px; font-family: var(--v-mono); color: var(--v-text-muted); }
+    .ide-row .tg.local { color: var(--v-success); }
+    .ide-row .tg.module { color: var(--tk-var); }
+    .ide-row .tg.actor { color: var(--v-info); }
+    .ide-row .tg.nil { color: var(--v-error); }
+    .ide-row .ac { flex: 0 0 auto; width: 6px; height: 6px; border-radius: 999px; background: var(--v-warning); }
+    .ide-row:hover { background: var(--v-hover); color: var(--v-text); }
+    .ide-row.cursor { background: var(--v-hover); color: var(--v-text); box-shadow: inset 0 0 0 1px var(--v-border-strong); }
+    .ide-row.active { background: var(--v-accent-soft); color: var(--v-text); }
+    .ide-note { padding: 10px 14px; font-size: 12px; color: var(--v-text-muted); }
+
+    .ide-main { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+
+    .ide-tabs {
+        display: flex;
+        align-items: stretch;
+        height: 40px;
+        flex: 0 0 auto;
+        background: var(--v-surface);
+        border-bottom: 1px solid var(--v-border);
+    }
+    .tabstrip { display: flex; align-items: stretch; flex: 1 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+    .tabstrip::-webkit-scrollbar { height: 0; }
+    .ide-tab {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 12px;
+        max-width: 260px;
+        flex: 0 0 auto;
+        font-size: 12.5px;
+        color: var(--v-text-2);
+        border-right: 1px solid var(--v-border);
+        position: relative;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+    .ide-tab > .lbl { overflow: hidden; text-overflow: ellipsis; }
+    .ide-tab svg { width: 16px; height: 16px; flex: 0 0 auto; opacity: 0.6; }
+    .ide-tab.t-home svg { color: var(--v-accent); opacity: 1; }
+    .ide-tab .fic { color: var(--v-text); opacity: 1; }
+    .ide-tab:hover { color: var(--v-text); }
+    .ide-tab.active { background: var(--v-contrast); color: var(--v-text); }
+    .ide-tab.active::before {
+        content: "";
+        position: absolute; top: 0; left: 0; right: 0;
+        height: 2px;
+        background: var(--v-accent);
+    }
+    .ide-tab .x { width: 15px; height: 15px; color: var(--v-text-muted); opacity: 1; margin-left: 2px; border-radius: 3px; padding: 1px; }
+    .ide-tab .x:hover { background: var(--v-hover); color: var(--v-text); }
+
+    .ide-addtab {
+        align-self: center;
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 28px; height: 28px;
+        margin-left: 6px;
+        flex: 0 0 auto;
+        border-radius: 6px;
+        border: 1px solid var(--v-border-subtle);
+        background: var(--v-raised);
+        color: var(--v-text-2);
+        cursor: pointer;
+    }
+    .ide-addtab:hover { color: var(--v-text); background: var(--v-hover); }
+    .ide-addtab svg { width: 14px; height: 14px; }
+
+    .ide-run, .ide-layout {
+        align-self: center;
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        background: var(--panel-2);
-        border: 1px solid var(--border-2);
-        color: var(--muted);
-        border-radius: 7px;
-        padding: 5px 9px;
-        font-family: var(--sans);
+        height: 28px;
+        cursor: pointer;
+        white-space: nowrap;
+        flex: 0 0 auto;
+    }
+    .ide-run {
+        margin-right: 10px;
+        padding: 0 12px;
+        border-radius: 8px;
+        border: 1px solid var(--v-border-strong);
+        background: var(--v-raised);
+        color: var(--v-text);
+        font-size: 12px;
+        font-weight: 600;
+    }
+    .ide-run:hover { background: var(--v-hover); }
+    .ide-run svg { width: 15px; height: 15px; }
+    .ide-run.spin svg { animation: spin 0.6s linear infinite; }
+    .ide-layout {
+        margin-right: 10px;
+        padding: 0 9px;
+        border: 1px solid var(--v-border-subtle);
+        background: var(--v-raised);
+        border-radius: 6px;
+        color: var(--v-text-2);
+        font-size: 12px;
+        font-weight: 500;
+    }
+    .ide-layout:hover { color: var(--v-text); background: var(--v-hover); }
+    .ide-layout svg { width: 15px; height: 15px; }
+    .ide-layout.done { color: var(--v-success); }
+
+    .ide-crumbs {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        height: 32px;
+        flex: 0 0 auto;
+        padding: 0 12px;
+        background: var(--v-contrast);
+        font-size: 12.5px;
+        color: var(--v-text-2);
+        min-width: 0;
+    }
+    .ide-crumbs .cr { width: 14px; height: 14px; color: var(--v-text-muted); flex: 0 0 auto; }
+    .ide-crumbs .fic { width: 14px; height: 14px; color: var(--v-text); flex: 0 0 auto; }
+    .ide-crumbs .cur { color: var(--v-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .ide-crumbs .smap { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding-left: 10px; flex: 0 0 auto; }
+    .ide-crumbs .smap .lk { width: 13px; height: 13px; color: var(--v-text-2); flex: 0 0 auto; }
+    .ide-crumbs .seg {
+        display: inline-flex;
+        align-items: center;
+        height: 24px;
+        padding: 0 9px;
+        border-radius: 5px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--v-text-2);
+        font-size: 12px;
+        cursor: pointer;
+    }
+    .ide-crumbs .seg:hover { color: var(--v-text); background: var(--v-accent-soft); }
+    .ide-crumbs .seg.on { border-color: var(--v-border); background: var(--v-raised); color: var(--v-text); }
+    .ide-crumbs .sel {
+        display: inline-flex; align-items: center; gap: 6px;
+        height: 24px; padding: 0 8px;
+        border-radius: 5px;
+        border: 1px solid var(--v-border);
+        background: var(--v-raised);
+        color: var(--v-text-2);
         font-size: 11.5px;
+        white-space: nowrap;
+    }
+
+    .ide-editor {
+        flex: 1 1 auto;
+        display: flex;
+        font-family: var(--v-mono);
+        font-size: 12.5px;
+        line-height: 1.7;
+        background: var(--v-contrast);
+        overflow: auto;
+        min-height: 0;
+        position: relative;
+    }
+
+    .ide-gutter {
+        flex: 0 0 auto;
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        padding: 12px 0 80px;
+        background: var(--v-contrast);
+        text-align: right;
+        color: #636369;
+        white-space: pre;
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    .ide-gutter span { display: block; padding: 0 12px 0 16px; }
+
+    .ide-code {
+        flex: 1 1 auto;
+        padding: 12px 24px 80px 4px;
+        margin: 0;
+        white-space: pre;
+        color: var(--v-text);
+        font: inherit;
+        min-width: 0;
+    }
+
+    .tok-kw { color: var(--tk-kw); }
+    .tok-cl { color: var(--tk-cl); }
+    .tok-var { color: var(--tk-var); }
+    .tok-fn { color: var(--tk-fn); }
+    .tok-str { color: var(--tk-str); }
+    .tok-com { color: var(--tk-com); }
+    .tok-num { color: var(--tk-num); }
+
+    .pane {
+        flex: 1 1 auto;
+        min-width: 0;
+        padding: 20px 24px 80px;
+        font-family: var(--v-sans);
+        font-size: 13px;
+        line-height: 1.55;
+    }
+    .pane.center { display: grid; place-items: center; padding: 24px; }
+    .pane > * { max-width: 980px; }
+
+    .muted { color: var(--v-text-muted); font-size: 12.5px; }
+
+    h2 { font-size: 13px; font-weight: 600; letter-spacing: 0.01em; color: var(--v-text); margin: 0; }
+    .h2row { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; }
+    .h2row + .h2row, .tablewrap + .h2row, .card + .h2row, .muted + .h2row { margin-top: 26px; }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        height: 26px;
+        padding: 0 10px;
+        border-radius: 6px;
+        border: 1px solid var(--v-border);
+        background: var(--v-raised);
+        color: var(--v-text-2);
+        font-family: var(--v-sans);
+        font-size: 11.5px;
+        font-weight: 500;
         cursor: pointer;
         line-height: 1;
+        white-space: nowrap;
     }
-    .copybtn:hover { color: var(--text); border-color: #3a3a44; background: var(--raised); }
-    .copybtn.done { color: var(--green); border-color: #2c4634; }
+    .btn:hover { background: var(--v-hover); color: var(--v-text); }
+    .btn.primary { background: var(--v-accent-hover); border-color: var(--v-accent-hover); color: #141416; font-weight: 600; }
+    .btn.primary:hover { background: #fff; color: #141416; }
+    .btn.danger:hover { color: var(--v-error); border-color: rgba(239, 68, 68, 0.45); }
+    .btn.done { color: var(--v-success); border-color: rgba(16, 185, 129, 0.45); }
+    .btn svg { width: 12px; height: 12px; flex: 0 0 auto; }
+    .push { margin-left: auto; }
 
-    .codewrap .copybtn {
-        position: absolute;
-        top: 10px;
-        right: 12px;
-        opacity: 0;
-        transition: opacity 0.12s;
+    .tablewrap { border: 1px solid var(--v-border); border-radius: 8px; overflow: hidden; background: var(--v-surface); }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    thead th {
+        text-align: left;
+        padding: 9px 13px;
+        background: var(--v-bg);
+        color: var(--v-text-2);
+        font-weight: 500;
+        font-size: 11.5px;
+        border-bottom: 1px solid var(--v-border);
     }
-    .codewrap:hover .copybtn, .codewrap .copybtn.done { opacity: 1; }
+    thead th + th { border-left: 1px solid var(--v-border); }
+    tbody td {
+        padding: 9px 13px;
+        border-bottom: 1px solid var(--v-border-subtle);
+        color: var(--v-text-2);
+        font-family: var(--v-mono);
+        font-size: 11.5px;
+        vertical-align: top;
+    }
+    tbody td + td { border-left: 1px solid var(--v-border-subtle); }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody td.name { color: var(--v-text); }
+    tbody tr.clickable { cursor: pointer; }
+    tbody tr.clickable:hover td { background: var(--v-hover); color: var(--v-text); }
+    td pre { margin: 0; font-family: var(--v-mono); font-size: 11.5px; line-height: 1.6; max-height: 320px; overflow: auto; white-space: pre; }
+    td .btn { margin-top: 6px; }
 
-    .h2row { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 34px 0 14px; }
-    .h2row h2 { margin: 0; }
+    .chip {
+        display: inline-flex;
+        align-items: center;
+        height: 20px;
+        padding: 0 7px;
+        border-radius: 4px;
+        border: 1px solid var(--v-border);
+        background: var(--v-raised);
+        font-family: var(--v-mono);
+        font-size: 10.5px;
+        color: var(--v-text-2);
+    }
+    .chip.ac { color: var(--v-warning); border-color: rgba(234, 179, 8, 0.35); }
 
-    .setting {
+    .card {
         display: flex;
         align-items: flex-start;
         gap: 14px;
-        padding: 16px 18px;
-        border: 1px solid var(--border);
-        border-radius: 11px;
-        margin-bottom: 10px;
-        background: var(--panel);
+        padding: 13px 15px;
+        border: 1px solid var(--v-border);
+        border-radius: 8px;
+        margin-bottom: 8px;
+        background: var(--v-surface);
     }
-    .setting .body { flex: 1 1 auto; min-width: 0; }
-    .setting .title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
-    .setting .desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
+    .card .body { flex: 1 1 auto; min-width: 0; }
+    .card .title { font-size: 12.5px; font-weight: 600; color: var(--v-text); margin-bottom: 3px; }
+    .card .desc { font-size: 12px; color: var(--v-text-muted); line-height: 1.55; }
+    .card code, .icode {
+        font-family: var(--v-mono);
+        font-size: 11px;
+        color: var(--v-text);
+        background: var(--v-raised);
+        border: 1px solid var(--v-border);
+        border-radius: 4px;
+        padding: 1px 5px;
+    }
 
     .toggle {
         flex: 0 0 auto;
-        width: 42px; height: 24px;
+        width: 38px; height: 22px;
         border-radius: 999px;
-        border: 1px solid var(--border-2);
-        background: var(--panel-2);
+        border: 1px solid var(--v-border-strong);
+        background: var(--v-raised);
         position: relative;
         cursor: pointer;
-        transition: background 0.15s, border-color 0.15s;
+        transition: background 0.14s, border-color 0.14s;
     }
     .toggle::after {
         content: "";
         position: absolute;
         top: 3px; left: 3px;
-        width: 16px; height: 16px;
+        width: 14px; height: 14px;
         border-radius: 50%;
-        background: var(--dim);
-        transition: transform 0.15s, background 0.15s;
+        background: var(--v-text-muted);
+        transition: transform 0.14s, background 0.14s;
     }
-    .toggle.on { background: #2b2350; border-color: var(--accent); }
-    .toggle.on::after { transform: translateX(18px); background: var(--accent); }
+    .toggle.on { background: var(--v-accent-soft); border-color: var(--v-accent); }
+    .toggle.on::after { transform: translateX(16px); background: var(--v-accent-hover); }
 
-    .settingrow { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-    .settingrow input {
+    .row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+    .row input {
         flex: 1 1 auto;
-        background: var(--panel-2);
-        border: 1px solid var(--border-2);
-        border-radius: 8px;
-        padding: 9px 12px;
-        color: var(--text);
-        font-family: var(--mono);
-        font-size: 12.5px;
+        height: 30px;
+        background: var(--v-raised);
+        border: 1px solid var(--v-border);
+        border-radius: 6px;
+        padding: 0 10px;
+        color: var(--v-text);
+        font-family: var(--v-mono);
+        font-size: 12px;
         outline: none;
     }
-    .settingrow input:focus { border-color: #33333d; }
+    .row input:focus { border-color: var(--v-border-strong); }
 
-    .toc { width: 244px; flex: 0 0 auto; padding: 40px 24px; }
-    .toc .head { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); font-weight: 500; margin-bottom: 14px; }
-    .toc .links { border-left: 1px solid var(--border); }
-    .toc a {
-        display: block;
-        font-size: 13.5px;
-        color: var(--muted);
-        text-decoration: none;
-        padding: 6px 0 6px 14px;
-        margin-left: -1px;
-        border-left: 1px solid transparent;
+    .welcome {
+        width: min(540px, 100%);
+        border: 1px solid var(--v-border);
+        border-radius: 10px;
+        background: var(--v-surface);
+        padding: 22px 24px;
+        font-family: var(--v-sans);
+    }
+    .welcome h3 { margin: 0 0 6px; font-size: 14px; font-weight: 600; color: var(--v-text); }
+    .welcome p { margin: 0; color: var(--v-text-muted); font-size: 12.5px; line-height: 1.6; }
+    .welcome ol { margin: 12px 0 0; padding-left: 18px; color: var(--v-text-muted); font-size: 12.5px; line-height: 1.9; }
+    .welcome .acts { margin-top: 16px; display: flex; gap: 8px; }
+    .welcome .keys { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--v-border-subtle); display: flex; flex-wrap: wrap; gap: 6px 14px; }
+    .welcome .keys span { font-size: 11.5px; color: var(--v-text-muted); }
+    .welcome .keys b { font-family: var(--v-mono); font-weight: 400; color: var(--v-text-2); }
+
+    .back { color: var(--v-text-2); font-size: 12px; cursor: pointer; display: inline-block; margin-bottom: 12px; font-family: var(--v-sans); }
+    .back:hover { color: var(--v-text); }
+    .reasons { margin-top: 12px; color: var(--v-warning); font-family: var(--v-mono); font-size: 11.5px; line-height: 1.7; }
+
+    .ide-term {
+        flex: 0 0 auto;
+        display: flex;
+        flex-direction: column;
+        border-top: 1px solid var(--v-border);
+        background: var(--v-contrast);
+        height: 172px;
+        min-height: 0;
+    }
+    .ide-term.collapsed { height: 34px; }
+    .ide-term.collapsed .term-body { display: none; }
+
+    .term-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 33px;
+        flex: 0 0 auto;
+        padding: 0 10px;
+        background: var(--v-surface);
+        border-bottom: 1px solid var(--v-border-subtle);
+        -webkit-user-select: none;
+        user-select: none;
+    }
+    .term-head .lbl { font-size: 12px; color: var(--v-text-2); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .term-head .lbl svg { width: 12px; height: 12px; color: var(--v-text-muted); transition: transform 0.14s; }
+    .ide-term.collapsed .term-head .lbl svg { transform: rotate(-90deg); }
+    .term-head .src {
+        display: inline-flex; align-items: center; gap: 6px;
+        height: 24px; padding: 0 9px;
+        border-radius: 5px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--v-text-2);
+        font-size: 11.5px;
+        font-family: var(--v-mono);
         cursor: pointer;
     }
-    .toc a:hover { color: var(--text); }
-    .toc a.active { color: var(--text); border-left-color: var(--text); }
+    .term-head .src:hover { background: var(--v-accent-soft); color: var(--v-text); }
+    .term-head .src.on { background: var(--v-contrast); border-color: var(--v-border); color: var(--v-text); }
+    .term-head .filter {
+        margin-left: auto;
+        position: relative;
+        display: flex; align-items: center;
+    }
+    .term-head .filter svg { position: absolute; left: 8px; width: 13px; height: 13px; color: var(--v-text-muted); pointer-events: none; }
+    .term-head .filter input {
+        width: 170px; height: 24px;
+        border-radius: 5px;
+        border: 1px solid var(--v-border);
+        background: var(--v-raised);
+        padding: 0 8px 0 26px;
+        color: var(--v-text);
+        font-size: 11.5px;
+        outline: none;
+    }
+    .term-head .filter input::placeholder { color: var(--v-text-muted); }
+    .term-head .tact { display: flex; gap: 2px; }
+    .term-head .tact button {
+        display: grid; place-items: center;
+        width: 24px; height: 24px;
+        border: none; background: transparent; border-radius: 5px;
+        color: var(--v-text-2); cursor: pointer;
+    }
+    .term-head .tact button:hover { background: var(--v-hover); color: var(--v-text); }
+    .term-head .tact button.on { color: var(--v-text); background: var(--v-hover); }
+    .term-head .tact svg { width: 14px; height: 14px; }
 
-    .empty { color: var(--dim); font-size: 13px; padding: 44px 0; }
-    .back { color: var(--muted); font-size: 12.5px; cursor: pointer; margin-bottom: 16px; display: inline-block; }
-    .back:hover { color: var(--text); }
-    .reasons { margin-top: 16px; color: var(--gold); font-family: var(--mono); font-size: 12px; line-height: 1.7; }
+    .term-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding: 6px 0 8px;
+        font-family: var(--v-mono);
+        font-size: 11.5px;
+        line-height: 1.75;
+        min-height: 0;
+    }
+    .term-line { padding: 0 12px; white-space: pre-wrap; word-break: break-word; color: var(--v-text-2); }
+    .term-line:hover { background: rgba(255, 255, 255, 0.025); }
+    .term-line .ts { color: #5f5f66; }
+    .term-line .tag { color: var(--v-info); }
+    .term-line.ok .tag { color: var(--v-success); }
+    .term-line.warn .tag, .term-line.warn { color: var(--v-warning); }
+    .term-line.err .tag, .term-line.err { color: var(--v-error); }
+    .term-empty { padding: 8px 12px; color: var(--v-text-muted); }
 
-    @media (max-width: 1180px) { .toc { display: none; } }
+    .ide-status {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        height: 24px;
+        flex: 0 0 auto;
+        padding: 0 12px;
+        background: var(--v-surface);
+        border-top: 1px solid var(--v-border-subtle);
+        font-size: 11px;
+        color: var(--v-text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+    }
+    .ide-status .sright { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+    .ide-status .k { color: var(--v-text-2); }
+    .ide-status .conn { display: inline-flex; align-items: center; gap: 6px; }
+    .ide-status .demoflag { color: #93c5fd; }
+
+    .toast {
+        position: fixed;
+        bottom: 42px; left: 50%;
+        transform: translate(-50%, 12px);
+        background: #1c1c1e;
+        border: 1px solid var(--v-border-strong);
+        color: var(--v-text);
+        border-radius: 10px;
+        padding: 10px 16px;
+        font-size: 12.5px;
+        box-shadow: 0 12px 34px rgba(0, 0, 0, 0.34);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.16s, transform 0.16s;
+        z-index: 50;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+    .toast.err { border-color: rgba(239, 68, 68, 0.5); }
+
+    @media (max-width: 860px) {
+        .ide-side { width: 210px; }
+        .urlbox input { width: 112px; }
+        .term-head .filter input { width: 110px; }
+    }
 </style>
 </head>
 <body>
 
-<div class="topbar">
-    <div class="brand"><span class="bolt">&#9889;</span> GcView</div>
-    <div class="searchwrap">
-        <div class="search">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4">
-                <circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" />
-            </svg>
-            <input type="text" id="url" value="ws://127.0.0.1:8765" spellcheck="false" />
-            <kbd id="connect">Connect</kbd>
+<div class="vwin">
+    <div class="vwin-bar">
+        <svg class="logo" viewBox="0 0 24 24" fill="currentColor"><path d="M13.2 2 4.4 13.6c-.3.4 0 1 .5 1h5.3l-1.2 7.1c-.1.6.7.9 1 .4l8.7-11.6c.3-.4 0-1-.5-1h-5.2l1.2-7.1c.1-.6-.7-.9-1-.4z"/></svg>
+        <span class="vwin-title">GcView</span>
+        <span class="vwin-right">
+            <span class="vwin-inst"><span class="dt" id="dot"></span><span class="st" id="status">disconnected</span></span>
+            <button class="demobtn" id="demobtn" title="Fill the interface with realistic sample data">Demo</button>
+            <span class="urlbox">
+                <input type="text" id="url" value="ws://127.0.0.1:8765" spellcheck="false" />
+                <button id="connect">Connect</button>
+            </span>
+        </span>
+    </div>
+
+    <div class="vwin-body">
+        <aside class="ide-side">
+            <div class="ide-act" id="sections"></div>
+            <div class="ide-search">
+                <div class="box">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <circle cx="11" cy="11" r="7" /><path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <input type="text" id="filter" placeholder="Search" spellcheck="false" />
+                </div>
+            </div>
+            <div class="ide-types" id="types"></div>
+            <div class="ide-sec">
+                <svg class="cv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                <span class="nm" id="grouplabel">Scripts</span>
+                <span class="ct" id="groupcount"></span>
+                <span class="secact">
+                    <button id="refresh" title="Reload list (R)">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 11a8 8 0 1 0-2.3 5.7" /><path d="M20 4v6h-6" />
+                        </svg>
+                    </button>
+                </span>
+            </div>
+            <div class="ide-tree" id="list"><div class="ide-note">not connected</div></div>
+        </aside>
+
+        <div class="ide-main">
+            <div class="ide-tabs" id="tabsbar"></div>
+            <div class="ide-crumbs" id="crumbs"></div>
+            <div class="ide-editor" id="editor"></div>
+
+            <div class="ide-term" id="term">
+                <div class="term-head">
+                    <span class="lbl" id="termtoggle">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                        Console
+                    </span>
+                    <button class="src on" data-src="all">all</button>
+                    <button class="src" data-src="relay">relay</button>
+                    <button class="src" data-src="exec">exec</button>
+                    <button class="src" data-src="ui">ui</button>
+                    <span class="filter">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+                        <input type="text" id="termfilter" placeholder="Filter" spellcheck="false" />
+                    </span>
+                    <span class="tact">
+                        <button id="termwrap" title="Follow new output">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="m6 13 6 6 6-6"/></svg>
+                        </button>
+                        <button id="termclear" title="Clear console">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M6 7l1 13h10l1-13"/></svg>
+                        </button>
+                    </span>
+                </div>
+                <div class="term-body" id="termbody"></div>
+            </div>
         </div>
     </div>
-    <div class="right">
-        <span class="dot" id="dot"></span>
-        <span class="status" id="status">disconnected</span>
+
+    <div class="ide-status">
+        <span id="statleft">ready</span>
+        <span class="sright"><span id="statright"></span></span>
     </div>
 </div>
 
-<nav class="rail" id="sections"></nav>
-
-<main>
-    <aside>
-        <div class="grouplabel" id="grouplabel">Scripts</div>
-        <div class="types" id="types"></div>
-        <div class="filter"><input type="text" id="filter" placeholder="filter by path or name" spellcheck="false" /></div>
-        <div class="list" id="list"><div class="empty" style="padding-left:10px">not connected</div></div>
-    </aside>
-
-    <section class="content">
-        <div class="doc" id="doc">
-            <h1 id="title">No script selected</h1>
-            <div class="subline" id="subtitle"></div>
-            <div class="empty">Connect to the relay, then pick a script from the sidebar.</div>
-        </div>
-        <div class="toc" id="toc"></div>
-    </section>
-</main>
+<div class="toast" id="toast"></div>
 
 <script>
 (function () {
     const SECTIONS = [
-        { id: "scripts", label: "Scripts" },
-        { id: "anticheat", label: "Anti-Cheat" },
-        { id: "actors", label: "Actors" },
-        { id: "unknown", label: "Unknown" },
-        { id: "settings", label: "Settings" },
+        { id: "scripts", label: "Scripts", icon: '<path d="M14.5 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6.5z"/><path d="M14 2v5h5"/><path d="m9.5 12.5-1.5 2 1.5 2"/><path d="m14.5 12.5 1.5 2-1.5 2"/>' },
+        { id: "anticheat", label: "Anti-Cheat", icon: '<path d="M12 22s8-4 8-10V5.2l-8-3.2-8 3.2V12c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>' },
+        { id: "actors", label: "Actors", icon: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="3.5"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>' },
+        { id: "unknown", label: "Unknown", icon: '<circle cx="12" cy="12" r="9.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.3 2.4c-.6.2-.9.8-.9 1.4v.4"/><path d="M12 17h.01"/>' },
+        { id: "settings", label: "Settings", icon: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>' },
     ];
     const TABS = ["Source", "Functions", "Info"];
     const TYPES = [
@@ -508,30 +857,101 @@
         { id: "other", label: "other" },
     ];
 
-    const KEYWORDS = new Set(["and","break","do","else","elseif","end","false","for","function","if","in",
-        "local","nil","not","or","repeat","return","then","true","until","while","continue","export","type"]);
-    const GLOBALS = new Set(["game","workspace","script","shared","math","string","table","task","os","coroutine",
-        "debug","bit32","utf8","buffer","Instance","Vector3","Vector2","CFrame","Color3","UDim2","UDim","Enum",
-        "print","warn","error","pcall","xpcall","select","typeof","type","tostring","tonumber","next","pairs",
-        "ipairs","setmetatable","getmetatable","rawget","rawset","rawequal","rawlen","unpack","require","assert","tick"]);
+    const ICON_FILE = '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'
+        + '<path d="M14.5 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6.5z"/><path d="M14 2v5h5"/></svg>';
+    const ICON_HOME = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+        + '<path d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"/></svg>';
+    const ICON_X = '<svg class="x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+    const ICON_CHEV = '<svg class="cr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
+    const ICON_RELOAD = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v6h-6"/></svg>';
+    const ICON_DOWN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 11 5 5 5-5"/><path d="M4 21h16"/></svg>';
+    const ICON_PLUS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>';
+    const ICON_LINK = '<svg class="lk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+        + '<path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>';
+    const COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'
+        + '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+
+    const KEYWORDS = new Set(["and","break","do","else","elseif","end","for","function","if","in",
+        "local","not","or","repeat","return","then","until","while","continue","export","type"]);
+    const CONSTS = new Set(["true","false","nil","self"]);
 
     const el = (id) => document.getElementById(id);
-    const dot = el("dot"), statusEl = el("status"), listEl = el("list"), docEl = el("doc");
+    const dot = el("dot"), statusEl = el("status"), listEl = el("list"), editorEl = el("editor");
 
     let socket = null, nextId = 1;
     const waiting = new Map();
 
     let section = "scripts";
-    let tab = "Source";
     let entries = [];
-    let selected = null;
+    let visibleEntries = [];
+    let cursor = -1;
     let counts = {};
     let activeTypes = new Set(TYPES.map((t) => t.id));
-    let fnDetail = null;
+
+    let openTabs = [];
+    let selected = null;
+    const tabState = {};
+
+    let caret = null;
+    let demo = false;
+
+    let session = 0;
+    let toolPresent = false;
+    let userClosed = false;
+    let reconnectTimer = null;
+    let probeTimer = null;
 
     function esc(s) {
         return String(s === undefined || s === null ? "" : s)
             .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function sectionLabel(id) {
+        const s = SECTIONS.filter((x) => x.id === id)[0];
+        return s ? s.label : id;
+    }
+
+    function ready() { return demo || toolPresent; }
+
+    let toastTimer = null;
+    function toast(text, isErr) {
+        const t = el("toast");
+        t.textContent = text;
+        t.className = "toast show" + (isErr ? " err" : "");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => { t.className = "toast" + (isErr ? " err" : ""); }, 2600);
+    }
+
+    const LOG_LIMIT = 600;
+    const logs = [];
+    let logSrc = "all";
+    let logFollow = true;
+
+    function clock() {
+        const d = new Date();
+        const p = (n) => (n < 10 ? "0" + n : "" + n);
+        return p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds());
+    }
+
+    function log(src, text, cls) {
+        logs.push({ t: clock(), src: src, text: text, cls: cls || "" });
+        if (logs.length > LOG_LIMIT) logs.splice(0, logs.length - LOG_LIMIT);
+        renderLogs();
+    }
+
+    function renderLogs() {
+        const body = el("termbody");
+        const q = el("termfilter").value.trim().toLowerCase();
+        const rows = logs.filter((l) => (logSrc === "all" || l.src === logSrc)
+            && (!q || (l.src + " " + l.text).toLowerCase().indexOf(q) !== -1));
+        if (!rows.length) {
+            body.innerHTML = '<div class="term-empty">' + (logs.length ? "nothing matches the filter" : "no output yet") + "</div>";
+            return;
+        }
+        body.innerHTML = rows.map((l) => '<div class="term-line ' + l.cls + '">'
+            + '<span class="ts">[' + l.t + "]</span> "
+            + '<span class="tag">[' + esc(l.src) + "]</span> " + esc(l.text) + "</div>").join("");
+        if (logFollow) body.scrollTop = body.scrollHeight;
     }
 
     function highlight(src) {
@@ -591,9 +1011,9 @@
                 let k = j;
                 while (k < n && /\s/.test(src[k])) k++;
                 if (KEYWORDS.has(word)) push("tok-kw", word);
-                else if (src[k] === "(" || src[k] === '"' || src[k] === "'") push("tok-fn", word);
-                else if (GLOBALS.has(word)) push("tok-glob", word);
-                else push(null, word);
+                else if (CONSTS.has(word)) push("tok-cl", word);
+                else if (src[k] === "(" || src[k] === "{" || src[k] === '"' || src[k] === "'") push("tok-fn", word);
+                else push("tok-var", word);
                 i = j; continue;
             }
 
@@ -604,7 +1024,8 @@
 
     function setStatus(text, state) {
         statusEl.textContent = text;
-        dot.className = "dot" + (state ? " " + state : "");
+        statusEl.title = text;
+        dot.className = "dt" + (state ? " " + state : "");
     }
 
     const SLOW_ACTIONS = { saveall: 900000, downloadbridge: 120000, sandbox: 120000 };
@@ -622,28 +1043,124 @@
         });
     }
 
+    function api(payload) {
+        const started = Date.now();
+        const label = payload.action + (payload.key ? " " + payload.key : "");
+        const p = demo ? demoApi(payload) : send(payload);
+        return p.then((data) => {
+            log("exec", label + " → ok (" + (Date.now() - started) + "ms)", "ok");
+            return data;
+        }, (err) => {
+            log("exec", label + " → " + err.message, "err");
+            throw err;
+        });
+    }
+
+    function rejectPending(reason) {
+        waiting.forEach((p) => { try { p.reject(new Error(reason)); } catch (e) {} });
+        waiting.clear();
+    }
+
+    function resetState() {
+        entries = [];
+        visibleEntries = [];
+        cursor = -1;
+        openTabs = [];
+        selected = null;
+        caret = null;
+        Object.keys(tabState).forEach((k) => delete tabState[k]);
+    }
+
+    function onToolReady(info) {
+        session++;
+        rejectPending("session reset");
+        const wasDemo = demo;
+        demo = false;
+        resetState();
+        toolPresent = true;
+        clearTimeout(probeTimer);
+        if (info) {
+            counts = info.counts || {};
+            const place = info.placeName || info.placeId || "";
+            setStatus((info.executor || "connected") + (place ? " · " + place : ""), "on");
+            log("relay", "executor attached: " + (info.executor || "unknown") + (place ? " · " + place : ""), "ok");
+        } else {
+            setStatus("connected", "on");
+            log("relay", "executor attached", "ok");
+        }
+        if (wasDemo) { updateDemoBtn(); log("ui", "demo data cleared — showing live executor"); }
+        renderSections();
+        if (section !== "settings") renderDoc();
+        loadList();
+    }
+
+    function onToolLost() {
+        session++;
+        rejectPending("executor disconnected");
+        resetState();
+        toolPresent = false;
+        counts = {};
+        renderSections();
+        renderTypes();
+        renderDoc();
+        listEl.innerHTML = '<div class="ide-note">waiting for executor…</div>';
+    }
+
     function connect() {
+        clearTimeout(reconnectTimer);
+        userClosed = false;
         const url = el("url").value.trim();
         if (!url) return;
+
+        if (socket) { try { socket.onclose = null; socket.close(); } catch (e) {} socket = null; }
+
         try { socket = new WebSocket(url); } catch (err) { setStatus(String(err), "err"); return; }
-        setStatus("connecting", null);
+        setStatus("connecting", "wait");
+        toolPresent = false;
+        log("relay", "connecting to " + url);
+        updateConnectBtn();
 
         socket.onopen = () => {
-            setStatus("connected", "on");
+            setStatus("waiting for executor…", "wait");
+            log("relay", "socket open — waiting for executor", "ok");
+            updateConnectBtn();
             socket.send(JSON.stringify({ type: "hello", role: "web" }));
-            refresh();
+            clearTimeout(probeTimer);
+            probeTimer = setTimeout(() => {
+                if (toolPresent) return;
+                api({ action: "info" }).then((info) => { if (!toolPresent) onToolReady(info); }).catch(() => {});
+            }, 700);
         };
-        socket.onclose = () => setStatus("disconnected", null);
-        socket.onerror = () => setStatus("connection error", "err");
+
+        socket.onclose = () => {
+            toolPresent = false;
+            rejectPending("connection closed");
+            updateConnectBtn();
+            if (userClosed) {
+                setStatus("disconnected", null);
+                log("relay", "disconnected by user");
+                return;
+            }
+            setStatus("reconnecting…", "wait");
+            log("relay", "socket closed — reconnecting in 2s", "warn");
+            if (!demo) listEl.innerHTML = '<div class="ide-note">relay offline — reconnecting…</div>';
+            reconnectTimer = setTimeout(connect, 2000);
+        };
+
+        socket.onerror = () => { setStatus("connection error", "err"); log("relay", "socket error", "err"); updateConnectBtn(); };
 
         socket.onmessage = (event) => {
             let msg;
             try { msg = JSON.parse(event.data); } catch (err) { return; }
 
             if (msg.type === "hello" && msg.info) {
-                counts = msg.info.counts || {};
-                setStatus(msg.info.executor + " · " + (msg.info.placeName || msg.info.placeId), "on");
-                renderSections();
+                onToolReady(msg.info);
+                return;
+            }
+            if (msg.type === "peer" && msg.role === "tool" && msg.event === "disconnect") {
+                setStatus("waiting for executor…", "wait");
+                log("relay", "executor detached", "warn");
+                onToolLost();
                 return;
             }
             if (msg.type === "response") {
@@ -655,32 +1172,314 @@
         };
     }
 
+    function disconnect() {
+        userClosed = true;
+        clearTimeout(reconnectTimer);
+        clearTimeout(probeTimer);
+        if (socket) { try { socket.close(); } catch (e) {} }
+        socket = null;
+        toolPresent = false;
+        if (!demo) {
+            onToolLost();
+            listEl.innerHTML = '<div class="ide-note">not connected</div>';
+        }
+        setStatus(demo ? "demo data" : "disconnected", demo ? "demo" : null);
+        updateConnectBtn();
+        renderStatusBar();
+    }
+
+    function updateConnectBtn() {
+        const btn = el("connect");
+        const live = socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING);
+        btn.textContent = live ? "Disconnect" : "Connect";
+        btn.classList.toggle("live", !!live);
+    }
+
+    const DEMO_SOURCE_MAIN = 'local Parent_upv_1 = script.Parent\n'
+        + 'local dark_upv_1 = Parent_upv_1.dark\n'
+        + 'local main_upv_1 = Parent_upv_1.main\n'
+        + 'local shop_upv_1 = Parent_upv_1.shop\n'
+        + 'local bar_upv_1 = shop_upv_1.bar\n'
+        + 'local tools_upv_1 = shop_upv_1.tools\n'
+        + 'local setting_upv_1 = main_upv_1.setting\n'
+        + 'local baseplate_upv_1 = main_upv_1.baseplate\n'
+        + 'local tos_upv_1 = main_upv_1.tos\n'
+        + 'local u1 = main_upv_1.Folder.dropsample:Clone()\n'
+        + 'local scroll_upv_1 = tos_upv_1.scroll\n'
+        + 'local u2 = scroll_upv_1.sample:Clone()\n'
+        + 'local ScrollingFrame_upv_1 = setting_upv_1.ScrollingFrame\n'
+        + 'local u3 = ScrollingFrame_upv_1.button:Clone()\n'
+        + 'local u4 = ScrollingFrame_upv_1.toggle:Clone()\n'
+        + 'local u5 = ScrollingFrame_upv_1.drop:Clone()\n'
+        + 'local u6 = tools_upv_1.sample:Clone()\n'
+        + 'main_upv_1.Folder.dropsample:Destroy()\n'
+        + 'ScrollingFrame_upv_1.button:Destroy()\n'
+        + 'ScrollingFrame_upv_1.toggle:Destroy()\n'
+        + 'ScrollingFrame_upv_1.drop:Destroy()\n'
+        + 'scroll_upv_1.sample:Destroy()\n'
+        + 'tools_upv_1.sample:Destroy()\n'
+        + 'local _ = game:GetService("Lighting")\n'
+        + 'local UserInputService_upv_1 = game:GetService("UserInputService")\n'
+        + 'local TweenService_upv_1 = game:GetService("TweenService")\n'
+        + 'local v14 = game:GetService("RunService")\n'
+        + 'local u7 = game:GetService("ReplicatedStorage"):FindFirstChild("02_client")\n'
+        + 'local u8 = game:GetService("ReplicatedStorage"):FindFirstChild("03_client")\n'
+        + 'local u9 = game:GetService("ReplicatedStorage"):FindFirstChild("01_server")\n'
+        + 'local u10 = TweenInfo.new(0.3, Enum.EasingStyle.Exponential)\n'
+        + 'local v15 = TweenInfo.new(1, Enum.EasingStyle.Elastic)\n'
+        + '\n'
+        + '-- line 487 in the original chunk\n'
+        + 'local function antiflingF(u11)\n'
+        + '    local v16 = {}\n'
+        + '    local Players_upv_1 = game:GetService("Players")\n'
+        + '\n'
+        + '    local function onCharacter(u12)\n'
+        + '        for _, v17 in pairs(u12:GetDescendants()) do\n'
+        + '            if v17:IsA("BasePart") then\n'
+        + '                v17.CanCollide = false\n'
+        + '                v17.Velocity = Vector3.new(0, 0, 0)\n'
+        + '                v17.RotVelocity = Vector3.new(0, 0, 0)\n'
+        + '            end\n'
+        + '        end\n'
+        + '    end\n'
+        + '\n'
+        + '    table.insert(v16, Players_upv_1.PlayerAdded:Connect(function(u13)\n'
+        + '        u13.CharacterAdded:Connect(onCharacter)\n'
+        + '    end))\n'
+        + '\n'
+        + '    return function()\n'
+        + '        for _, v18 in pairs(v16) do\n'
+        + '            v18:Disconnect()\n'
+        + '        end\n'
+        + '    end\n'
+        + 'end\n'
+        + '\n'
+        + 'return antiflingF\n';
+
+    const DEMO_SOURCE_ICON = '--!strict\n'
+        + '-- ReplicatedStorage.bar.Icon\n'
+        + 'local Icon = {}\n'
+        + 'Icon.__index = Icon\n'
+        + '\n'
+        + 'local Elements = script.Elements\n'
+        + 'local Features = script.Features\n'
+        + '\n'
+        + 'function Icon.new(name: string)\n'
+        + '    local self = setmetatable({}, Icon)\n'
+        + '    self.name = name\n'
+        + '    self.enabled = true\n'
+        + '    self.widget = require(Elements.Widget).new(self)\n'
+        + '    self.overflow = require(Features.Overflow).new(self)\n'
+        + '    return self\n'
+        + 'end\n'
+        + '\n'
+        + 'function Icon:setEnabled(state: boolean)\n'
+        + '    self.enabled = state\n'
+        + '    self.widget:update()\n'
+        + '    return self\n'
+        + 'end\n'
+        + '\n'
+        + 'return Icon\n';
+
+    const DEMO_SOURCE_AC = '-- ServerScriptService replica pushed to the client\n'
+        + 'local Detector = {}\n'
+        + 'Detector.__index = Detector\n'
+        + '\n'
+        + 'local Players = game:GetService("Players")\n'
+        + 'local flagRemote = game:GetService("ReplicatedStorage").Remotes.Flag\n'
+        + '\n'
+        + 'function Detector.new(config)\n'
+        + '    local self = setmetatable({}, Detector)\n'
+        + '    self.walkSpeedCap = config.walkSpeedCap or 16\n'
+        + '    self.strikes = 0\n'
+        + '    return self\n'
+        + 'end\n'
+        + '\n'
+        + 'function Detector:check(player)\n'
+        + '    local humanoid = player.Character and player.Character:FindFirstChild("Humanoid")\n'
+        + '    if not humanoid then\n'
+        + '        return\n'
+        + '    end\n'
+        + '    if humanoid.WalkSpeed > self.walkSpeedCap then\n'
+        + '        self.strikes = self.strikes + 1\n'
+        + '        flagRemote:FireServer("speed", humanoid.WalkSpeed)\n'
+        + '        if self.strikes > 3 then\n'
+        + '            player:Kick("Unexpected movement values")\n'
+        + '        end\n'
+        + '    end\n'
+        + 'end\n'
+        + '\n'
+        + 'return Detector\n';
+
+    function demoEntry(key, path, context, extra) {
+        const bits = path.split(".");
+        return Object.assign({
+            key: key,
+            path: path,
+            name: bits[bits.length - 1],
+            context: context,
+            class: context.indexOf("Module") === 0 ? "ModuleScript" : "LocalScript",
+            parented: true,
+        }, extra || {});
+    }
+
+    const DEMO_SCRIPTS = [
+        demoEntry("0x2f1a40", "Players.mountainparadox.PlayerGui.MainGui.LocalScript", "LocalScript"),
+        demoEntry("0x2f1a58", "Players.mountainparadox.PlayerGui.MainGui.LocalScript.Folder.v27", "LocalScript"),
+        demoEntry("0x2f1a70", "Players.mountainparadox.PlayerGui.MainGui.LocalScript.shift.ImageButton.LocalScript", "LocalScript"),
+        demoEntry("0x2f1a88", "Players.mountainparadox.PlayerGui.MainGui.LocalScript.shift.LocalScript", "LocalScript"),
+        demoEntry("0x2f1aa0", "Players.mountainparadox.PlayerScripts.RbxCharacterSounds.AtomicBinding", "ModuleScript"),
+        demoEntry("0x2f1ab8", "ReplicatedStorage.bar.Icon", "ModuleScript"),
+        demoEntry("0x2f1ad0", "ReplicatedStorage.bar.Icon.Attribute", "ModuleScript"),
+        demoEntry("0x2f1ae8", "ReplicatedStorage.bar.Icon.Elements.Caption", "ModuleScript"),
+        demoEntry("0x2f1b00", "ReplicatedStorage.bar.Icon.Elements.Container", "ModuleScript"),
+        demoEntry("0x2f1b18", "ReplicatedStorage.bar.Icon.Elements.Dropdown", "ModuleScript"),
+        demoEntry("0x2f1b30", "ReplicatedStorage.bar.Icon.Elements.Indicator", "ModuleScript"),
+        demoEntry("0x2f1b48", "ReplicatedStorage.bar.Icon.Elements.Menu", "ModuleScript"),
+        demoEntry("0x2f1b60", "ReplicatedStorage.bar.Icon.Elements.Notice", "ModuleScript"),
+        demoEntry("0x2f1b78", "ReplicatedStorage.bar.Icon.Elements.Selection", "ModuleScript"),
+        demoEntry("0x2f1b90", "ReplicatedStorage.bar.Icon.Elements.Widget", "ModuleScript"),
+        demoEntry("0x2f1ba8", "ReplicatedStorage.bar.Icon.Features.Overflow", "ModuleScript"),
+        demoEntry("0x2f1bc0", "ReplicatedStorage.Modules.Security.Detector", "ModuleScript", {
+            isAntiCheat: true,
+            reasons: ["matched keyword: Kick", "matched keyword: WalkSpeed", "fires remote: Remotes.Flag"],
+        }),
+        demoEntry("0x2f1bd8", "Workspace.Actors.PathWorker.ActorRunner", "Actor LocalScript"),
+        demoEntry("0x2f1bf0", "Workspace.Actors.NetWorker.ActorRunner", "Actor LocalScript"),
+        Object.assign(demoEntry("0x2f1c08", "Orphan.RemoteHandler", "ModuleScript"), { parented: false }),
+    ];
+
+    const DEMO_FUNCTIONS = [
+        { index: 1, name: "antiflingF", line: 487, numparams: 1, vargs: false, hash: "9f1c2ab77e4410dd" },
+        { index: 2, name: "onCharacter", line: 492, numparams: 1, vargs: false, hash: "44be0091cc7712aa" },
+        { index: 3, name: "Icon.new", line: 9, numparams: 1, vargs: false, hash: "b03fe19a2210cd41" },
+        { index: 4, name: "Icon:setEnabled", line: 19, numparams: 2, vargs: false, hash: "77aa10ce4b920f35" },
+        { index: 5, name: "anonymous", line: 501, numparams: 1, vargs: true, hash: "12dd90ab7fc4e001" },
+    ];
+
+    const DEMO_CONSTANTS = ['"Disconnect"', '"PlayerAdded"', '"<userdata: 0xe3584300a4c1d147>"', '"Connect"',
+        '"table"', '"insert"', '"<userdata: 0x84aa8072123ee477>"', '"GetPlayers"', '"Character"',
+        '"CharacterAdded"', '"pairs"', '"<userdata: 0xe9a3c3a48357fb67>"', '"game"', "game", '"Players"',
+        '"GetService"', '"Parent"', '"GetDescendants"', '"BasePart"', '"IsA"', '"CanCollide"',
+        "Vector3.new(0, 0, 0)", '"Velocity"', '"RotVelocity"'];
+
+    const DEMO_UPVALUES = ["{}", 'game:GetService("Players")', "{\n    walkSpeedCap = 16,\n    strikes = 0,\n}", "function() end"];
+
+    function demoSourceFor(key) {
+        if (key === "0x2f1ab8") return DEMO_SOURCE_ICON;
+        if (key === "0x2f1bc0") return DEMO_SOURCE_AC;
+        return DEMO_SOURCE_MAIN;
+    }
+
+    const DEMO_INFO = {
+        executor: "Volt",
+        placeName: "Demo Place (sample data)",
+        counts: { scripts: DEMO_SCRIPTS.length, anticheat: 1, actors: 2, unknown: 3 },
+    };
+
+    function demoApi(payload) {
+        return new Promise((resolve, reject) => {
+            setTimeout(() => {
+                const a = payload.action;
+                if (a === "info") return resolve(DEMO_INFO);
+                if (a === "scripts") return resolve({ entries: DEMO_SCRIPTS });
+                if (a === "anticheat") return resolve({ entries: DEMO_SCRIPTS.filter((e) => e.isAntiCheat) });
+                if (a === "actors") return resolve({ entries: DEMO_SCRIPTS.filter((e) => (e.context || "").indexOf("Actor") === 0) });
+                if (a === "unknown") return resolve({ functions: [
+                    { name: "anonymous@0x1f4c", line: 12, numparams: 2, source: "[C]" },
+                    { name: "checkVelocity", line: 88, numparams: 1, source: "[C]" },
+                    { name: "hook.onStep", line: 140, numparams: 3, source: "[C]" },
+                ] });
+                if (a === "source") {
+                    const src = demoSourceFor(payload.key);
+                    return resolve({ source: src, total: src.length, nextOffset: src.length + 1, done: true });
+                }
+                if (a === "functions") return resolve({ functions: DEMO_FUNCTIONS });
+                if (a === "funcdetail") {
+                    const info = DEMO_FUNCTIONS.filter((f) => f.index === payload.index)[0] || DEMO_FUNCTIONS[0];
+                    return resolve({
+                        info: info,
+                        constants: DEMO_CONSTANTS.map((v, i) => ({ index: i + 1, value: v })),
+                        upvalues: DEMO_UPVALUES.map((v, i) => ({ index: i + 1, value: v, code: v.indexOf("\n") !== -1 || v.indexOf("function") === 0 })),
+                    });
+                }
+                if (a === "config") return resolve({
+                    config: { RelayUrl: "ws://127.0.0.1:8765" },
+                    plugins: [
+                        { key: "SourceRecovery", title: "Source recovery", description: "Rebuild readable source from bytecode when the real source is stripped.", enabled: true },
+                        { key: "AcScan", title: "Anti-cheat scan", description: "Flag scripts that look like anti-cheat while collecting.", enabled: true },
+                        { key: "ActorScan", title: "Actor scan", description: "Walk actor sandboxes for scripts the main thread cannot see.", enabled: false },
+                    ],
+                });
+                if (a === "bytecode") return reject(new Error("no bytecode in demo data"));
+                return reject(new Error("disabled in demo mode"));
+            }, 140);
+        });
+    }
+
+    function setDemo(on) {
+        demo = on;
+        session++;
+        rejectPending("demo toggled");
+        resetState();
+        updateDemoBtn();
+
+        if (on) {
+            counts = DEMO_INFO.counts;
+            setStatus("demo · " + DEMO_INFO.executor, "demo");
+            log("ui", "demo data loaded — nothing here comes from a live executor", "warn");
+            toast("Demo data loaded — this is sample content, not a live game");
+        } else {
+            counts = {};
+            setStatus(toolPresent ? "connected" : (socket && socket.readyState === WebSocket.OPEN ? "waiting for executor…" : "disconnected"),
+                toolPresent ? "on" : (socket && socket.readyState === WebSocket.OPEN ? "wait" : null));
+            log("ui", "demo data cleared");
+        }
+
+        renderSections();
+        renderTypes();
+        renderDoc();
+        loadList();
+    }
+
+    function updateDemoBtn() {
+        const b = el("demobtn");
+        b.classList.toggle("on", demo);
+        b.textContent = demo ? "Demo on" : "Demo";
+    }
+
     function renderSections() {
         const box = el("sections");
         box.innerHTML = "";
         SECTIONS.forEach((s) => {
-            const t = document.createElement("div");
-            t.className = "navtab" + (s.id === section ? " active" : "");
-            const n = counts[s.id];
-            t.innerHTML = esc(s.label) + (typeof n === "number" ? ' <span class="count">' + n + "</span>" : "");
-            t.onclick = () => {
-                section = s.id; selected = null; fnDetail = null;
+            const b = document.createElement("button");
+            b.className = "ab" + (s.id === section ? " active" : "");
+            b.title = s.label + (typeof counts[s.id] === "number" ? " (" + counts[s.id] + ")" : "");
+            b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+                + 'stroke-linecap="round" stroke-linejoin="round">' + s.icon + "</svg>"
+                + (counts[s.id] ? '<span class="n"></span>' : "");
+            b.onclick = () => {
+                if (section === s.id) return;
+                section = s.id; cursor = -1;
                 el("grouplabel").textContent = s.label;
+                log("ui", "section: " + s.label);
                 renderSections();
                 if (s.id !== "settings") renderDoc();
                 loadList();
             };
-            box.appendChild(t);
+            box.appendChild(b);
         });
+        el("groupcount").textContent = typeof counts[section] === "number" ? counts[section] : "";
+        renderStatusBar();
     }
 
     function renderTypes() {
         const box = el("types");
         box.innerHTML = "";
-        if (section === "unknown") return;
+        if (section === "unknown" || section === "settings") return;
         TYPES.forEach((t) => {
             const b = document.createElement("button");
-            b.className = "type" + (activeTypes.has(t.id) ? " on" : "");
+            b.className = "ty" + (activeTypes.has(t.id) ? " on" : "");
             b.textContent = t.label;
             b.onclick = () => {
                 if (activeTypes.has(t.id)) activeTypes.delete(t.id); else activeTypes.add(t.id);
@@ -690,124 +1489,216 @@
         });
     }
 
-    function typeOf(entry) {
-        if (!entry.parented) return "nil";
-        const ctx = (entry.context || "").toLowerCase();
-        if (ctx.indexOf("local") === 0) return "local";
-        if (ctx.indexOf("module") === 0) return "module";
-        if (ctx.indexOf("actor") === 0) return "actor";
-        return "other";
+    function viewOf(entry) {
+        if (!entry) return { tab: "Source", source: null };
+        if (!tabState[entry.key]) tabState[entry.key] = { tab: "Source", source: null };
+        return tabState[entry.key];
     }
 
-    function labelOf(entry) {
-        const t = typeOf(entry);
-        if (t === "nil") return ["nil", "nil"];
-        if (t === "local") return ["local", "LocalScript"];
-        if (t === "module") return ["module", "ModuleScript"];
-        if (t === "actor") return ["actor", "Actor"];
-        return ["", entry.context || "Unknown"];
+    function currentTab() { return selected ? viewOf(selected).tab : "Source"; }
+    function currentSource() { return selected ? viewOf(selected).source : null; }
+
+    function closeTab(entry) {
+        const at = openTabs.indexOf(entry);
+        if (at === -1) return;
+        openTabs.splice(at, 1);
+        delete tabState[entry.key];
+        if (selected === entry) {
+            selected = openTabs[Math.min(at, openTabs.length - 1)] || null;
+            caret = null;
+            renderList();
+            renderDoc();
+            if (selected) loadTab();
+        } else {
+            renderTabs();
+        }
     }
 
-    function renderList() {
-        const q = el("filter").value.trim().toLowerCase();
-        listEl.innerHTML = "";
+    function renderTabs() {
+        const box = el("tabsbar");
+        box.innerHTML = "";
 
-        if (section === "unknown") {
-            const rows = entries.filter((f) => !q || (f.name + " " + f.source).toLowerCase().indexOf(q) !== -1);
-            if (!rows.length) { listEl.innerHTML = '<div class="empty" style="padding-left:10px">no orphan functions</div>'; return; }
-            rows.forEach((fn) => {
-                const row = document.createElement("div");
-                row.className = "item";
-                row.innerHTML = '<div class="path">' + esc(fn.name) + '</div><div class="meta">'
-                    + '<span class="badge">line ' + fn.line + '</span><span class="badge">params ' + fn.numparams + '</span></div>';
-                listEl.appendChild(row);
+        const strip = document.createElement("div");
+        strip.className = "tabstrip";
+
+        const home = document.createElement("div");
+        home.className = "ide-tab t-home" + (!selected && section !== "settings" ? " active" : "");
+        home.innerHTML = ICON_HOME + '<span class="lbl">Home</span>';
+        home.onclick = () => {
+            if (section === "settings") {
+                section = "scripts";
+                el("grouplabel").textContent = "Scripts";
+                renderSections();
+                loadList();
+            }
+            selected = null; caret = null;
+            renderList(); renderDoc();
+        };
+        strip.appendChild(home);
+
+        if (section === "settings") {
+            const t = document.createElement("div");
+            t.className = "ide-tab active";
+            t.innerHTML = ICON_FILE.replace('class="ic"', 'class="fic"') + '<span class="lbl">Settings</span>';
+            strip.appendChild(t);
+        } else {
+            openTabs.forEach((entry) => {
+                const t = document.createElement("div");
+                t.className = "ide-tab" + (entry === selected ? " active" : "");
+                t.title = entry.path;
+                t.innerHTML = ICON_FILE.replace('class="ic"', 'class="fic"')
+                    + '<span class="lbl">' + esc(entry.name || entry.path) + "</span>" + ICON_X;
+                t.onclick = (e) => {
+                    if (e.target.closest(".x")) { closeTab(entry); return; }
+                    if (entry !== selected) { selected = entry; caret = null; renderList(); renderDoc(); loadTab(); }
+                };
+                strip.appendChild(t);
             });
-            return;
+
+            const add = document.createElement("button");
+            add.className = "ide-addtab";
+            add.title = "Open a script  ( / )";
+            add.innerHTML = ICON_PLUS;
+            add.onclick = () => { const f = el("filter"); f.focus(); f.select(); };
+            strip.appendChild(add);
         }
 
-        const rows = entries.filter((e) => activeTypes.has(typeOf(e))
-            && (!q || (e.path + " " + e.name).toLowerCase().indexOf(q) !== -1));
+        box.appendChild(strip);
 
-        if (!rows.length) { listEl.innerHTML = '<div class="empty" style="padding-left:10px">nothing matches</div>'; return; }
+        if (selected && currentTab() === "Source") {
+            const dl = document.createElement("button");
+            dl.className = "ide-layout";
+            dl.innerHTML = ICON_DOWN + " Download";
+            dl.onclick = () => {
+                const code = currentSource();
+                if (code === null) { toast("source not loaded yet", true); return; }
+                downloadBlob(safeFileName(selected.path, ".luau"), new Blob([code], { type: "text/plain;charset=utf-8" }));
+                log("ui", "downloaded " + safeFileName(selected.path, ".luau"));
+            };
+            box.appendChild(dl);
 
-        rows.forEach((entry) => {
-            const row = document.createElement("div");
-            row.className = "item" + (selected && selected.key === entry.key ? " active" : "");
-            const [cls, label] = labelOf(entry);
-            row.innerHTML = '<div class="path">' + esc(entry.path) + '</div><div class="meta">'
-                + '<span class="badge ' + cls + '">' + esc(label) + "</span>"
-                + (entry.isAntiCheat ? '<span class="badge ac">anti-cheat</span>' : "") + "</div>";
-            row.onclick = () => { selected = entry; fnDetail = null; renderList(); renderDoc(); loadTab(); };
-            listEl.appendChild(row);
+            const cp = document.createElement("button");
+            cp.className = "ide-layout";
+            cp.innerHTML = COPY_ICON + " Copy";
+            cp.onclick = () => {
+                const code = currentSource();
+                if (code === null) { toast("source not loaded yet", true); return; }
+                writeClipboard(code).then(() => {
+                    cp.classList.add("done");
+                    toast("source copied");
+                    setTimeout(() => cp.classList.remove("done"), 1300);
+                }).catch(() => toast("copy blocked", true));
+            };
+            box.appendChild(cp);
+        }
+
+        const run = document.createElement("button");
+        run.className = "ide-run";
+        run.id = "reload";
+        run.innerHTML = ICON_RELOAD + " Reload";
+        run.onclick = refreshList;
+        box.appendChild(run);
+    }
+
+    function renderCrumbs() {
+        const box = el("crumbs");
+        let html = '<svg class="cr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" '
+            + 'stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h6a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>'
+            + "<span>" + esc(sectionLabel(section)) + "</span>";
+
+        if (section === "settings") {
+            html += ICON_CHEV + '<span class="cur">Preferences</span>';
+        } else if (selected) {
+            html += ICON_CHEV + ICON_FILE.replace('class="ic"', 'class="fic"')
+                + '<span class="cur" title="' + esc(selected.path) + '">' + esc(selected.path) + "</span>";
+        }
+
+        html += '<span class="smap">';
+        if (selected) {
+            TABS.forEach((name) => {
+                html += '<button class="seg' + (name === currentTab() ? " on" : "") + '" data-tab="' + name + '">' + name + "</button>";
+            });
+        }
+        const st = demo ? "demo" : toolPresent ? "on" : "err";
+        html += '<span class="dt ' + st + '"></span>' + ICON_LINK
+            + '<span class="sel">' + esc(demo ? "Demo · " + DEMO_INFO.executor : toolPresent ? statusEl.textContent : "no executor") + "</span></span>";
+
+        box.innerHTML = html;
+        Array.prototype.forEach.call(box.querySelectorAll(".seg"), (b) => {
+            b.onclick = () => {
+                viewOf(selected).tab = b.getAttribute("data-tab");
+                caret = null;
+                renderDoc();
+                loadTab();
+            };
         });
     }
 
-    function renderToc() {
-        const box = el("toc");
-        if (!selected) { box.innerHTML = ""; return; }
-        let html = '<div class="head"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
-            + '<path d="M4 6h16M4 12h16M4 18h10"/></svg> On this page</div><div class="links">';
-        TABS.forEach((name) => {
-            html += '<a data-tab="' + name + '" class="' + (name === tab ? "active" : "") + '">' + name + "</a>";
+    function renderStatusBar() {
+        const left = [];
+        if (selected) {
+            const [, label] = labelOf(selected);
+            const code = currentSource();
+            left.push(caret ? "Ln " + caret.ln + ", Col " + caret.col : "Ln 1, Col 1");
+            left.push("Spaces: 4");
+            left.push(label);
+            if (code !== null) left.push(humanBytes(code.length) + " · " + countLines(code) + " lines");
+            left.push(selected.key);
+        } else {
+            left.push(ready() ? "ready" : "no executor");
+        }
+        el("statleft").innerHTML = left.map((s) => '<span class="k">' + esc(s) + "</span>").join(" &nbsp;·&nbsp; ");
+
+        const counted = [];
+        SECTIONS.forEach((s) => {
+            if (typeof counts[s.id] === "number") counted.push(s.label.toLowerCase() + " " + counts[s.id]);
         });
-        box.innerHTML = html + "</div>";
-        Array.prototype.forEach.call(box.querySelectorAll("a"), (a) => {
-            a.onclick = () => { tab = a.getAttribute("data-tab"); fnDetail = null; renderDoc(); loadTab(); };
-        });
+        const state = demo ? '<span class="conn demoflag"><span class="dt demo"></span>Demo data</span>'
+            : toolPresent ? '<span class="conn"><span class="dt on"></span>Connected</span>'
+            : '<span class="conn"><span class="dt"></span>Offline</span>';
+        el("statright").innerHTML = (counted.length ? esc(counted.join("   ")) + " &nbsp;&nbsp; " : "")
+            + "UTF-8 &nbsp;&nbsp; Luau &nbsp;&nbsp; " + state;
     }
 
     function renderDoc(body) {
-        docEl.innerHTML = "";
         copyBuffers = {};
-
-        const h1 = document.createElement("h1");
-        h1.textContent = selected ? selected.path : "No script selected";
-        docEl.appendChild(h1);
-
-        const sub = document.createElement("div");
-        sub.className = "subline";
-        if (selected) {
-            const [cls, label] = labelOf(selected);
-            sub.innerHTML = '<span class="badge ' + cls + '">' + esc(label) + "</span>"
-                + (selected.isAntiCheat ? '<span class="badge ac">anti-cheat</span>' : "")
-                + '<span class="badge">' + esc(selected.key) + "</span>"
-                + copyButton(selected.path, "Copy path");
-        }
-        docEl.appendChild(sub);
-        wireCopy(sub);
-
-        if (selected) {
-            const tabs = document.createElement("div");
-            tabs.className = "tabs";
-            TABS.forEach((name) => {
-                const t = document.createElement("div");
-                t.className = "tab" + (name === tab ? " active" : "");
-                t.textContent = name;
-                t.onclick = () => { tab = name; fnDetail = null; renderDoc(); loadTab(); };
-                tabs.appendChild(t);
-            });
-            docEl.appendChild(tabs);
-        }
-
-        const holder = document.createElement("div");
-        holder.id = "pane";
-        holder.innerHTML = body || (selected ? '<div class="empty">loading</div>'
-            : '<div class="empty">Connect to the relay, then pick a script from the sidebar.</div>');
-        docEl.appendChild(holder);
-
-        renderToc();
+        renderTabs();
+        renderCrumbs();
+        renderStatusBar();
+        setPane(body || (selected ? paneMsg("loading…") : emptyPaneHtml()));
     }
 
-    const COPY_ICON = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">'
-        + '<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+    function emptyPaneHtml() {
+        if (ready()) {
+            return '<div class="pane center"><div class="welcome"><h3>No file open</h3>'
+                + "<p>Pick a script from the sidebar to read its source, resolved functions and metadata. "
+                + "Several can stay open at once.</p>"
+                + '<div class="keys"><span><b>/</b> search</span><span><b>↑ ↓</b> move</span>'
+                + "<span><b>Enter</b> open</span><span><b>R</b> reload</span><span><b>Esc</b> close tab</span></div></div></div>";
+        }
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            return '<div class="pane center"><div class="welcome"><h3>Waiting for the executor</h3>'
+                + "<p>The relay is up, but no game client is connected yet.</p>"
+                + "<ol><li>Join the Roblox game.</li>"
+                + "<li>Run the GcView script in your executor.</li>"
+                + "<li>Scripts appear here automatically — no page refresh needed.</li></ol>"
+                + '<div class="acts"><button class="btn" id="wdemo">Load demo data</button></div></div></div>';
+        }
+        return '<div class="pane center"><div class="welcome"><h3>Not connected</h3>'
+            + "<p>Start the relay with <code>node relay.js</code>, then press <code>Connect</code> in the title bar. "
+            + "Or load sample data to see the interface with content in it.</p>"
+            + '<div class="acts"><button class="btn primary" id="wconnect">Connect</button>'
+            + '<button class="btn" id="wdemo">Load demo data</button></div></div></div>';
+    }
 
     let copyBuffers = {};
     let copySeq = 0;
 
-    function copyButton(text, label) {
+    function copyButton(text, label, cls) {
         const id = "c" + ++copySeq;
         copyBuffers[id] = text;
-        return '<button class="copybtn" data-copy="' + id + '">' + COPY_ICON + (label ? " " + esc(label) : "") + "</button>";
+        return '<button class="btn' + (cls ? " " + cls : "") + '" data-copy="' + id + '">'
+            + COPY_ICON + (label ? " " + esc(label) : "") + "</button>";
     }
 
     function writeClipboard(text) {
@@ -846,8 +1737,50 @@
         });
     }
 
-    function codeBlock(raw) {
-        return '<div class="codewrap">' + copyButton(raw) + "<pre>" + highlight(raw) + "</pre></div>";
+    function setPane(html) {
+        editorEl.innerHTML = html;
+        editorEl.scrollTop = 0;
+        wireCopy(editorEl);
+
+        const wc = el("wconnect");
+        if (wc) wc.onclick = () => connect();
+        const wd = el("wdemo");
+        if (wd) wd.onclick = () => setDemo(true);
+    }
+
+    function paneMsg(text) {
+        return '<div class="pane"><span class="muted">' + esc(text) + "</span></div>";
+    }
+
+    function countLines(text) {
+        let n = 1;
+        for (let i = 0; i < text.length; i++) if (text.charCodeAt(i) === 10) n++;
+        return n;
+    }
+
+    function editorHtml(code) {
+        const lines = countLines(code);
+        let nums = "";
+        for (let i = 1; i <= lines; i++) nums += "<span>" + i + "</span>";
+        return '<div class="ide-gutter">' + nums + '</div><pre class="ide-code">' + highlight(code) + "</pre>";
+    }
+
+    function updateCaret() {
+        const code = editorEl.querySelector(".ide-code");
+        if (!code) return;
+        const src = currentSource();
+        if (src === null || src.length > 400000) return;
+        const sel = window.getSelection();
+        if (!sel || !sel.rangeCount) return;
+        const r = sel.getRangeAt(0);
+        if (!code.contains(r.startContainer)) return;
+        const pre = document.createRange();
+        pre.selectNodeContents(code);
+        pre.setEnd(r.startContainer, r.startOffset);
+        const text = pre.toString();
+        const nl = text.lastIndexOf("\n");
+        caret = { ln: countLines(text), col: text.length - nl };
+        renderStatusBar();
     }
 
     function safeFileName(name, ext) {
@@ -872,11 +1805,13 @@
     }
 
     function fetchChunked(action, key, field, onProgress) {
+        const mySession = session;
         let out = "";
         let offset = 1;
 
         function step() {
-            return send({ action: action, key: key, offset: offset, limit: 262144 }).then((data) => {
+            if (mySession !== session) return Promise.reject(new Error("session reset"));
+            return api({ action: action, key: key, offset: offset, limit: 262144 }).then((data) => {
                 const piece = data[field] || "";
                 out += piece;
 
@@ -891,55 +1826,158 @@
         return step();
     }
 
-    function setPane(html) {
-        const pane = el("pane");
-        if (!pane) return;
-        pane.innerHTML = html;
-        wireCopy(pane);
+    function typeOf(entry) {
+        if (!entry.parented) return "nil";
+        const ctx = (entry.context || "").toLowerCase();
+        if (ctx.indexOf("local") === 0) return "local";
+        if (ctx.indexOf("module") === 0) return "module";
+        if (ctx.indexOf("actor") === 0) return "actor";
+        return "other";
+    }
+
+    function labelOf(entry) {
+        const t = typeOf(entry);
+        if (t === "nil") return ["nil", "nil"];
+        if (t === "local") return ["local", "LocalScript"];
+        if (t === "module") return ["module", "ModuleScript"];
+        if (t === "actor") return ["actor", "Actor"];
+        return ["", entry.context || "Unknown"];
+    }
+
+    function shortType(entry) {
+        const t = typeOf(entry);
+        if (t === "local") return "ls";
+        if (t === "module") return "ms";
+        if (t === "actor") return "act";
+        if (t === "nil") return "nil";
+        return "?";
+    }
+
+    function parentPath(entry) {
+        const p = entry.path || "";
+        const name = entry.name || "";
+        if (name && p.slice(-name.length) === name) return p.slice(0, Math.max(0, p.length - name.length - 1));
+        return p;
+    }
+
+    function applyCursor() {
+        Array.prototype.forEach.call(listEl.querySelectorAll(".ide-row"), (row) => {
+            const idx = Number(row.getAttribute("data-idx"));
+            row.classList.toggle("cursor", idx === cursor);
+        });
+    }
+
+    function moveCursor(delta) {
+        if (!visibleEntries.length) return;
+        cursor = cursor < 0 ? (delta > 0 ? 0 : visibleEntries.length - 1)
+                            : Math.max(0, Math.min(visibleEntries.length - 1, cursor + delta));
+        applyCursor();
+        const row = listEl.querySelector('.ide-row[data-idx="' + cursor + '"]');
+        if (row) row.scrollIntoView({ block: "nearest" });
+    }
+
+    function openCursor() {
+        if (cursor < 0 || cursor >= visibleEntries.length) return;
+        openEntry(visibleEntries[cursor]);
+    }
+
+    function openEntry(entry) {
+        if (!entry || section === "unknown") return;
+        if (openTabs.indexOf(entry) === -1) openTabs.push(entry);
+        selected = entry;
+        caret = null;
+        log("ui", "open " + entry.path);
+        renderList(); renderDoc(); loadTab();
+    }
+
+    function renderList() {
+        const q = el("filter").value.trim().toLowerCase();
+        listEl.innerHTML = "";
+
+        if (section === "unknown") {
+            const rows = entries.filter((f) => !q || (f.name + " " + f.source).toLowerCase().indexOf(q) !== -1);
+            visibleEntries = rows;
+            if (!rows.length) { listEl.innerHTML = '<div class="ide-note">no orphan functions</div>'; return; }
+            rows.forEach((fn, idx) => {
+                const row = document.createElement("div");
+                row.className = "ide-row" + (idx === cursor ? " cursor" : "");
+                row.setAttribute("data-idx", idx);
+                row.title = fn.name + " · line " + fn.line;
+                row.innerHTML = ICON_FILE + '<span class="nm">' + esc(fn.name) + "</span>"
+                    + '<span class="pt">line ' + fn.line + " · " + fn.numparams + "p</span>";
+                row.onclick = () => { cursor = idx; applyCursor(); };
+                listEl.appendChild(row);
+            });
+            return;
+        }
+
+        const rows = entries.filter((e) => activeTypes.has(typeOf(e))
+            && (!q || (e.path + " " + e.name).toLowerCase().indexOf(q) !== -1));
+        visibleEntries = rows;
+
+        if (!rows.length) { listEl.innerHTML = '<div class="ide-note">nothing matches</div>'; return; }
+
+        rows.forEach((entry, idx) => {
+            const row = document.createElement("div");
+            row.className = "ide-row" + (selected && selected.key === entry.key ? " active" : "")
+                + (idx === cursor ? " cursor" : "");
+            row.setAttribute("data-idx", idx);
+            row.title = entry.path;
+            row.innerHTML = ICON_FILE
+                + '<span class="nm">' + esc(entry.name || entry.path) + "</span>"
+                + '<span class="pt">' + esc(parentPath(entry)) + "</span>"
+                + (entry.isAntiCheat ? '<span class="ac" title="anti-cheat"></span>' : "")
+                + '<span class="tg ' + typeOf(entry) + '">' + shortType(entry) + "</span>";
+            row.onclick = () => { cursor = idx; openEntry(entry); };
+            listEl.appendChild(row);
+        });
     }
 
     function renderSettings() {
-        docEl.innerHTML = "";
-        copyBuffers = {};
-        el("toc").innerHTML = "";
+        const mySession = session;
+        selected = null;
+        renderTabs();
+        renderCrumbs();
+        renderStatusBar();
+        setPane(paneMsg("loading…"));
 
-        const h1 = document.createElement("h1");
-        h1.textContent = "Settings";
-        docEl.appendChild(h1);
-
-        const holder = document.createElement("div");
-        holder.id = "pane";
-        holder.innerHTML = '<div class="empty">loading</div>';
-        docEl.appendChild(holder);
-
-        send({ action: "config" }).then((data) => {
+        api({ action: "config" }).then((data) => {
+            if (mySession !== session) return;
             const cfg = data.config || {};
-            let html = '<div class="h2row"><h2>Plugins</h2></div>';
+            let html = '<div class="pane">';
+            if (demo) html += '<div class="card"><div class="body"><div class="title">Demo data</div>'
+                + '<div class="desc">These values are sampled, and the buttons below are disabled. '
+                + "Connect a real executor to change anything.</div></div></div>";
+            html += '<div class="h2row"><h2>Plugins</h2></div>';
 
             (data.plugins || []).forEach((p) => {
-                html += '<div class="setting"><div class="body"><div class="title">' + esc(p.title)
+                html += '<div class="card"><div class="body"><div class="title">' + esc(p.title)
                     + '</div><div class="desc">' + esc(p.description) + "</div></div>"
                     + '<div class="toggle' + (p.enabled ? " on" : "") + '" data-key="' + esc(p.key) + '"></div></div>';
             });
 
             html += '<div class="h2row"><h2>Relay</h2></div>'
-                + '<div class="settingrow"><input type="text" id="cfgurl" value="' + esc(cfg.RelayUrl || "")
-                + '" spellcheck="false" /><button class="copybtn" id="saveurl">Save</button></div>'
+                + '<div class="row"><input type="text" id="cfgurl" value="' + esc(cfg.RelayUrl || "")
+                + '" spellcheck="false" /><button class="btn primary" id="saveurl">Save</button></div>'
                 + '<div class="h2row"><h2>Bridge server</h2></div>'
-                + '<div class="setting"><div class="body"><div class="title">Download node server</div>'
+                + '<div class="card"><div class="body"><div class="title">Download node server</div>'
                 + '<div class="desc">Writes relay.js, index.html and package.json into the executor workspace so you '
-                + 'can run <span class="chipcode">npm i</span> then <span class="chipcode">node relay.js</span>.</div></div>'
-                + '<button class="copybtn" id="dlbridge">Download</button></div>'
+                + 'can run <span class="icode">npm i</span> then <span class="icode">node relay.js</span>.</div></div>'
+                + '<button class="btn" id="dlbridge">Download</button></div>'
+                + '<div class="card"><div class="body"><div class="title">Update from GitHub</div>'
+                + '<div class="desc">Compare the local bridge files with the repo and overwrite them when the '
+                + "front-end changed. Runs on load too, unless auto web update is off.</div></div>"
+                + '<button class="btn" id="webupdate">Check</button></div>'
                 + '<div class="h2row"><h2>Safe mode</h2></div>'
-                + '<div class="setting"><div class="body"><div class="title">Sandbox now</div>'
-                + '<div class="desc">Set <span class="chipcode">Sandboxed</span> on every LuaSourceContainer so the '
+                + '<div class="card"><div class="body"><div class="title">Sandbox now</div>'
+                + '<div class="desc">Set <span class="icode">Sandboxed</span> on every LuaSourceContainer so the '
                 + "game's scripts stop running. Does not rejoin.</div></div>"
-                + '<button class="copybtn" id="sandbox">Sandbox</button></div>'
-                + '<div class="setting"><div class="body"><div class="title">Save all scripts</div>'
-                + '<div class="desc">Write every collected script into one <span class="chipcode">.rbxmx</span> '
-                + 'model inside the per-game folder. Nothing is written until you press this.</div></div>'
-                + '<button class="copybtn" id="saveall">Save .rbxmx</button></div>'
-                + '<div class="empty" id="cfgnote" style="padding:6px 0"></div>';
+                + '<button class="btn danger" id="sandbox">Sandbox</button></div>'
+                + '<div class="card"><div class="body"><div class="title">Save all scripts</div>'
+                + '<div class="desc">Write every collected script into one <span class="icode">.rbxmx</span> '
+                + "model inside the per-game folder. Nothing is written until you press this.</div></div>"
+                + '<button class="btn" id="saveall">Save .rbxmx</button></div>'
+                + '<div class="muted" id="cfgnote" style="display:block;margin-top:12px"></div></div>';
 
             setPane(html);
 
@@ -947,14 +1985,14 @@
             const say = (text, ok) => {
                 if (!note) return;
                 note.textContent = text;
-                note.style.color = ok === false ? "var(--red)" : ok ? "var(--green)" : "var(--dim)";
+                note.style.color = ok === false ? "var(--v-error)" : ok ? "var(--v-success)" : "var(--v-text-muted)";
             };
 
-            Array.prototype.forEach.call(document.querySelectorAll(".toggle"), (t) => {
+            Array.prototype.forEach.call(editorEl.querySelectorAll(".toggle"), (t) => {
                 t.onclick = () => {
                     const key = t.getAttribute("data-key");
                     const next = !t.classList.contains("on");
-                    send({ action: "setconfig", key: key, value: next }).then(() => {
+                    api({ action: "setconfig", key: key, value: next }).then(() => {
                         t.classList.toggle("on", next);
                         say(key + " " + (next ? "enabled" : "disabled") + " — applies on next load", true);
                     }).catch((err) => say(err.message, false));
@@ -965,8 +2003,8 @@
             if (saveUrl) {
                 saveUrl.onclick = () => {
                     const value = el("cfgurl").value.trim();
-                    send({ action: "setconfig", key: "RelayUrl", value: value })
-                        .then(() => say("relay url saved", true))
+                    api({ action: "setconfig", key: "RelayUrl", value: value })
+                        .then(() => { say("relay url saved", true); toast("Relay URL saved"); })
                         .catch((err) => say(err.message, false));
                 };
             }
@@ -975,8 +2013,21 @@
             if (dl) {
                 dl.onclick = () => {
                     say("downloading...");
-                    send({ action: "downloadbridge" })
+                    api({ action: "downloadbridge" })
                         .then((d) => say(d.note + " → " + d.folder, true))
+                        .catch((err) => say(err.message, false));
+                };
+            }
+
+            const wu = el("webupdate");
+            if (wu) {
+                wu.onclick = () => {
+                    say("checking github...");
+                    api({ action: "webupdate" })
+                        .then((d) => {
+                            say(d.note + ((d.updated || 0) > 0 ? " — reload this page" : ""), true);
+                            if ((d.updated || 0) > 0) toast("Front-end updated — reload the page");
+                        })
                         .catch((err) => say(err.message, false));
                 };
             }
@@ -985,7 +2036,7 @@
             if (sb) {
                 sb.onclick = () => {
                     say("sandboxing...");
-                    send({ action: "sandbox" })
+                    api({ action: "sandbox" })
                         .then((d) => say("sandboxed " + d.sandboxed + " script(s)"
                             + (d.blocked ? ", " + d.blocked + " blocked" : ""), true))
                         .catch((err) => say(err.message, false));
@@ -996,93 +2047,122 @@
             if (sa) {
                 sa.onclick = () => {
                     say("saving, this can take a while...");
-                    send({ action: "saveall" })
+                    api({ action: "saveall" })
                         .then((d) => say("saved " + d.saved + " script(s)"
                             + (d.failed ? ", " + d.failed + " without source" : "") + " → " + d.path, true))
                         .catch((err) => say(err.message, false));
                 };
             }
-        }).catch((err) => setPane('<div class="empty">' + esc(err.message) + "</div>"));
+        }).catch((err) => { if (mySession === session) setPane(paneMsg(err.message)); });
     }
 
     function loadList() {
         if (section === "settings") {
-            listEl.innerHTML = '<div class="empty" style="padding-left:10px">no list for settings</div>';
+            listEl.innerHTML = '<div class="ide-note">no list for settings</div>';
             el("types").innerHTML = "";
+            el("groupcount").textContent = "";
             renderSettings();
             return;
         }
         renderTypes();
-        listEl.innerHTML = '<div class="empty" style="padding-left:10px">loading</div>';
-        send({ action: section }).then((data) => {
+        if (!ready() && !(socket && socket.readyState === WebSocket.OPEN)) {
+            listEl.innerHTML = '<div class="ide-note">not connected</div>';
+            return;
+        }
+        const mySession = session;
+        listEl.innerHTML = '<div class="ide-note">loading…</div>';
+        api({ action: section }).then((data) => {
+            if (mySession !== session) return;
             entries = section === "unknown" ? (data.functions || []) : (data.entries || []);
+            cursor = -1;
             renderList();
         }).catch((err) => {
-            listEl.innerHTML = '<div class="empty" style="padding-left:10px">' + esc(err.message) + "</div>";
+            if (mySession !== session) return;
+            listEl.innerHTML = '<div class="ide-note">' + esc(err.message) + "</div>";
         });
+    }
+
+    function refreshList() {
+        if (!ready()) { toast("no executor connected", true); return; }
+        const btn = el("reload");
+        if (btn) { btn.classList.add("spin"); setTimeout(() => btn.classList.remove("spin"), 600); }
+        const side = el("refresh");
+        if (side) { side.classList.add("spin"); setTimeout(() => side.classList.remove("spin"), 600); }
+        const mySession = session;
+        api({ action: "info" }).then((info) => {
+            if (mySession !== session) return;
+            counts = info.counts || {};
+            renderSections();
+        }).catch(() => {});
+        loadList();
     }
 
     function valueTable(title, rows) {
         if (!rows || !rows.length) {
-            return '<div class="h2row"><h2>' + title + "</h2></div>"
-                + '<div class="empty" style="padding:14px 0">none</div>';
+            return '<div class="h2row"><h2>' + title + '</h2></div><div class="muted">none</div>';
         }
         const raw = rows.map((r) => "[" + r.index + "] = " + r.value).join("\n");
-        let html = '<div class="h2row"><h2>' + title + "</h2>" + copyButton(raw, "Copy") + "</div>"
-            + '<div class="tablewrap"><table><thead><tr><th style="width:70px">#</th><th>value</th></tr></thead><tbody>';
+        let html = '<div class="h2row"><h2>' + title + " (" + rows.length + ")</h2>"
+            + '<span class="push">' + copyButton(raw, "Copy") + "</span></div>"
+            + '<div class="tablewrap"><table><thead><tr><th style="width:64px">#</th><th>value</th></tr></thead><tbody>';
         rows.forEach((r) => {
             const cell = r.code
                 ? "<pre>" + highlight(r.value) + "</pre>" + copyButton(r.value, "Copy")
-                : '<span class="valtext">' + highlight(r.value) + "</span>";
+                : '<span class="name">' + highlight(r.value) + "</span>";
             html += "<tr><td>" + r.index + "</td><td>" + cell + "</td></tr>";
         });
         return html + "</tbody></table></div>";
     }
 
     function showFunctionDetail(index) {
-        setPane('<div class="empty">loading</div>');
-        send({ action: "funcdetail", key: selected.key, index: index }).then((data) => {
-            fnDetail = data;
+        const mySession = session;
+        setPane(paneMsg("loading…"));
+        api({ action: "funcdetail", key: selected.key, index: index }).then((data) => {
+            if (mySession !== session) return;
             const i = data.info;
-            let html = '<span class="back" id="back">&larr; back to functions</span>'
-                + '<div class="subline"><span class="chipcode">' + esc(i.name) + "</span>"
-                + '<span class="badge">line ' + i.line + "</span>"
-                + '<span class="badge">params ' + i.numparams + "</span>"
-                + '<span class="badge">vargs ' + (i.vargs ? "yes" : "no") + "</span>"
-                + (i.hash ? '<span class="badge">' + esc(i.hash.slice(0, 18)) + "</span>" : "") + "</div>"
+            let html = '<div class="pane"><span class="back" id="back">&larr; back to functions</span>'
+                + '<div class="h2row"><span class="chip">' + esc(i.name) + "</span>"
+                + '<span class="chip">line ' + i.line + "</span>"
+                + '<span class="chip">params ' + i.numparams + "</span>"
+                + '<span class="chip">vargs ' + (i.vargs ? "yes" : "no") + "</span>"
+                + (i.hash ? '<span class="chip">' + esc(i.hash.slice(0, 18)) + "</span>" : "") + "</div>"
                 + valueTable("Constants", data.constants)
-                + valueTable("Upvalues", data.upvalues);
+                + valueTable("Upvalues", data.upvalues) + "</div>";
             setPane(html);
             const back = el("back");
-            if (back) back.onclick = () => { fnDetail = null; loadTab(); };
+            if (back) back.onclick = () => loadTab();
         }).catch((err) => {
+            if (mySession !== session) return;
             const hint = err.message === "unknown action"
                 ? "this build of the tool has no funcdetail action &mdash; re-run bundled.luau in the executor"
                 : esc(err.message);
-            setPane('<span class="back" id="back">&larr; back to functions</span>'
-                + '<div class="empty">' + hint + "</div>");
+            setPane('<div class="pane"><span class="back" id="back">&larr; back to functions</span>'
+                + '<div class="muted">' + hint + "</div></div>");
             const back = el("back");
-            if (back) back.onclick = () => { fnDetail = null; loadTab(); };
+            if (back) back.onclick = () => loadTab();
         });
     }
 
     function loadTab() {
         if (!selected) return;
+        const mySession = session;
+        const view = viewOf(selected);
+        const tab = view.tab;
 
         if (tab === "Info") {
             const rows = [["path", selected.path], ["name", selected.name], ["context", selected.context],
                 ["class", selected.class || "-"], ["parented", String(selected.parented)], ["key", selected.key]];
             const raw = rows.map((r) => r[0] + ": " + r[1]).join("\n");
-            let html = '<div class="h2row"><h2>Details</h2>' + copyButton(raw, "Copy") + "</div>"
-                + '<div class="tablewrap"><table><thead><tr><th style="width:180px">field</th><th>value</th></tr></thead><tbody>';
+            let html = '<div class="pane"><div class="h2row"><h2>Details</h2><span class="push">' + copyButton(raw, "Copy") + "</span></div>"
+                + '<div class="tablewrap"><table><thead><tr><th style="width:160px">field</th><th>value</th></tr></thead><tbody>';
             rows.forEach((r) => { html += "<tr><td>" + esc(r[0]) + '</td><td class="name">' + esc(r[1]) + "</td></tr>"; });
             html += "</tbody></table></div>";
             if (selected.reasons && selected.reasons.length) {
                 html += '<div class="reasons">' + selected.reasons.map(esc).join("<br>") + "</div>";
             }
-            html += '<div class="h2row"><h2>Bytecode</h2>'
-                + '<button class="copybtn" id="dlbc">' + COPY_ICON + " Download .luac</button></div>"
-                + '<div class="empty" id="bcnote" style="padding:0">not fetched</div>';
+            html += '<div class="h2row"><h2>Bytecode</h2><span class="push">'
+                + '<button class="btn" id="dlbc">' + ICON_DOWN + " Download .luac</button></span></div>"
+                + '<div class="muted" id="bcnote">not fetched</div></div>';
             setPane(html);
 
             const key = selected.key;
@@ -1091,7 +2171,7 @@
             if (bc) {
                 bc.onclick = () => {
                     const note = el("bcnote");
-                    if (note) note.textContent = "fetching";
+                    if (note) note.textContent = "fetching…";
                     fetchChunked("bytecode", key, "base64", (got, total) => {
                         if (note) note.textContent = "fetching " + humanBytes(got) + " / " + humanBytes(total);
                     }).then((b64) => {
@@ -1106,63 +2186,118 @@
             return;
         }
 
-        setPane('<div class="empty">loading</div>');
-
         if (tab === "Source") {
             const key = selected.key;
-            const name = selected.path;
+            if (view.source !== null) { setPane(editorHtml(view.source)); renderTabs(); renderStatusBar(); return; }
+            setPane(paneMsg("loading…"));
             fetchChunked("source", key, "source", (got, total) => {
-                setPane('<div class="empty">loading ' + humanBytes(got) + " / " + humanBytes(total) + "</div>");
+                if (mySession !== session) return;
+                setPane(paneMsg("loading " + humanBytes(got) + " / " + humanBytes(total)));
             }).then((code) => {
-                if (!selected || selected.key !== key) return;
-                setPane('<div class="h2row"><h2>' + humanBytes(code.length) + "</h2>"
-                    + '<span style="display:flex;gap:8px">'
-                    + copyButton(code, "Copy")
-                    + '<button class="copybtn" id="dl">' + COPY_ICON + " Download</button></span></div>"
-                    + codeBlock(code));
-                const dl = el("dl");
-                if (dl) {
-                    dl.onclick = () => downloadBlob(safeFileName(name, ".luau"),
-                        new Blob([code], { type: "text/plain;charset=utf-8" }));
-                }
-            }).catch((err) => setPane('<div class="empty">' + esc(err.message) + "</div>"));
+                if (mySession !== session || !selected || selected.key !== key) return;
+                view.source = code;
+                setPane(editorHtml(code));
+                renderTabs();
+                renderStatusBar();
+            }).catch((err) => { if (mySession === session) setPane(paneMsg(err.message)); });
             return;
         }
 
-        send({ action: "functions", key: selected.key }).then((data) => {
+        setPane(paneMsg("loading…"));
+        api({ action: "functions", key: selected.key }).then((data) => {
+            if (mySession !== session) return;
             const fns = data.functions || [];
-            if (!fns.length) { setPane('<div class="empty">no functions resolved</div>'); return; }
+            if (!fns.length) { setPane(paneMsg("no functions resolved")); return; }
             const raw = fns.map((f) => f.name + " | line " + f.line + " | params " + f.numparams
                 + " | vargs " + (f.vargs ? "yes" : "no") + (f.hash ? " | " + f.hash : "")).join("\n");
-            let html = '<div class="h2row"><h2>' + fns.length + " function(s)</h2>" + copyButton(raw, "Copy") + "</div>"
-                + '<div class="tablewrap"><table><thead><tr><th>name</th><th style="width:90px">line</th><th style="width:90px">params</th>'
-                + '<th style="width:90px">vargs</th><th style="width:180px">hash</th></tr></thead><tbody>';
+            let html = '<div class="pane"><div class="h2row"><h2>' + fns.length + " function(s)</h2>"
+                + '<span class="push">' + copyButton(raw, "Copy") + "</span></div>"
+                + '<div class="tablewrap"><table><thead><tr><th>name</th><th style="width:80px">line</th><th style="width:80px">params</th>'
+                + '<th style="width:80px">vargs</th><th style="width:170px">hash</th></tr></thead><tbody>';
             fns.forEach((f) => {
                 html += '<tr class="clickable" data-index="' + f.index + '"><td class="name">' + esc(f.name)
                     + "</td><td>" + f.line + "</td><td>" + f.numparams + "</td><td>" + (f.vargs ? "yes" : "no")
                     + "</td><td>" + esc((f.hash || "").slice(0, 18)) + "</td></tr>";
             });
-            setPane(html + "</tbody></table></div>");
-            Array.prototype.forEach.call(document.querySelectorAll("tr.clickable"), (tr) => {
+            setPane(html + "</tbody></table></div></div>");
+            Array.prototype.forEach.call(editorEl.querySelectorAll("tr.clickable"), (tr) => {
                 tr.onclick = () => showFunctionDetail(Number(tr.getAttribute("data-index")));
             });
-        }).catch((err) => setPane('<div class="empty">' + esc(err.message) + "</div>"));
+        }).catch((err) => { if (mySession === session) setPane(paneMsg(err.message)); });
     }
 
-    function refresh() {
-        send({ action: "info" }).then((info) => {
-            counts = info.counts || {};
-            renderSections(); loadList();
-        }).catch(() => loadList());
-    }
-
-    el("connect").onclick = connect;
-    el("filter").oninput = renderList;
+    el("connect").onclick = () => {
+        const live = socket && (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING);
+        if (live) disconnect(); else connect();
+    };
+    el("demobtn").onclick = () => setDemo(!demo);
+    el("filter").oninput = () => { cursor = -1; renderList(); };
     el("url").onkeydown = (e) => { if (e.key === "Enter") connect(); };
+    el("refresh").onclick = refreshList;
 
+    el("termtoggle").onclick = () => el("term").classList.toggle("collapsed");
+    el("termfilter").oninput = renderLogs;
+    el("termclear").onclick = () => { logs.length = 0; renderLogs(); };
+    el("termwrap").onclick = () => {
+        logFollow = !logFollow;
+        el("termwrap").classList.toggle("on", logFollow);
+        if (logFollow) renderLogs();
+    };
+    Array.prototype.forEach.call(document.querySelectorAll(".term-head .src"), (b) => {
+        b.onclick = () => {
+            logSrc = b.getAttribute("data-src");
+            Array.prototype.forEach.call(document.querySelectorAll(".term-head .src"), (o) => {
+                o.classList.toggle("on", o === b);
+            });
+            renderLogs();
+        };
+    });
+
+    editorEl.addEventListener("click", updateCaret);
+    editorEl.addEventListener("keyup", updateCaret);
+
+    const isTyping = (t) => t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA");
+
+    document.addEventListener("keydown", (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+            e.preventDefault(); const f = el("filter"); f.focus(); f.select(); return;
+        }
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "w" && selected) {
+            e.preventDefault(); closeTab(selected); return;
+        }
+
+        const filterFocused = document.activeElement === el("filter");
+
+        if (!isTyping(e.target) || filterFocused) {
+            if (e.key === "ArrowDown") { e.preventDefault(); moveCursor(1); return; }
+            if (e.key === "ArrowUp") { e.preventDefault(); moveCursor(-1); return; }
+            if (e.key === "Enter" && cursor >= 0) { e.preventDefault(); openCursor(); return; }
+        }
+
+        if (isTyping(e.target)) {
+            if (e.key === "Escape") e.target.blur();
+            return;
+        }
+
+        if (e.key === "Escape") {
+            if (selected) closeTab(selected);
+            return;
+        }
+        if (e.key === "/") { e.preventDefault(); el("filter").focus(); return; }
+        if (e.key === "`") { e.preventDefault(); el("term").classList.toggle("collapsed"); return; }
+        if (e.key.toLowerCase() === "r") { refreshList(); return; }
+    });
+
+    el("termwrap").classList.add("on");
+    log("ui", "GcView ready");
+    renderLogs();
     renderSections();
     renderTypes();
     renderDoc();
+    updateDemoBtn();
+    updateConnectBtn();
+
+    connect();
 })();
 </script>
 </body>

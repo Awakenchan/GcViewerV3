@@ -49,41 +49,41 @@ __DARKLUA_BUNDLE_MODULES.c()local Services=__DARKLUA_BUNDLE_MODULES.a()local
 HttpService=Services.HttpService local Config={}local CONFIG_FILE=Constants.
 CONFIG_DIR..'/gcview.json'local Defaults={WebOnly=false,AutoConnect=false,
 RelayUrl='ws://127.0.0.1:8765',SafeMode=false,AutoSafeMode=false,ScriptTools=
-true,Bridge=true}local Current=nil local Listeners={}local HasFunction=function(
-Value)return type(Value)=='function'end local EnsureFolder=function(Path)if not(
-HasFunction(isfolder)and HasFunction(makefolder))then return false end local Ok,
-Exists=pcall(isfolder,Path)if Ok and Exists==true then return true end return(
-pcall(makefolder,Path))end local Clone=function(Source)local Out={}for Key,Value
-in Source do Out[Key]=Value end return Out end local Load=function()local Values
-=Clone(Defaults)if HasFunction(isfile)and HasFunction(readfile)then local
-OkExists,Exists=pcall(isfile,CONFIG_FILE)if OkExists and Exists then local
-OkRead,Raw=pcall(readfile,CONFIG_FILE)if OkRead and type(Raw)=='string'and Raw~=
-''then local OkDecode,Stored=pcall(function()return HttpService:JSONDecode(Raw)
-end)if OkDecode and type(Stored)=='table'then for Key in Defaults do local Value
-=Stored[Key]if type(Value)==type(Defaults[Key])then Values[Key]=Value end end
-end end end end return Values end function Config.All()if not Current then
-Current=Load()end return Current end function Config.Get(Key)local Values=Config
-.All()if Values[Key]~=nil then return Values[Key]end return Defaults[Key]end
-function Config.Defaults()return Clone(Defaults)end function Config.Save()if not
-HasFunction(writefile)then return false,'writefile unsupported'end EnsureFolder(
-Constants.CONFIG_DIR)local OkEncode,Raw=pcall(function()return HttpService:
-JSONEncode(Config.All())end)if not OkEncode then return false,'encode failed'end
-local OkWrite,Err=pcall(writefile,CONFIG_FILE,Raw)if not OkWrite then return
-false,tostring(Err)end return true end function Config.Set(Key,Value)if Defaults
-[Key]==nil then return false,'unknown setting'end if type(Value)~=type(Defaults[
-Key])then return false,'wrong type for '..Key end local Values=Config.All()
-Values[Key]=Value Config.Save()for _,Listener in Listeners do pcall(Listener,Key
-,Value)end return true end function Config.Apply(Table)if type(Table)~='table'
-then return false,'expected a table'end local Changed=0 for Key,Value in Table
-do if Config.Set(Key,Value)then Changed=Changed+1 end end return true,Changed
-end function Config.OnChange(Listener)if HasFunction(Listener)then Listeners[#
-Listeners+1]=Listener end end function Config.Path()return CONFIG_FILE end
-return Config end function __DARKLUA_BUNDLE_MODULES.d()local v=
-__DARKLUA_BUNDLE_MODULES.cache.d if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.d=v end return v.c end end do local __modImpl=
-function()local GcShared={}local HAS_GETGC=type(getgc)=='function'local
-HAS_ISEXEC=type(isexecutorclosure)=='function'local HAS_HASH=type(
-getfunctionhash)=='function'local snapshot local snapshotOk=false local
+true,Bridge=true,AutoWebUpdate=true}local Current=nil local Listeners={}local
+HasFunction=function(Value)return type(Value)=='function'end local EnsureFolder=
+function(Path)if not(HasFunction(isfolder)and HasFunction(makefolder))then
+return false end local Ok,Exists=pcall(isfolder,Path)if Ok and Exists==true then
+return true end return(pcall(makefolder,Path))end local Clone=function(Source)
+local Out={}for Key,Value in Source do Out[Key]=Value end return Out end local
+Load=function()local Values=Clone(Defaults)if HasFunction(isfile)and
+HasFunction(readfile)then local OkExists,Exists=pcall(isfile,CONFIG_FILE)if
+OkExists and Exists then local OkRead,Raw=pcall(readfile,CONFIG_FILE)if OkRead
+and type(Raw)=='string'and Raw~=''then local OkDecode,Stored=pcall(function()
+return HttpService:JSONDecode(Raw)end)if OkDecode and type(Stored)=='table'then
+for Key in Defaults do local Value=Stored[Key]if type(Value)==type(Defaults[Key]
+)then Values[Key]=Value end end end end end end return Values end function
+Config.All()if not Current then Current=Load()end return Current end function
+Config.Get(Key)local Values=Config.All()if Values[Key]~=nil then return Values[
+Key]end return Defaults[Key]end function Config.Defaults()return Clone(Defaults)
+end function Config.Save()if not HasFunction(writefile)then return false,
+'writefile unsupported'end EnsureFolder(Constants.CONFIG_DIR)local OkEncode,Raw=
+pcall(function()return HttpService:JSONEncode(Config.All())end)if not OkEncode
+then return false,'encode failed'end local OkWrite,Err=pcall(writefile,
+CONFIG_FILE,Raw)if not OkWrite then return false,tostring(Err)end return true
+end function Config.Set(Key,Value)if Defaults[Key]==nil then return false,
+'unknown setting'end if type(Value)~=type(Defaults[Key])then return false,
+'wrong type for '..Key end local Values=Config.All()Values[Key]=Value Config.
+Save()for _,Listener in Listeners do pcall(Listener,Key,Value)end return true
+end function Config.Apply(Table)if type(Table)~='table'then return false,
+'expected a table'end local Changed=0 for Key,Value in Table do if Config.Set(
+Key,Value)then Changed=Changed+1 end end return true,Changed end function Config
+.OnChange(Listener)if HasFunction(Listener)then Listeners[#Listeners+1]=Listener
+end end function Config.Path()return CONFIG_FILE end return Config end function
+__DARKLUA_BUNDLE_MODULES.d()local v=__DARKLUA_BUNDLE_MODULES.cache.d if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.d=v end return v.c end end
+do local __modImpl=function()local GcShared={}local HAS_GETGC=type(getgc)==
+'function'local HAS_ISEXEC=type(isexecutorclosure)=='function'local HAS_HASH=
+type(getfunctionhash)=='function'local snapshot local snapshotOk=false local
 snapshotVersion=0 local execCache={}local fenvCache={}local hashCache={}local
 ownedTables=setmetatable({},{__mode='k'})function GcShared.Own(value)if type(
 value)=='table'then ownedTables[value]=true end return value end function
@@ -1068,13 +1068,77 @@ local ok2,legacy=xpcall(function()return SerializeRoot(data,true)end,errHandler)
 if ok2 then return legacy end return compact end return Data2Code end function
 __DARKLUA_BUNDLE_MODULES.l()local v=__DARKLUA_BUNDLE_MODULES.cache.l if not v
 then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.l=v end return v.c end end
-do local __modImpl=function()local Config=__DARKLUA_BUNDLE_MODULES.d()local
-Executor=__DARKLUA_BUNDLE_MODULES.f()local Constants=__DARKLUA_BUNDLE_MODULES.c(
-)local Plugins={}local BRIDGE_DIR=Constants.CONFIG_DIR..'/bridge'local
-BRIDGE_BASE=('https://raw.githubusercontent.com/%s/%s/%s/GcViewV4/web/'):format(
-Constants.REPO_OWNER,Constants.REPO_NAME,Constants.REPO_BRANCH)local
-BRIDGE_FILES={'relay.js','index.html','package.json'}local Registry={{Key=
-'ScriptTools',Title='Script tools',Description=
+do local __modImpl=function()local Constants=__DARKLUA_BUNDLE_MODULES.c()local
+Executor=__DARKLUA_BUNDLE_MODULES.f()local Services=__DARKLUA_BUNDLE_MODULES.a()
+local HttpService=Services.HttpService local WebUpdate={}local BRIDGE_DIR=
+Constants.CONFIG_DIR..'/bridge'local STATE_FILE=BRIDGE_DIR..'/versions.json'
+local REPO_PATH='GcViewV4/web'local FILES={'relay.js','index.html',
+'package.json'}local API_URL=(
+'https://api.github.com/repos/%s/%s/contents/%s?ref=%s'):format(Constants.
+REPO_OWNER,Constants.REPO_NAME,REPO_PATH,Constants.REPO_BRANCH)local RAW_BASE=(
+'https://raw.githubusercontent.com/%s/%s/%s/%s/'):format(Constants.REPO_OWNER,
+Constants.REPO_NAME,Constants.REPO_BRANCH,REPO_PATH)local HasFunction=function(
+Value)return type(Value)=='function'end local EnsureFolder=function(Path)if not(
+HasFunction(isfolder)and HasFunction(makefolder))then return false end local Ok,
+Exists=pcall(isfolder,Path)if Ok and Exists==true then return true end return(
+pcall(makefolder,Path))end local ReadLocal=function(Path)if not(HasFunction(
+isfile)and HasFunction(readfile))then return nil end local OkExists,Exists=
+pcall(isfile,Path)if not(OkExists and Exists==true)then return nil end local
+OkRead,Body=pcall(readfile,Path)if OkRead and type(Body)=='string'then return
+Body end return nil end local ReadState=function()local Raw=ReadLocal(STATE_FILE
+)if not Raw or Raw==''then return{}end local Ok,Value=pcall(function()return
+HttpService:JSONDecode(Raw)end)if Ok and type(Value)=='table'and type(Value.
+files)=='table'then return Value.files end return{}end local WriteState=function
+(Files)if not HasFunction(writefile)then return false end local Ok,Raw=pcall(
+function()return HttpService:JSONEncode({files=Files,path=REPO_PATH})end)if not
+Ok then return false end return(pcall(writefile,STATE_FILE,Raw))end local Fetch=
+function(Url,Headers)local Request=Executor.Request()if not Request then return
+nil,'no HTTP request function on this executor'end local Ok,Response=pcall(
+Request,{Url=Url,Method='GET',Headers=Headers})if not Ok then return nil,
+'request failed'end if not Executor.ResponseOk(Response)then return nil,'http '
+..tostring(Executor.Status(Response)or'error')end local Body=Executor.
+ResponseBody(Response)if type(Body)~='string'or Body==''then return nil,
+'empty response'end return Body end local Tracked=function(Name)for _,Value in
+FILES do if Value==Name then return true end end return false end local
+RemoteIndex=function()local Body,Err=Fetch(API_URL,{['User-Agent']='Roblox',[
+'Accept']='application/vnd.github.v3+json'})if not Body then return nil,Err end
+local Ok,Listing=pcall(function()return HttpService:JSONDecode(Body)end)if not(
+Ok and type(Listing)=='table')then return nil,'unreadable listing'end local
+Index={}for _,Entry in Listing do if type(Entry)=='table'and Entry.type=='file'
+and Tracked(Entry.name)then Index[Entry.name]={Sha=tostring(Entry.sha),Url=type(
+Entry.download_url)=='string'and Entry.download_url or(RAW_BASE..Entry.name)}end
+end if not next(Index)then return nil,'no web files listed'end return Index end
+function WebUpdate.Dir()return BRIDGE_DIR end function WebUpdate.Files()return
+FILES end function WebUpdate.Installed()for _,Name in FILES do if ReadLocal(
+BRIDGE_DIR..'/'..Name)then return true end end return false end function
+WebUpdate.Sync(Options)Options=type(Options)=='table'and Options or{}local Force
+=Options.Force==true local OnProgress=Options.OnProgress if not HasFunction(
+writefile)then return false,'writefile unsupported on this executor',0 end
+EnsureFolder(Constants.CONFIG_DIR)EnsureFolder(BRIDGE_DIR)local State=ReadState(
+)local Index,IndexErr=RemoteIndex()local NextState={}local Updated={}local
+Failed={}local Fresh=0 for _,Name in FILES do local Path=BRIDGE_DIR..'/'..Name
+local Stored=ReadLocal(Path)local Remote=Index and Index[Name]or nil local Sha=
+Remote and Remote.Sha or nil local Url=Remote and Remote.Url or(RAW_BASE..Name)
+NextState[Name]=State[Name]if not Force and Stored and Sha and State[Name]==Sha
+then Fresh=Fresh+1 else if OnProgress then pcall(OnProgress,Name)end local Body,
+Err=Fetch(Url,{['User-Agent']='Roblox'})if not Body then Failed[#Failed+1]=Name
+..' ('..tostring(Err)..')'elseif not Force and Stored==Body then NextState[Name]
+=Sha or State[Name]Fresh=Fresh+1 elseif pcall(writefile,Path,Body)then NextState
+[Name]=Sha or State[Name]Updated[#Updated+1]=Name else Failed[#Failed+1]=Name..
+' (write failed)'end end end WriteState(NextState)if#Updated==0 and#Failed==#
+FILES then return false,'web update failed: '..table.concat(Failed,', '),0 end
+local Note if#Updated>0 then Note=('updated %s in %s'):format(table.concat(
+Updated,', '),BRIDGE_DIR)else Note=('web front-end already current (%d file%s)')
+:format(Fresh,Fresh==1 and''or's')end if#Failed>0 then Note=Note..' | failed: '
+..table.concat(Failed,', ')elseif not Index and IndexErr then Note=Note..
+' | compared by content ('..tostring(IndexErr)..')'end return true,Note,#Updated
+end function WebUpdate.Auto()if not WebUpdate.Installed()then return false,
+'no local bridge files',0 end return WebUpdate.Sync()end return WebUpdate end
+function __DARKLUA_BUNDLE_MODULES.m()local v=__DARKLUA_BUNDLE_MODULES.cache.m if
+not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.m=v end return v.c
+end end do local __modImpl=function()local Config=__DARKLUA_BUNDLE_MODULES.d()
+local WebUpdate=__DARKLUA_BUNDLE_MODULES.m()local Plugins={}local Registry={{Key
+='ScriptTools',Title='Script tools',Description=
 'Scripts, Anti Cheat, AC Tables and Actor Scripts tabs.'},{Key='Bridge',Title=
 'Web bridge',Description=
 [[WebSocket bridge so a browser front-end can drive this session.]]},{Key=
@@ -1085,40 +1149,29 @@ Key='WebOnly',Title='Web only',Description=
 'AutoConnect',Title='Auto connect',Description=
 'Connect to the relay as soon as GcView loads.'},{Key='AutoSafeMode',Title=
 'Auto safe mode',Description=
-[[Run safe mode automatically on load instead of waiting for the button.]]}}
-function Plugins.List()local Out={}for _,Entry in Registry do Out[#Out+1]={key=
-Entry.Key,title=Entry.Title,description=Entry.Description,enabled=Config.Get(
+[[Run safe mode automatically on load instead of waiting for the button.]]},{Key
+='AutoWebUpdate',Title='Auto web update',Description=
+[[Check GitHub on load and overwrite the local bridge files when the web front-end changed.]]
+}}function Plugins.List()local Out={}for _,Entry in Registry do Out[#Out+1]={key
+=Entry.Key,title=Entry.Title,description=Entry.Description,enabled=Config.Get(
 Entry.Key)==true}end return Out end function Plugins.Enabled(Key)return Config.
 Get(Key)==true end function Plugins.Set(Key,Value)return Config.Set(Key,Value==
-true)end function Plugins.BridgeDir()return BRIDGE_DIR end local HasFunction=
-function(Value)return type(Value)=='function'end local EnsureFolder=function(
-Path)if not(HasFunction(isfolder)and HasFunction(makefolder))then return false
-end local Ok,Exists=pcall(isfolder,Path)if Ok and Exists==true then return true
-end return(pcall(makefolder,Path))end function Plugins.DownloadBridge(OnProgress
-)if not HasFunction(writefile)then return false,
-'writefile unsupported on this executor'end local Request=Executor.Request()if
-not Request then return false,'no HTTP request function on this executor'end
-EnsureFolder(Constants.CONFIG_DIR)EnsureFolder(BRIDGE_DIR)local Written=0 local
-Failed={}for _,Name in BRIDGE_FILES do if OnProgress then pcall(OnProgress,Name)
-end local Ok,Response=pcall(Request,{Url=BRIDGE_BASE..Name,Method='GET'})local
-Body=Ok and Executor.ResponseBody(Response)or nil if Ok and Executor.ResponseOk(
-Response)and type(Body)=='string'and Body~=''then if pcall(writefile,BRIDGE_DIR
-..'/'..Name,Body)then Written=Written+1 else Failed[#Failed+1]=Name end else
-Failed[#Failed+1]=Name end end if Written==0 then return false,
-'nothing downloaded ('..table.concat(Failed,', ')..')'end if#Failed>0 then
-return true,('%d/%d written, failed: %s'):format(Written,#BRIDGE_FILES,table.
-concat(Failed,', '))end return true,('%d files written to %s'):format(Written,
-BRIDGE_DIR)end return Plugins end function __DARKLUA_BUNDLE_MODULES.m()local v=
-__DARKLUA_BUNDLE_MODULES.cache.m if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.m=v end return v.c end end do local __modImpl=
-function()local Services=__DARKLUA_BUNDLE_MODULES.a()local FunctionLibrary=
-__DARKLUA_BUNDLE_MODULES.h()local Executor=__DARKLUA_BUNDLE_MODULES.f()local
-GcShared=__DARKLUA_BUNDLE_MODULES.e()local Source=__DARKLUA_BUNDLE_MODULES.g()
-local Data2Code=__DARKLUA_BUNDLE_MODULES.l()local Config=
-__DARKLUA_BUNDLE_MODULES.d()local Plugins=__DARKLUA_BUNDLE_MODULES.m()local
-HttpService=Services.HttpService local WebBridge={}local Socket=nil local
-SocketUrl=nil local Connected=false local LogSink=nil local StatusSink=nil local
-DefaultChunk=262144 local MaxChunk=1048576 local MaxListEntries=5000 local
+true)end function Plugins.BridgeDir()return WebUpdate.Dir()end function Plugins.
+DownloadBridge(OnProgress)local Ok,Note=WebUpdate.Sync({Force=true,OnProgress=
+OnProgress})return Ok,Note end function Plugins.UpdateBridge(OnProgress)return
+WebUpdate.Sync({OnProgress=OnProgress})end function Plugins.AutoUpdateBridge()if
+not Plugins.Enabled('Bridge')or not Plugins.Enabled('AutoWebUpdate')then return
+false,'auto web update disabled',0 end return WebUpdate.Auto()end return Plugins
+end function __DARKLUA_BUNDLE_MODULES.n()local v=__DARKLUA_BUNDLE_MODULES.cache.
+n if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.n=v end return v
+.c end end do local __modImpl=function()local Services=__DARKLUA_BUNDLE_MODULES.
+a()local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.h()local Executor=
+__DARKLUA_BUNDLE_MODULES.f()local GcShared=__DARKLUA_BUNDLE_MODULES.e()local
+Source=__DARKLUA_BUNDLE_MODULES.g()local Data2Code=__DARKLUA_BUNDLE_MODULES.l()
+local Config=__DARKLUA_BUNDLE_MODULES.d()local Plugins=__DARKLUA_BUNDLE_MODULES.
+n()local HttpService=Services.HttpService local WebBridge={}local Socket=nil
+local SocketUrl=nil local Connected=false local LogSink=nil local StatusSink=nil
+local DefaultChunk=262144 local MaxChunk=1048576 local MaxListEntries=5000 local
 Sources=GcShared.Own({scripts=GcShared.Own({}),anticheat=GcShared.Own({}),actors
 =GcShared.Own({}),unknown=GcShared.Own({})})local KeyIndex=GcShared.Own({})local
 Log=function(Message)if LogSink then pcall(LogSink,tostring(Message))end end
@@ -1209,54 +1262,58 @@ return nil,tostring(Err)end return{path=Path,saved=Saved or 0,failed=Failed or 0
 __DARKLUA_BUNDLE_MODULES.j()local Done,Blocked=SafeMode.Sandbox()return{
 sandboxed=Done,blocked=Blocked}end Actions.downloadbridge=function()local Ok,
 Note=Plugins.DownloadBridge()if not Ok then return nil,tostring(Note)end return{
-note=tostring(Note),folder=Plugins.BridgeDir()}end Actions.scripts=function()
-return{entries=SerializeList(Sources.scripts)}end Actions.anticheat=function()
-return{entries=SerializeList(Sources.anticheat)}end Actions.actors=function()
-return{entries=SerializeList(Sources.actors)}end Actions.unknown=function()local
-Out={}for Index,Record in Sources.unknown do if type(Record)=='table'then Out[#
-Out+1]=SerializeFunction(Record,Index)end end return{functions=Out}end Actions.
-functions=function(Request)local Entry=FindEntry(Request.key)if not Entry then
-return nil,'unknown script key'end return{key=Request.key,functions=
-CollectFunctions(Entry,Request.key)}end Actions.funcdetail=function(Request)
-local Entry=FindEntry(Request.key)if not Entry then return nil,
-'unknown script key'end local Records=RecordsFor(Entry,Request.key)local Record=
-Records[tonumber(Request.index)or 0]if type(Record)~='table'then return nil,
-'unknown function index'end local Constants,Upvalues if type(Record.constants)==
-'table'then Constants=DecodeList(Record.constants)end if type(Record.upvalues)==
-'table'then Upvalues=DecodeList(Record.upvalues)end local Fn=Record.func if
-type(Fn)=='function'then if not Constants then local Ok,Values=pcall(debug.
-getconstants,Fn)Constants=Ok and DecodeList(Values)or{}end if not Upvalues then
-local Ok,Values=pcall(debug.getupvalues,Fn)Upvalues=Ok and DecodeList(Values)or{
-}end end return{key=Request.key,info=SerializeFunction(Record,tonumber(Request.
-index)or 0),constants=Constants or{},upvalues=Upvalues or{}}end local Chunked=
-function(Key,Text,Request)local Total=#Text local Offset=tonumber(Request.offset
-)or 1 if Offset<1 then Offset=1 end local Limit=tonumber(Request.limit)or
-DefaultChunk if Limit<1 then Limit=DefaultChunk elseif Limit>MaxChunk then Limit
-=MaxChunk end local Chunk=Text:sub(Offset,Offset+Limit-1)local NextOffset=Offset
-+#Chunk return{key=Key,offset=Offset,total=Total,nextOffset=NextOffset,done=
-NextOffset>Total,chunk=Chunk}end Actions.source=function(Request)local Entry=
-FindEntry(Request.key)if not Entry then return nil,'unknown script key'end local
-Text,Reason=DecompileEntry(Entry)if not Text then return nil,Reason or
-'decompile failed'end local Payload=Chunked(Request.key,Text,Request)Payload.
-source=Payload.chunk return Payload end Actions.bytecode=function(Request)local
-Entry=FindEntry(Request.key)if not Entry then return nil,'unknown script key'end
-local Encoded,Note=BytecodeEntry(Entry)if not Encoded then return nil,Note or
-'no bytecode'end local Payload=Chunked(Request.key,Encoded,Request)Payload.
-base64=Payload.chunk return Payload end local Send=function(Payload)if not
-Socket or not Connected then return false end local Text=Encode(Payload)if not
-Text then return false end local Ok=pcall(function()Socket:Send(Text)end)return
-Ok end local HandleRequest=function(Request)local Action=Actions[Request.action]
-if not Action then Send({type='response',id=Request.id,ok=false,error=
-'unknown action'})return end local Ok,Data,Err=pcall(Action,Request)if not Ok
-then Send({type='response',id=Request.id,ok=false,error=SafeText(Data)})return
-end if Data==nil then Send({type='response',id=Request.id,ok=false,error=
-SafeText(Err or'failed')})return end Send({type='response',id=Request.id,ok=true
-,action=Request.action,data=Data})end function WebBridge.Handle(RawMessage)local
-Message=Decode(RawMessage)if not Message then return end if Message.type==
-'request'then Log(('request: %s'):format(SafeText(Message.action)))task.spawn(
-HandleRequest,Message)return end if Message.type=='hello'then Log(
-'peer connected')return end end function WebBridge.Publish(Name,List)if type(
-Name)~='string'or type(List)~='table'then return end Sources[Name]=List
+note=tostring(Note),folder=Plugins.BridgeDir()}end Actions.webupdate=function(
+Request)local Ok,Note,Updated if Request.force==true then Ok,Note=Plugins.
+DownloadBridge()Updated=Ok and#__DARKLUA_BUNDLE_MODULES.m().Files()or 0 else Ok,
+Note,Updated=Plugins.UpdateBridge()end if not Ok then return nil,tostring(Note)
+end return{note=tostring(Note),updated=Updated or 0,folder=Plugins.BridgeDir()}
+end Actions.scripts=function()return{entries=SerializeList(Sources.scripts)}end
+Actions.anticheat=function()return{entries=SerializeList(Sources.anticheat)}end
+Actions.actors=function()return{entries=SerializeList(Sources.actors)}end
+Actions.unknown=function()local Out={}for Index,Record in Sources.unknown do if
+type(Record)=='table'then Out[#Out+1]=SerializeFunction(Record,Index)end end
+return{functions=Out}end Actions.functions=function(Request)local Entry=
+FindEntry(Request.key)if not Entry then return nil,'unknown script key'end
+return{key=Request.key,functions=CollectFunctions(Entry,Request.key)}end Actions
+.funcdetail=function(Request)local Entry=FindEntry(Request.key)if not Entry then
+return nil,'unknown script key'end local Records=RecordsFor(Entry,Request.key)
+local Record=Records[tonumber(Request.index)or 0]if type(Record)~='table'then
+return nil,'unknown function index'end local Constants,Upvalues if type(Record.
+constants)=='table'then Constants=DecodeList(Record.constants)end if type(Record
+.upvalues)=='table'then Upvalues=DecodeList(Record.upvalues)end local Fn=Record.
+func if type(Fn)=='function'then if not Constants then local Ok,Values=pcall(
+debug.getconstants,Fn)Constants=Ok and DecodeList(Values)or{}end if not Upvalues
+then local Ok,Values=pcall(debug.getupvalues,Fn)Upvalues=Ok and DecodeList(
+Values)or{}end end return{key=Request.key,info=SerializeFunction(Record,
+tonumber(Request.index)or 0),constants=Constants or{},upvalues=Upvalues or{}}end
+local Chunked=function(Key,Text,Request)local Total=#Text local Offset=tonumber(
+Request.offset)or 1 if Offset<1 then Offset=1 end local Limit=tonumber(Request.
+limit)or DefaultChunk if Limit<1 then Limit=DefaultChunk elseif Limit>MaxChunk
+then Limit=MaxChunk end local Chunk=Text:sub(Offset,Offset+Limit-1)local
+NextOffset=Offset+#Chunk return{key=Key,offset=Offset,total=Total,nextOffset=
+NextOffset,done=NextOffset>Total,chunk=Chunk}end Actions.source=function(Request
+)local Entry=FindEntry(Request.key)if not Entry then return nil,
+'unknown script key'end local Text,Reason=DecompileEntry(Entry)if not Text then
+return nil,Reason or'decompile failed'end local Payload=Chunked(Request.key,Text
+,Request)Payload.source=Payload.chunk return Payload end Actions.bytecode=
+function(Request)local Entry=FindEntry(Request.key)if not Entry then return nil,
+'unknown script key'end local Encoded,Note=BytecodeEntry(Entry)if not Encoded
+then return nil,Note or'no bytecode'end local Payload=Chunked(Request.key,
+Encoded,Request)Payload.base64=Payload.chunk return Payload end local Send=
+function(Payload)if not Socket or not Connected then return false end local Text
+=Encode(Payload)if not Text then return false end local Ok=pcall(function()
+Socket:Send(Text)end)return Ok end local HandleRequest=function(Request)local
+Action=Actions[Request.action]if not Action then Send({type='response',id=
+Request.id,ok=false,error='unknown action'})return end local Ok,Data,Err=pcall(
+Action,Request)if not Ok then Send({type='response',id=Request.id,ok=false,error
+=SafeText(Data)})return end if Data==nil then Send({type='response',id=Request.
+id,ok=false,error=SafeText(Err or'failed')})return end Send({type='response',id=
+Request.id,ok=true,action=Request.action,data=Data})end function WebBridge.
+Handle(RawMessage)local Message=Decode(RawMessage)if not Message then return end
+if Message.type=='request'then Log(('request: %s'):format(SafeText(Message.
+action)))task.spawn(HandleRequest,Message)return end if Message.type=='hello'
+then Log('peer connected')return end end function WebBridge.Publish(Name,List)if
+type(Name)~='string'or type(List)~='table'then return end Sources[Name]=List
 RebuildIndex()end function WebBridge.SetLogSink(Sink)LogSink=Sink end function
 WebBridge.SetStatusSink(Sink)StatusSink=Sink end function WebBridge.IsConnected(
 )return Connected end function WebBridge.Url()return SocketUrl end function
@@ -1281,11 +1338,11 @@ SetStatus('disconnected')Log('socket closed')end)end)RebuildIndex()Send({type=
 'connected')return true end function WebBridge.Disconnect()if not Socket then
 return false,'not connected'end pcall(function()Socket:Close()end)Connected=
 false Socket=nil SetStatus('disconnected')Log('closed by user')return true end
-return WebBridge end function __DARKLUA_BUNDLE_MODULES.n()local v=
-__DARKLUA_BUNDLE_MODULES.cache.n if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.n=v end return v.c end end do local __modImpl=
+return WebBridge end function __DARKLUA_BUNDLE_MODULES.o()local v=
+__DARKLUA_BUNDLE_MODULES.cache.o if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.o=v end return v.c end end do local __modImpl=
 function()local Config=__DARKLUA_BUNDLE_MODULES.d()local WebBridge=
-__DARKLUA_BUNDLE_MODULES.n()local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.h()
+__DARKLUA_BUNDLE_MODULES.o()local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.h()
 local Headless={}local RETRY_DELAY=3 local MAX_ATTEMPTS=3 function Headless.
 Start()if not WebBridge.Supported()then warn(
 [[[GcView] Web only mode needs WebSocket support, falling back to the in-game UI.]]
@@ -1302,9 +1359,9 @@ AntiCheat)WebBridge.Publish('actors',FunctionLibrary.GetActorScripts())print((
 '[GcView] bridge connect failed (%d/%d): %s'):format(Attempt,MAX_ATTEMPTS,
 tostring(Err)))if Attempt<MAX_ATTEMPTS then task.wait(RETRY_DELAY)end end warn(
 [[[GcView] web only mode could not reach the relay, falling back to the in-game UI.]]
-)return false end return Headless end function __DARKLUA_BUNDLE_MODULES.o()local
-v=__DARKLUA_BUNDLE_MODULES.cache.o if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.o=v end return v.c end end do local __modImpl=
+)return false end return Headless end function __DARKLUA_BUNDLE_MODULES.p()local
+v=__DARKLUA_BUNDLE_MODULES.cache.p if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.p=v end return v.c end end do local __modImpl=
 function()return{CONFIG_DIR='GcView@awakenkn',CONFIG_EXT='.json',
 DEFAULT_CONFIG_NAME='default',REPO_OWNER='Awakenchan',REPO_NAME='GcViewerV3',
 REPO_BRANCH='main',ASSETS_DIR_NAME='GcViwerV2@Assets',ASSETS_PATH=
@@ -1313,10 +1370,10 @@ REPO_BRANCH='main',ASSETS_DIR_NAME='GcViwerV2@Assets',ASSETS_PATH=
 'GcView@awakenkn/GcViewv4Source.luau',SAFE_CAPTURE_DIR=
 'GcView@awakenkn/GcViewSafeCapture',SAFE_SOURCE_URL=
 [[https://raw.githubusercontent.com/Awakenchan/GcViewerV3/refs/heads/main/GcViewV4/bundled.luau]]
-}end function __DARKLUA_BUNDLE_MODULES.p()local v=__DARKLUA_BUNDLE_MODULES.cache
-.p if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.p=v end return
+}end function __DARKLUA_BUNDLE_MODULES.q()local v=__DARKLUA_BUNDLE_MODULES.cache
+.q if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.q=v end return
 v.c end end do local __modImpl=function()local Constants=
-__DARKLUA_BUNDLE_MODULES.p()local PlayerRefs=__DARKLUA_BUNDLE_MODULES.b()local
+__DARKLUA_BUNDLE_MODULES.q()local PlayerRefs=__DARKLUA_BUNDLE_MODULES.b()local
 Executor=__DARKLUA_BUNDLE_MODULES.f()local HttpService=Services.HttpService
 local ASSET_PATH=Constants.ASSETS_PATH local httpReq=Executor.Request()local
 assertExploitFunctions=function()local required=table.pack(identifyexecutor,
@@ -1341,8 +1398,8 @@ localPath=localBase..'/'..entry.name if entry.type=='dir'then walk(entry.path,
 localPath)elseif entry.type=='file'and entry.download_url then downloadFile(
 entry,localPath)end end end local Assets={}function Assets.Download()
 assertExploitFunctions()walk(Constants.ASSETS_DIR_NAME,ASSET_PATH)end return
-Assets end function __DARKLUA_BUNDLE_MODULES.q()local v=__DARKLUA_BUNDLE_MODULES
-.cache.q if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.q=v end
+Assets end function __DARKLUA_BUNDLE_MODULES.r()local v=__DARKLUA_BUNDLE_MODULES
+.cache.r if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.r=v end
 return v.c end end do local __modImpl=function()local FunctionLibrary=
 __DARKLUA_BUNDLE_MODULES.h()local a a={cache={},load=function(b)if not a.cache[b
 ]then a.cache[b]={c=a[b]()}end return a.cache[b].c end}do function a.a()local b,
@@ -3147,16 +3204,16 @@ NoButtons=true})m('InputInt4','InputInt',4,{NoButtons=true})m('SliderInt2',
 'DragFloat4','DragFloat',4)n('InputColor3','InputInt3')n('SliderColor3',
 'SliderInt3')n('DragColor3','DragInt3')o('InputCFrame','InputInt3')o(
 'SliderCFrame','SliderInt3')o('DragCFrame','DragInt3')return aa end function
-__DARKLUA_BUNDLE_MODULES.r()local v=__DARKLUA_BUNDLE_MODULES.cache.r if not v
-then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.r=v end return v.c end end
+__DARKLUA_BUNDLE_MODULES.s()local v=__DARKLUA_BUNDLE_MODULES.cache.s if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.s=v end return v.c end end
 do local __modImpl=function()local Source=__DARKLUA_BUNDLE_MODULES.g()getgenv().
 decompile=function(scr)local text,reason=Source.Decompile(scr)if text then
 return text end return Source.Comment(reason)end getgenv().disassemble=function(
 scr)local text,reason=Source.Disassemble(scr)if text then return text end return
-Source.Comment(reason)end local Assets=__DARKLUA_BUNDLE_MODULES.q()Assets.
+Source.Comment(reason)end local Assets=__DARKLUA_BUNDLE_MODULES.r()Assets.
 Download()local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.h()local Sizex,Sizey=
 FunctionLibrary.GetSize()local isActor=getactors and#getactors()>0 or false
-local ReGui=__DARKLUA_BUNDLE_MODULES.r()local THEME_NAME='Cherry'ReGui:
+local ReGui=__DARKLUA_BUNDLE_MODULES.s()local THEME_NAME='Cherry'ReGui:
 DefineTheme(THEME_NAME,{TitleAlign=Enum.TextXAlignment.Center,TextDisabled=
 Color3.fromRGB(120,100,120),Text=Color3.fromRGB(200,180,200),FrameBg=Color3.
 fromRGB(25,20,25),FrameBgTransparency=0.4,FrameBgActive=Color3.fromRGB(120,100,
@@ -3170,13 +3227,13 @@ fromRGB(50,45,50),RegionBgTransparency=1})getgenv().Window=ReGui:TabsWindow({
 Title='GCViewV4 by @awakenkn | Exe: '..identifyexecutor()..' | Actor: '..
 FunctionLibrary.SafeString(isActor),Size=UDim2.fromOffset(Sizex,Sizey),Theme=
 THEME_NAME}):Center()return{ReGui=ReGui,Theme=THEME_NAME}end function
-__DARKLUA_BUNDLE_MODULES.s()local v=__DARKLUA_BUNDLE_MODULES.cache.s if not v
-then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.s=v end return v.c end end
-do local __modImpl=function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.s()local
+__DARKLUA_BUNDLE_MODULES.t()local v=__DARKLUA_BUNDLE_MODULES.cache.t if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.t=v end return v.c end end
+do local __modImpl=function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.t()local
 ReGui=ReGuiTable.ReGui local THEME=ReGuiTable.Theme local FunctionLibrary=
 __DARKLUA_BUNDLE_MODULES.h()local Data2Code=__DARKLUA_BUNDLE_MODULES.l()local
 GcShared=__DARKLUA_BUNDLE_MODULES.e()local Source=__DARKLUA_BUNDLE_MODULES.g()
-local WebBridge=__DARKLUA_BUNDLE_MODULES.n()local ActorScripts=FunctionLibrary.
+local WebBridge=__DARKLUA_BUNDLE_MODULES.o()local ActorScripts=FunctionLibrary.
 GetActorScripts()local actorScriptKeys={}for _,entry in ActorScripts do if entry
 .key then actorScriptKeys[entry.key]=true end if entry.name then actorScriptKeys
 ['name:'..entry.name]=true end end local AllScripts=FunctionLibrary.GetScripts(
@@ -3808,12 +3865,12 @@ ActorLabels[#ActorLabels+1]={label=label,separator=sep,type=item.scriptType}
 label.InputBegan:Connect(function(input)if input.UserInputType==Enum.
 UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
 openActorWindow(entry)end end)end refreshActorFilter()return{ReGui=ReGui,
-OpenScriptWindow=openScriptWindow}end function __DARKLUA_BUNDLE_MODULES.t()local
-v=__DARKLUA_BUNDLE_MODULES.cache.t if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.t=v end return v.c end end do local __modImpl=
-function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.s()local _=ReGuiTable.ReGui
+OpenScriptWindow=openScriptWindow}end function __DARKLUA_BUNDLE_MODULES.u()local
+v=__DARKLUA_BUNDLE_MODULES.cache.u if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.u=v end return v.c end end do local __modImpl=
+function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.t()local _=ReGuiTable.ReGui
 local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.h()local WebBridge=
-__DARKLUA_BUNDLE_MODULES.n()local COLORS=FunctionLibrary.Colors()local
+__DARKLUA_BUNDLE_MODULES.o()local COLORS=FunctionLibrary.Colors()local
 DEFAULT_URL='ws://127.0.0.1:8765'local MAX_LOG_LINES=12 local WebTab=getgenv().
 Window:CreateTab({Name='Web'})local supported=WebBridge.Supported()WebTab:Label(
 {Text=supported and'Bridge a browser front-end to this session over WebSocket.'
@@ -3850,11 +3907,11 @@ tostring(err),COLORS.orange)end end})buttonRow:Button({Text='Copy URL',Callback=
 function()local setter=setclipboard or toclipboard if type(setter)=='function'
 then pcall(setter,currentUrl())pushLog('copied relay url')end end})pushLog(
 'run the relay, then Connect')return WebTab end function
-__DARKLUA_BUNDLE_MODULES.u()local v=__DARKLUA_BUNDLE_MODULES.cache.u if not v
-then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.u=v end return v.c end end
-do local __modImpl=function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.s()local
+__DARKLUA_BUNDLE_MODULES.v()local v=__DARKLUA_BUNDLE_MODULES.cache.v if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.v=v end return v.c end end
+do local __modImpl=function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.t()local
 _=ReGuiTable.ReGui local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.h()local
-Config=__DARKLUA_BUNDLE_MODULES.d()local Plugins=__DARKLUA_BUNDLE_MODULES.m()
+Config=__DARKLUA_BUNDLE_MODULES.d()local Plugins=__DARKLUA_BUNDLE_MODULES.n()
 local SafeMode=__DARKLUA_BUNDLE_MODULES.j()local COLORS=FunctionLibrary.Colors()
 local PluginTab=getgenv().Window:CreateTab({Name='Plugins'})PluginTab:Label({
 Text='Changes are saved to '..Config.Path()..' and apply on the next load.',
@@ -3877,8 +3934,14 @@ setStatus('relay url saved',COLORS.green)end end})local actionRow=PluginTab:Row(
 Plugins.DownloadBridge(function(name)setStatus('downloading '..name,COLORS.
 yellow)end)if ok then setStatus(tostring(note)..'  |  run: node relay.js',COLORS
 .green)else setStatus(tostring(note),COLORS.red)end end)end})actionRow:Button({
-Text='Copy bridge folder',Callback=function()local setter=setclipboard or
-toclipboard if type(setter)=='function'then pcall(setter,Plugins.BridgeDir())
+Text='Check web update',Callback=function()setStatus(
+'checking github for a newer front-end...',COLORS.yellow)task.spawn(function()
+local ok,note,updated=Plugins.UpdateBridge(function(name)setStatus('fetching '..
+name,COLORS.yellow)end)if not ok then setStatus(tostring(note),COLORS.red)elseif
+(updated or 0)>0 then setStatus(tostring(note)..'  |  refresh the browser tab',
+COLORS.green)else setStatus(tostring(note),COLORS.gray)end end)end})actionRow:
+Button({Text='Copy bridge folder',Callback=function()local setter=setclipboard
+or toclipboard if type(setter)=='function'then pcall(setter,Plugins.BridgeDir())
 setStatus('copied '..Plugins.BridgeDir(),COLORS.green)end end})actionRow:Button(
 {Text='Run safe mode now',Callback=function()setStatus(
 'arming queue and rejoining...',COLORS.orange)task.spawn(SafeMode.Rejoin)end})
@@ -3895,8 +3958,8 @@ setStatus(('saving %d/%d'):format(done,total),COLORS.yellow)end end)if path then
 setStatus(('saved %d script(s)%s to %s'):format(saved or 0,(failed or 0)>0 and(
 ', %d without source'):format(failed)or'',path),COLORS.green)else setStatus(
 tostring(err),COLORS.red)end end)end})return PluginTab end function
-__DARKLUA_BUNDLE_MODULES.v()local v=__DARKLUA_BUNDLE_MODULES.cache.v if not v
-then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.v=v end return v.c end end
+__DARKLUA_BUNDLE_MODULES.w()local v=__DARKLUA_BUNDLE_MODULES.cache.w if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.w=v end return v.c end end
 end __DARKLUA_BUNDLE_MODULES.a()__DARKLUA_BUNDLE_MODULES.b()local Constants=
 __DARKLUA_BUNDLE_MODULES.c()local Config=__DARKLUA_BUNDLE_MODULES.d()local
 FunctionLibrary=__DARKLUA_BUNDLE_MODULES.h()local SafeMode=
@@ -3904,16 +3967,18 @@ __DARKLUA_BUNDLE_MODULES.j()local Globals=getgenv()local ForceUi=Globals.
 gcviewui==true local Captured=false if Globals[Constants.SAFE_CAPTURE_MARKER]
 then SafeMode.Hook()local Found=SafeMode.Capture()Captured=true if Config.Get(
 'Bridge')and type(Found)=='table'then local WebBridge=__DARKLUA_BUNDLE_MODULES.
-n()local Entries={}for _,Entry in Found do Entries[#Entries+1]={script=Entry.
+o()local Entries={}for _,Entry in Found do Entries[#Entries+1]={script=Entry.
 Script,path=Entry.Path,context='SafeMode',key=FunctionLibrary.ScriptKey(Entry.
 Script)}end WebBridge.Publish('scripts',Entries)end end if not Captured then
 local Requested=Globals[Constants.SAFE_GLOBAL]==true local Automatic=Config.Get(
 'SafeMode')and Config.Get('AutoSafeMode')and not ForceUi if Requested or
-Automatic then SafeMode.Rejoin()return end end if Config.Get('WebOnly')and
-Config.Get('Bridge')and not ForceUi then local Headless=__DARKLUA_BUNDLE_MODULES
-.o()if Headless.Start()then return end end __DARKLUA_BUNDLE_MODULES.s()
-__DARKLUA_BUNDLE_MODULES.l()if Config.Get('ScriptTools')then
-__DARKLUA_BUNDLE_MODULES.t()end if Config.Get('Bridge')then
-__DARKLUA_BUNDLE_MODULES.u()end __DARKLUA_BUNDLE_MODULES.v()
+Automatic then SafeMode.Rejoin()return end end if Config.Get('Bridge')and Config
+.Get('AutoWebUpdate')then task.spawn(function()local Plugins=
+__DARKLUA_BUNDLE_MODULES.n()Plugins.AutoUpdateBridge()end)end if Config.Get(
+'WebOnly')and Config.Get('Bridge')and not ForceUi then local Headless=
+__DARKLUA_BUNDLE_MODULES.p()if Headless.Start()then return end end
+__DARKLUA_BUNDLE_MODULES.t()__DARKLUA_BUNDLE_MODULES.l()if Config.Get(
+'ScriptTools')then __DARKLUA_BUNDLE_MODULES.u()end if Config.Get('Bridge')then
+__DARKLUA_BUNDLE_MODULES.v()end __DARKLUA_BUNDLE_MODULES.w()
 ]=]
 loadstring(getgenv()["__GcViewSource"], "GcView")()

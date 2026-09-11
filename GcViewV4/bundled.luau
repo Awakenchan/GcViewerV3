@@ -1870,40 +1870,49 @@ __DARKLUA_BUNDLE_MODULES.y()local v=__DARKLUA_BUNDLE_MODULES.cache.y if not v
 then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.y=v end return v.c end end
 do local __modImpl=function()local Constants=__DARKLUA_BUNDLE_MODULES.b()local
 PlayerRefs=__DARKLUA_BUNDLE_MODULES.f()local Executor=__DARKLUA_BUNDLE_MODULES.
-i()local Services=__DARKLUA_BUNDLE_MODULES.c()local HttpService=Services.
-HttpService local ASSET_PATH=Constants.ASSETS_PATH local httpReq=Executor.
-Request()local assertExploitFunctions=function()local required=table.pack(
-identifyexecutor,cloneref,clonefunction,debug and debug.info,getgc,httpReq,
-writefile,makefolder,isfolder,isfile)for index=1,required.n do local fn=required
-[index]if typeof(fn)~='function'then PlayerRefs.LocalPlayer:Kick('['..Constants.
-REPO_NAME..'] Missing required exploit functions.')task.wait(0.2)error(
+i()local ASSET_PATH=Constants.ASSETS_PATH local httpReq=Executor.Request()local
+assertExploitFunctions=function()local required=table.pack(identifyexecutor,
+cloneref,clonefunction,debug and debug.info,getgc,httpReq,writefile,makefolder,
+isfolder,isfile)for index=1,required.n do local fn=required[index]if typeof(fn)
+~='function'then PlayerRefs.LocalPlayer:Kick('['..Constants.REPO_NAME..
+'] Missing required exploit functions.')task.wait(0.2)error(
 'Missing exploit functions')end end end local ensureFolder=function(path)if not
-isfolder(path)then makefolder(path)end end local fetchDir=function(repoPath)
-local url=('https://api.github.com/repos/%s/%s/contents/%s?ref=%s'):format(
-Constants.REPO_OWNER,Constants.REPO_NAME,repoPath,Constants.REPO_BRANCH)local
-res=httpReq({Url=url,Method='GET',Headers={['User-Agent']='Roblox',['Accept']=
-'application/vnd.github.v3+json'}})local body=Executor.ResponseBody(res)assert(
-type(body)=='string','Invalid GitHub response')return HttpService:JSONDecode(
-body)end local downloadFile=function(entry,localPath)if isfile(localPath)then
-return end local res=httpReq({Url=entry.download_url,Method='GET',Headers={[
-'User-Agent']='Roblox'}})local body=Executor.ResponseBody(res)if body and
-Executor.ResponseOk(res)then writefile(localPath,body)else warn(
-'[Assets] Failed to download:',entry.path)end end local function walk(repoPath,
-localBase)ensureFolder(localBase)for _,entry in fetchDir(repoPath)do local
-localPath=localBase..'/'..entry.name if entry.type=='dir'then walk(entry.path,
-localPath)elseif entry.type=='file'and entry.download_url then downloadFile(
-entry,localPath)end end end local BINARY_MODEL_HEADER=
+isfolder(path)then makefolder(path)end end local ICONS={'Dot','Arrow','Close',
+'Checkmark','Cat','Script','Settings','Info','Move','Roblox','Warning','Audio',
+'Shop','CharacterDance','Pants','Home','Robux','Badge','SpawnLocation','Sword',
+'Clover','Star','Code','Paw','Shield','Shield2','File','Location','Puzzle',
+'Discord','Premium','Friend','User','Duplicate','ChatBox','ChatBox2','Devices',
+'Weight','Image','Profile','Admin','PaintBrush','Speed','NoConnection',
+'Connection','Globe','Box','Crown','Control','Send','FastForward','Pause',
+'Reload','Joystick','Controller','Lock','Calculator','Sun','Moon','Prohibited',
+'Flag','Website','Telegram','MusicNote','Music','Headphones','Phone',
+'Smartphone','Desktop','Desktop2','Laptop','Server','Wedge','Drill','Character'}
+local ICON_URL=('https://raw.githubusercontent.com/%s/%s/%s/%s/'):format(
+Constants.REPO_OWNER,Constants.REPO_NAME,Constants.REPO_BRANCH,Constants.
+ASSETS_DIR_NAME)local PNG_HEADER='\137PNG\r\n\26\n'local DOWNLOAD_TIMEOUT=20
+local downloadIcon=function(name,path)local ok,res=pcall(httpReq,{Url=ICON_URL..
+name..'.png',Method='GET',Headers={['User-Agent']='Roblox'}})local body=ok and
+Executor.ResponseBody(res)or nil if ok and Executor.ResponseOk(res)and type(body
+)=='string'and body:sub(1,#PNG_HEADER)==PNG_HEADER then return pcall(writefile,
+path,body)end return false end local BINARY_MODEL_HEADER=
 '<roblox!\137\255\r\n\26\n'local XML_MODEL_HEADER='<roblox 'local isModelFile=
 function(data)if type(data)~='string'then return false end return data:sub(1,#
 BINARY_MODEL_HEADER)==BINARY_MODEL_HEADER or data:sub(1,#XML_MODEL_HEADER)==
-XML_MODEL_HEADER end local Assets={}function Assets.Download()
-assertExploitFunctions()walk(Constants.ASSETS_DIR_NAME,ASSET_PATH)end function
-Assets.PrefabPath()local path=Constants.PREFABS_FILE local okCached,cached=
-pcall(function()return isfile(path)and readfile(path)end)if okCached and
-isModelFile(cached)then return path end local ok,res=pcall(httpReq,{Url=
-Constants.PREFABS_URL,Method='GET',Headers={['User-Agent']='Roblox'}})local body
-=ok and Executor.ResponseBody(res)or nil if not(ok and Executor.ResponseOk(res)
-and isModelFile(body))then warn('[Assets] Failed to download ReGui prefabs')
+XML_MODEL_HEADER end local Assets={}Assets.Icons=ICONS function Assets.Download(
+)assertExploitFunctions()if not pcall(ensureFolder,ASSET_PATH)then return end
+local pending,failed=0,0 for _,name in ICONS do local path=('%s/%s.png'):format(
+ASSET_PATH,name)if not isfile(path)then pending=pending+1 task.spawn(function()
+local ok,saved=pcall(downloadIcon,name,path)if not(ok and saved)then failed=
+failed+1 end pending=pending-1 end)end end local deadline=os.clock()+
+DOWNLOAD_TIMEOUT while pending>0 and os.clock()<deadline do task.wait()end if
+failed>0 then warn((
+[[[Assets] %d icon(s) failed to download, using built-in images]]):format(failed
+))end end function Assets.PrefabPath()local path=Constants.PREFABS_FILE local
+okCached,cached=pcall(function()return isfile(path)and readfile(path)end)if
+okCached and isModelFile(cached)then return path end local ok,res=pcall(httpReq,
+{Url=Constants.PREFABS_URL,Method='GET',Headers={['User-Agent']='Roblox'}})local
+body=ok and Executor.ResponseBody(res)or nil if not(ok and Executor.ResponseOk(
+res)and isModelFile(body))then warn('[Assets] Failed to download ReGui prefabs')
 return nil end local okWrite=pcall(function()ensureFolder(ASSET_PATH)writefile(
 path,body)end)if not okWrite then warn('[Assets] Failed to save ReGui prefabs')
 return nil end return path end return Assets end function
@@ -2637,25 +2646,9 @@ tostring(B),tostring(z))}end end local z=u:TreeNode{Title='With headers'}local A
 ,B=z:Table{Border=true,RowBackground=true,MaxColumns=3},{'One','Two','Three'}for
 C=1,7 do if C==1 then p=A:HeaderRow()else p=A:Row()end for D,E in B do if C==1
 then local F=p:Column()F:Label{Text=E}continue end local F=p:NextColumn()F:Label
-{Text=string.format('Hello %s,%s',tostring(D),tostring(C))}end end end end
-function a.f()local folderPath=getgenv().assetpath or
-'GcView@awakenkn/GcView@Assets'local getasset=getcustomasset if getasset then
-local assets={'Dot','Arrow','Close','Checkmark','Cat','Script','Settings','Info'
-,'Move','Roblox','Warning','Audio','Shop','CharacterDance','Pants','Home',
-'Robux','Badge','SpawnLocation','Sword','Clover','Star','Code','Paw','Shield',
-'Shield2','File','Location','Puzzle','Discord','Premium','Friend','User',
-'Duplicate','ChatBox','ChatBox2','Devices','Weight','Image','Profile','Admin',
-'PaintBrush','Speed','NoConnection','Connection','Globe','Box','Crown','Control'
-,'Send','FastForward','Pause','Reload','Joystick','Controller','Lock',
-'Calculator','Sun','Moon','Prohibited','Flag','Website','Telegram','MusicNote',
-'Music','Headphones','Phone','Smartphone','Desktop','Desktop2','Laptop','Server'
-,'Wedge','Drill','Character'}local t={}for _,name in ipairs(assets)do local path
-=('%s/%s.png'):format(folderPath,name)if isfile and isfile(path)and getasset
-then local ok,result=pcall(getasset,path)if ok and result then t[name]=result
-else warn('\u{26a0}\u{fe0f} Failed to load local asset:',name)end else warn(
-'\u{26a0}\u{fe0f} Missing asset file:',path)end end return t else return{Dot=
-'rbxasset://textures/whiteCircle.png',Arrow=
-'rbxasset://textures/ui/AvatarContextMenu_Arrow.png',Close=
+{Text=string.format('Hello %s,%s',tostring(D),tostring(C))}end end end end local
+fallbackIcons=function()do return{Dot='rbxasset://textures/whiteCircle.png',
+Arrow='rbxasset://textures/ui/AvatarContextMenu_Arrow.png',Close=
 'rbxasset://textures/loading/cancelButton.png',Checkmark=
 'rbxasset://textures/ui/Lobby/Buttons/nine_slice_button.png',Cat=
 'rbxassetid://16211812161',Script='rbxassetid://11570895459',Settings=
@@ -2694,76 +2687,82 @@ else warn('\u{26a0}\u{fe0f} Failed to load local asset:',name)end else warn(
 'rbxassetid://4728059490',Laptop='rbxassetid://4728059725',Server=
 'rbxassetid://9692125126',Wedge='rbxassetid://9086583059',Drill=
 'rbxassetid://11959189471',Character='rbxassetid://13285102351'}end end function
-a.g()return{Light=Color3.fromRGB(50,150,250),Dark=Color3.fromRGB(30,66,115),
-ExtraDark=Color3.fromRGB(28,39,53),White=Color3.fromRGB(240,240,240),Gray=Color3
-.fromRGB(172,171,175),Black=Color3.fromRGB(15,19,24),Yellow=Color3.fromRGB(230,
-180,0),Orange=Color3.fromRGB(230,150,0),Green=Color3.fromRGB(130,188,91),Red=
-Color3.fromRGB(255,69,69),ImGui={Light=Color3.fromRGB(66,150,250),Dark=Color3.
-fromRGB(41,74,122),Black=Color3.fromRGB(15,15,15),Gray=Color3.fromRGB(36,36,36)}
-}end function a.h()local aa,ab=a.load'g',{}ab.DarkTheme={Values={
-AnimationTweenInfo=TweenInfo.new(0.08),TextFont=Font.fromEnum(Enum.Font.
-RobotoMono),TextSize=14,Text=aa.White,TextDisabled=aa.Gray,ErrorText=aa.Red,
-FrameBg=aa.Dark,FrameBgTransparency=0.4,FrameBgActive=aa.Light,
-FrameBgTransparencyActive=0.4,FrameRounding=UDim.new(0,0),SliderGrab=aa.Light,
-ButtonsBg=aa.Light,CollapsingHeaderBg=aa.Light,CollapsingHeaderText=aa.White,
-CheckMark=aa.Light,ResizeGrab=aa.Light,HeaderBg=aa.Gray,HeaderBgTransparency=0.7
-,HistogramBar=aa.Yellow,ProgressBar=aa.Yellow,RegionBg=aa.Dark,
-RegionBgTransparency=0.1,Separator=aa.Gray,SeparatorTransparency=0.5,
-ConsoleLineNumbers=aa.White,LabelPaddingTop=UDim.new(0,0),LabelPaddingBottom=
-UDim.new(0,0),MenuBar=aa.ExtraDark,MenuBarTransparency=0.1,PopupCanvas=aa.Black,
-TabTextPaddingTop=UDim.new(0,3),TabTextPaddingBottom=UDim.new(0,8),TabText=aa.
-Gray,TabBg=aa.Dark,TabTextActive=aa.White,TabBgActive=aa.Light,TabsBarBg=Color3.
-fromRGB(36,36,36),TabsBarBgTransparency=1,TabPagePadding=UDim.new(0,8),
-ModalWindowDimBg=Color3.fromRGB(230,230,230),ModalWindowDimTweenInfo=TweenInfo.
-new(0.2),WindowBg=aa.Black,WindowBgTransparency=0.05,Border=aa.Gray,
-BorderTransparency=0.8,BorderTransparencyActive=0.5,Title=aa.White,TitleAlign=
-Enum.TextXAlignment.Left,TitleBarBg=aa.Black,TitleBarTransparency=0,TitleActive=
-aa.White,TitleBarBgActive=aa.Dark,TitleBarTransparencyActive=0.05,
-TitleBarBgCollapsed=Color3.fromRGB(0,0,0),TitleBarTransparencyCollapsed=0.6}}ab.
-LightTheme={BaseTheme=ab.DarkTheme,Values={Text=aa.Black,TextFont=Font.fromEnum(
-Enum.Font.Ubuntu),TextSize=14,FrameBg=aa.Gray,FrameBgTransparency=0.4,
-FrameBgActive=aa.Light,FrameBgTransparencyActive=0.6,SliderGrab=aa.Light,
-ButtonsBg=aa.Light,CollapsingHeaderText=aa.Black,Separator=aa.Black,
-ConsoleLineNumbers=aa.Yellow,MenuBar=Color3.fromRGB(219,219,219),PopupCanvas=aa.
-White,TabText=aa.Black,TabTextActive=aa.Black,WindowBg=aa.White,Border=aa.Gray,
-ResizeGrab=aa.Gray,Title=aa.Black,TitleAlign=Enum.TextXAlignment.Center,
-TitleBarBg=aa.Gray,TitleActive=aa.Black,TitleBarBgActive=Color3.fromRGB(186,186,
-186),TitleBarBgCollapsed=aa.Gray}}ab.ImGui={BaseTheme=ab.DarkTheme,Values={
-AnimationTweenInfo=TweenInfo.new(0),Text=Color3.fromRGB(255,255,255),FrameBg=aa.
-ImGui.Dark,FrameBgTransparency=0.4,FrameBgActive=aa.ImGui.Light,
-FrameBgTransparencyActive=0.5,FrameRounding=UDim.new(0,0),ButtonsBg=aa.ImGui.
-Light,CollapsingHeaderBg=aa.ImGui.Light,CollapsingHeaderText=aa.White,CheckMark=
-aa.ImGui.Light,ResizeGrab=aa.ImGui.Light,MenuBar=aa.ImGui.Gray,
-MenuBarTransparency=0,PopupCanvas=aa.ImGui.Black,TabText=aa.Gray,TabBg=aa.ImGui.
-Dark,TabTextActive=aa.White,TabBgActive=aa.ImGui.Light,WindowBg=aa.ImGui.Black,
-WindowBgTransparency=0.05,Border=aa.Gray,BorderTransparency=0.7,
-BorderTransparencyActive=0.4,Title=aa.White,TitleBarBg=aa.ImGui.Black,
-TitleBarTransparency=0,TitleBarBgActive=aa.ImGui.Dark,TitleBarTransparencyActive
-=0}}return ab end function a.i()local aa,ab=(a.load'b')aa:AddOnInit(function(ad)
-ab=ad end)return{{Properties={'Center'},Callback=function(ad,ae,af)local ag=ae.
-Position aa:SetProperties(ae,{Position=UDim2.new(af:find'X'and 0.5 or ag.X.Scale
-,ag.X.Offset,af:find'Y'and 0.5 or ag.Y.Scale,ag.Y.Offset),AnchorPoint=Vector2.
-new(af:find'X'and 0.5 or 0,af:find'Y'and 0.5 or 0)})end},{Properties={
-'ElementStyle'},Callback=function(ad,ae,af)ab:ApplyStyle(ae,af)end},{Properties=
-{'ColorTag'},Callback=function(ad,ae,af)local ag,ah=ad.Class,ad.WindowClass
-local aj=ag.NoAutoTheme if not ah then return end if aj then return end ab:
-UpdateColors{Object=ae,Tag=af,NoAnimation=true,Theme=ah.Theme}end},{Properties={
-'Animation'},Callback=function(ad,ae,af)local ag=ad.Class.NoAnimation if ag then
-return end ab:SetAnimation(ae,af)end},{Properties={'Image'},Callback=function(ad
-,ae,af)local ag=ad.WindowClass ae.Image=aa:CheckAssetUrl(af)ab:DynamicImageTag(
-ae,af,ag)end},{Properties={'Icon','IconSize','IconRotation','IconPadding'},
-Callback=function(ad,ae,af)local ag=ae:FindFirstChild('Icon',true)if not ag then
-ab:Warn('No icon for',ae)return end local ah=ad.Class aa:CheckConfig(ah,{Icon=''
-,IconSize=UDim2.fromScale(1,1),IconRotation=0,IconPadding=UDim2.new(0,2)})local
-aj=ag.Parent:FindFirstChild'UIPadding'aa:SetPadding(aj,ah.IconPadding)local ak=
-ah.Icon ak=aa:CheckAssetUrl(ak)local b=ad.WindowClass ab:DynamicImageTag(ag,ak,b
-)aa:SetProperties(ag,{Visible=ag~='',Image=aa:CheckAssetUrl(ak),Size=ah.IconSize
-,Rotation=ah.IconRotation})end},{Properties={'BorderThickness','Border',
-'BorderColor'},Callback=function(ad,ae,af)local ag=ad.Class local ah=ag.Border==
-true aa:CheckConfig(ag,{BorderTransparency=ad:GetThemeKey
-'BorderTransparencyActive',BorderColor=ad:GetThemeKey'Border',BorderThickness=1,
-BorderStrokeMode=Enum.ApplyStrokeMode.Border})local aj=aa:GetChildOfClass(ae,
-'UIStroke')aa:SetProperties(aj,{Transparency=ag.BorderTransparency,Thickness=ag.
+a.f()local icons=fallbackIcons()local folderPath=getgenv().assetpath or
+'GcView@awakenkn/GcView@Assets'if type(getcustomasset)~='function'or type(isfile
+)~='function'then return icons end for _,name in Assets.Icons do local path=(
+'%s/%s.png'):format(folderPath,name)local okFile,exists=pcall(isfile,path)if
+okFile and exists then local ok,result=pcall(getcustomasset,path)if ok and
+result then icons[name]=result end end end return icons end function a.g()return
+{Light=Color3.fromRGB(50,150,250),Dark=Color3.fromRGB(30,66,115),ExtraDark=
+Color3.fromRGB(28,39,53),White=Color3.fromRGB(240,240,240),Gray=Color3.fromRGB(
+172,171,175),Black=Color3.fromRGB(15,19,24),Yellow=Color3.fromRGB(230,180,0),
+Orange=Color3.fromRGB(230,150,0),Green=Color3.fromRGB(130,188,91),Red=Color3.
+fromRGB(255,69,69),ImGui={Light=Color3.fromRGB(66,150,250),Dark=Color3.fromRGB(
+41,74,122),Black=Color3.fromRGB(15,15,15),Gray=Color3.fromRGB(36,36,36)}}end
+function a.h()local aa,ab=a.load'g',{}ab.DarkTheme={Values={AnimationTweenInfo=
+TweenInfo.new(0.08),TextFont=Font.fromEnum(Enum.Font.RobotoMono),TextSize=14,
+Text=aa.White,TextDisabled=aa.Gray,ErrorText=aa.Red,FrameBg=aa.Dark,
+FrameBgTransparency=0.4,FrameBgActive=aa.Light,FrameBgTransparencyActive=0.4,
+FrameRounding=UDim.new(0,0),SliderGrab=aa.Light,ButtonsBg=aa.Light,
+CollapsingHeaderBg=aa.Light,CollapsingHeaderText=aa.White,CheckMark=aa.Light,
+ResizeGrab=aa.Light,HeaderBg=aa.Gray,HeaderBgTransparency=0.7,HistogramBar=aa.
+Yellow,ProgressBar=aa.Yellow,RegionBg=aa.Dark,RegionBgTransparency=0.1,Separator
+=aa.Gray,SeparatorTransparency=0.5,ConsoleLineNumbers=aa.White,LabelPaddingTop=
+UDim.new(0,0),LabelPaddingBottom=UDim.new(0,0),MenuBar=aa.ExtraDark,
+MenuBarTransparency=0.1,PopupCanvas=aa.Black,TabTextPaddingTop=UDim.new(0,3),
+TabTextPaddingBottom=UDim.new(0,8),TabText=aa.Gray,TabBg=aa.Dark,TabTextActive=
+aa.White,TabBgActive=aa.Light,TabsBarBg=Color3.fromRGB(36,36,36),
+TabsBarBgTransparency=1,TabPagePadding=UDim.new(0,8),ModalWindowDimBg=Color3.
+fromRGB(230,230,230),ModalWindowDimTweenInfo=TweenInfo.new(0.2),WindowBg=aa.
+Black,WindowBgTransparency=0.05,Border=aa.Gray,BorderTransparency=0.8,
+BorderTransparencyActive=0.5,Title=aa.White,TitleAlign=Enum.TextXAlignment.Left,
+TitleBarBg=aa.Black,TitleBarTransparency=0,TitleActive=aa.White,TitleBarBgActive
+=aa.Dark,TitleBarTransparencyActive=0.05,TitleBarBgCollapsed=Color3.fromRGB(0,0,
+0),TitleBarTransparencyCollapsed=0.6}}ab.LightTheme={BaseTheme=ab.DarkTheme,
+Values={Text=aa.Black,TextFont=Font.fromEnum(Enum.Font.Ubuntu),TextSize=14,
+FrameBg=aa.Gray,FrameBgTransparency=0.4,FrameBgActive=aa.Light,
+FrameBgTransparencyActive=0.6,SliderGrab=aa.Light,ButtonsBg=aa.Light,
+CollapsingHeaderText=aa.Black,Separator=aa.Black,ConsoleLineNumbers=aa.Yellow,
+MenuBar=Color3.fromRGB(219,219,219),PopupCanvas=aa.White,TabText=aa.Black,
+TabTextActive=aa.Black,WindowBg=aa.White,Border=aa.Gray,ResizeGrab=aa.Gray,Title
+=aa.Black,TitleAlign=Enum.TextXAlignment.Center,TitleBarBg=aa.Gray,TitleActive=
+aa.Black,TitleBarBgActive=Color3.fromRGB(186,186,186),TitleBarBgCollapsed=aa.
+Gray}}ab.ImGui={BaseTheme=ab.DarkTheme,Values={AnimationTweenInfo=TweenInfo.new(
+0),Text=Color3.fromRGB(255,255,255),FrameBg=aa.ImGui.Dark,FrameBgTransparency=
+0.4,FrameBgActive=aa.ImGui.Light,FrameBgTransparencyActive=0.5,FrameRounding=
+UDim.new(0,0),ButtonsBg=aa.ImGui.Light,CollapsingHeaderBg=aa.ImGui.Light,
+CollapsingHeaderText=aa.White,CheckMark=aa.ImGui.Light,ResizeGrab=aa.ImGui.Light
+,MenuBar=aa.ImGui.Gray,MenuBarTransparency=0,PopupCanvas=aa.ImGui.Black,TabText=
+aa.Gray,TabBg=aa.ImGui.Dark,TabTextActive=aa.White,TabBgActive=aa.ImGui.Light,
+WindowBg=aa.ImGui.Black,WindowBgTransparency=0.05,Border=aa.Gray,
+BorderTransparency=0.7,BorderTransparencyActive=0.4,Title=aa.White,TitleBarBg=aa
+.ImGui.Black,TitleBarTransparency=0,TitleBarBgActive=aa.ImGui.Dark,
+TitleBarTransparencyActive=0}}return ab end function a.i()local aa,ab=(a.load'b'
+)aa:AddOnInit(function(ad)ab=ad end)return{{Properties={'Center'},Callback=
+function(ad,ae,af)local ag=ae.Position aa:SetProperties(ae,{Position=UDim2.new(
+af:find'X'and 0.5 or ag.X.Scale,ag.X.Offset,af:find'Y'and 0.5 or ag.Y.Scale,ag.Y
+.Offset),AnchorPoint=Vector2.new(af:find'X'and 0.5 or 0,af:find'Y'and 0.5 or 0)}
+)end},{Properties={'ElementStyle'},Callback=function(ad,ae,af)ab:ApplyStyle(ae,
+af)end},{Properties={'ColorTag'},Callback=function(ad,ae,af)local ag,ah=ad.Class
+,ad.WindowClass local aj=ag.NoAutoTheme if not ah then return end if aj then
+return end ab:UpdateColors{Object=ae,Tag=af,NoAnimation=true,Theme=ah.Theme}end}
+,{Properties={'Animation'},Callback=function(ad,ae,af)local ag=ad.Class.
+NoAnimation if ag then return end ab:SetAnimation(ae,af)end},{Properties={
+'Image'},Callback=function(ad,ae,af)local ag=ad.WindowClass ae.Image=aa:
+CheckAssetUrl(af)ab:DynamicImageTag(ae,af,ag)end},{Properties={'Icon','IconSize'
+,'IconRotation','IconPadding'},Callback=function(ad,ae,af)local ag=ae:
+FindFirstChild('Icon',true)if not ag then ab:Warn('No icon for',ae)return end
+local ah=ad.Class aa:CheckConfig(ah,{Icon='',IconSize=UDim2.fromScale(1,1),
+IconRotation=0,IconPadding=UDim2.new(0,2)})local aj=ag.Parent:FindFirstChild
+'UIPadding'aa:SetPadding(aj,ah.IconPadding)local ak=ah.Icon ak=aa:CheckAssetUrl(
+ak)local b=ad.WindowClass ab:DynamicImageTag(ag,ak,b)aa:SetProperties(ag,{
+Visible=ag~='',Image=aa:CheckAssetUrl(ak),Size=ah.IconSize,Rotation=ah.
+IconRotation})end},{Properties={'BorderThickness','Border','BorderColor'},
+Callback=function(ad,ae,af)local ag=ad.Class local ah=ag.Border==true aa:
+CheckConfig(ag,{BorderTransparency=ad:GetThemeKey'BorderTransparencyActive',
+BorderColor=ad:GetThemeKey'Border',BorderThickness=1,BorderStrokeMode=Enum.
+ApplyStrokeMode.Border})local aj=aa:GetChildOfClass(ae,'UIStroke')aa:
+SetProperties(aj,{Transparency=ag.BorderTransparency,Thickness=ag.
 BorderThickness,Color=ag.BorderColor,ApplyStrokeMode=ag.BorderStrokeMode,Enabled
 =ah})end},{Properties={'Ratio'},Callback=function(ad,ae,af)local ag=ad.Class aa:
 CheckConfig(ag,{Ratio=1.3333333333333333,RatioAxis=Enum.DominantAxis.Height,
@@ -3750,18 +3749,19 @@ Mark('ui: window built, centering')getgenv().Window=MainWindow:Center()Trace.
 Mark('ui: window ready')return{ReGui=ReGui,Theme=Theme.Name}end function
 __DARKLUA_BUNDLE_MODULES.B()local v=__DARKLUA_BUNDLE_MODULES.cache.B if not v
 then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.B=v end return v.c end end
-do local __modImpl=function()local Grab={}local GRAB_BUDGET=8 local hasFiltergc=
-type(filtergc)=='function'local hasHash=type(getfunctionhash)=='function'local
-safeGet=function(fn,ref)local ok,res=pcall(fn,ref)return ok and res or nil end
-local grabCandidates=function(target)local name=target.name and target.name~=
-'(anonymous)'and target.name or nil local line=target.line local hash=target.
-hash if not hash and target.func and hasHash then hash=safeGet(getfunctionhash,
-target.func)end local list={}local add=function(label,template,runner,
-uniqueCheck)list[#list+1]={label=label,template=template,runner=runner,
-uniqueCheck=uniqueCheck}end local filterUnique=function(opts)local ok,all=pcall(
-filtergc,'function',opts,false)if not ok or type(all)~='table'then return false
-end local count=0 for _,f in all do if type(f)=='function'then count=count+1 end
-end return count==1 end if hash and hasFiltergc then add('filtergc by hash',(
+do local __modImpl=function()local Gc=__DARKLUA_BUNDLE_MODULES.j()local Grab={}
+local GRAB_BUDGET=8 local hasFiltergc=type(filtergc)=='function'local hasHash=
+type(getfunctionhash)=='function'local safeGet=function(fn,ref)local ok,res=
+pcall(fn,ref)return ok and res or nil end local grabCandidates=function(target)
+local name=target.name and target.name~='(anonymous)'and target.name or nil
+local line=target.line local hash=target.hash if not hash and target.func and
+hasHash then hash=safeGet(getfunctionhash,target.func)end local list={}local add
+=function(label,template,runner,uniqueCheck)list[#list+1]={label=label,template=
+template,runner=runner,uniqueCheck=uniqueCheck}end local filterUnique=function(
+opts)local ok,all=pcall(filtergc,'function',opts,false)if not ok or type(all)~=
+'table'then return false end local count=0 for _,f in all do if type(f)==
+'function'then count=count+1 end end return count==1 end if hash and hasFiltergc
+then add('filtergc by hash',(
 [[filtergc("function", { Hash = %q, IgnoreExecutor = true }, true)]]):format(
 hash),function()return filtergc('function',{Hash=hash,IgnoreExecutor=true},true)
 end,function()return filterUnique({Hash=hash,IgnoreExecutor=true})end)end if
@@ -3833,8 +3833,76 @@ parts[#parts+1]=''emit(ambiguous)return table.concat(parts,'\n')end return
 [[-- No reliable getter for this one. It's in the gc right now, but the name
 -- and line are stripped and there's no hash to match on, so a fresh script
 -- has nothing to find it by.]]
-end Grab.Budget=GRAB_BUDGET return Grab end function __DARKLUA_BUNDLE_MODULES.C(
-)local v=__DARKLUA_BUNDLE_MODULES.cache.C if not v then v={c=__modImpl()}
+end local MAX_CHECKS=24 local MAX_INDEX_KEY=16 local MAX_KEY_LENGTH=64 local
+MAX_STRING_VALUE=80 local functionId=function(fn)local ok,line,name=pcall(debug.
+info,fn,'ln')if not ok then return nil end return name or'',line end local
+buildChecks=function(target)local stringKeys,indexKeys={},{}for key in next,
+target do if type(key)=='string'and#key<=MAX_KEY_LENGTH then stringKeys[#
+stringKeys+1]=key elseif type(key)=='number'and key%1==0 and key>=1 and key<=
+MAX_INDEX_KEY then indexKeys[#indexKeys+1]=key end end table.sort(stringKeys)
+table.sort(indexKeys)local checks={}local add=function(key)if#checks>=MAX_CHECKS
+then return end local value=rawget(target,key)local check={key=key,kind=typeof(
+value)}if check.kind=='function'then check.fnName,check.fnLine=functionId(value)
+elseif check.kind=='string'and#value<=MAX_STRING_VALUE then check.str=value end
+checks[#checks+1]=check end for _,key in stringKeys do add(key)end for _,key in
+indexKeys do add(key)end return checks end local matchLevel=function(t,checks)
+local level=2 for _,check in checks do local value=rawget(t,check.key)if typeof(
+value)~=check.kind then return 0 end if check.fnLine then local name,line=
+functionId(value)if name~=check.fnName or line~=check.fnLine then return 0 end
+elseif check.str and value~=check.str then level=1 end end return level end
+local literal=function(value)if type(value)=='string'then return('%q'):format(
+value)end return tostring(value)end local FINDER=
+[[local function matches(t)
+    for _, c in spec do
+        local v = rawget(t, c[1])
+        if typeof(v) ~= c[2] then
+            return false
+        end
+        if c[2] == "function" then
+            local line, name = debug.info(v, "ln")
+            if (name or "") ~= c[3] or line ~= c[4] then
+                return false
+            end
+        elseif c[3] ~= nil and v ~= c[3] then
+            return false
+        end
+    end
+    return true
+end
+
+local tbl
+for _, t in getgc(true) do
+    if type(t) == "table" and matches(t) then
+        tbl = t
+        break
+    end
+end
+
+-- tbl is the table (nil if the game hasn't created it yet)]]
+function Grab.Table(target,label)if type(target)~='table'then return nil,
+'not a table'end local checks=buildChecks(target)if#checks==0 then return nil,
+'this table has no string keys or small indexes to match on'end local okGc,gc=
+pcall(getgc,true)if not okGc or type(gc)~='table'then return nil,'getgc failed'
+end local shapeCount,exactCount,targetLevel=0,0,0 for _,obj in gc do if type(obj
+)=='table'and not Gc.IsOwn(obj)then local level=matchLevel(obj,checks)if level>0
+then shapeCount=shapeCount+1 if level==2 then exactCount=exactCount+1 end if
+rawequal(obj,target)then targetLevel=level end end end Gc.Step()end gc=nil local
+useStrings=shapeCount~=1 local count=useStrings and exactCount or shapeCount
+local lines={'-- GcView table grab'..(label and(': '..label)or'')}if targetLevel
+==0 then lines[#lines+1]=
+[[-- Heads up: the table changed during the scan, so this may not find it.]]
+elseif count==1 then lines[#lines+1]=
+[[-- Matches exactly this table right now, and finds it again after a rejoin.]]
+else lines[#lines+1]=(
+[[-- Matches %d tables right now; this returns the first one found, which may not be this one.]]
+):format(count)end lines[#lines+1]=''lines[#lines+1]='local spec = {'for _,check
+in checks do local parts={literal(check.key),literal(check.kind)}if check.fnLine
+then parts[3]=literal(check.fnName)parts[4]=literal(check.fnLine)elseif
+useStrings and check.str then parts[3]=literal(check.str)end lines[#lines+1]=
+'    { '..table.concat(parts,', ')..' },'end lines[#lines+1]='}'lines[#lines+1]=
+''lines[#lines+1]=FINDER return table.concat(lines,'\n'),count end Grab.Budget=
+GRAB_BUDGET return Grab end function __DARKLUA_BUNDLE_MODULES.C()local v=
+__DARKLUA_BUNDLE_MODULES.cache.C if not v then v={c=__modImpl()}
 __DARKLUA_BUNDLE_MODULES.cache.C=v end return v.c end end do local __modImpl=
 function()local Strings=__DARKLUA_BUNDLE_MODULES.g()local Gc=
 __DARKLUA_BUNDLE_MODULES.j()local SafeString=Strings.SafeString local Tables={}
@@ -4060,23 +4128,32 @@ Enum.TextXAlignment.Left})tab:Separator()local Editor=IDE.CodeFrame.new({
 Editable=false,FontSize=13,Colors=SyntaxColors,FontFace=TextFont})ReGui:
 ApplyFlags({Object=Editor.Gui,WindowClass=parentClass,Class={Fill=true,Parent=
 tab:GetObject(),BackgroundTransparency=1}})local row=tab:Row()row:Button({Text=
-'Copy',Callback=function()copyToClipboard(Editor:GetText())end})row:Expand()tab:
-Separator()task.spawn(function()local ok,serialized=pcall(Data2Code.Convert,info
-.value,true)Editor:ClearText()Editor:AppendText(ok and SafeString(serialized)or(
-'-- Convert failed: '..tostring(serialized)))end)if window.SetActiveTab then
-pcall(function()window:SetActiveTab(tabName)end)end return tab end local
-buildGcTablesTab=function(window,parentClass,scriptRef,entries)local tab=window:
-CreateTab({Name='GC Tables'})local headerLabel=tab:Label({Text=
-'Collecting GC tables...',TextColor3=COLORS.gray,TextXAlignment=Enum.
-TextXAlignment.Left})local listLabels={}local clearList=function()for _,obj in
-listLabels do pcall(function()obj:Destroy()end)end listLabels={}end local run
-tab:Button({Text='Rescan GC',Callback=function()Tables.Reset()GcShared.Reset()
-clearList()run()end})tab:Separator()run=function()headerLabel.Text=
-'Collecting GC tables...'headerLabel.TextColor3=COLORS.gray task.spawn(function(
-)local ok,tables=pcall(Tables.CollectForScript,scriptRef,entries,function(n)
-headerLabel.Text=('Scanning GC... %d objects'):format(n)end)if not ok or type(
-tables)~='table'then headerLabel.Text='GC table collection failed: '..tostring(
-tables)headerLabel.TextColor3=COLORS.red return end headerLabel.Text=(
+'Copy',Callback=function()copyToClipboard(Editor:GetText())end})local grabbing=
+false row:Button({Text='Grab Table',Callback=function()if grabbing then return
+end grabbing=true Editor:ClearText()Editor:AppendText(
+[[-- Fingerprinting this table and checking it against the GC...
+]])task.spawn(
+function()local ok,code,err=pcall(Grab.Table,info.value,('%s | %s'):format(info.
+origin,info.address))Editor:ClearText()if ok and code then Editor:AppendText(
+code..'\n')copyToClipboard(code)else Editor:AppendText(
+"-- Couldn't build a finder: "..tostring(ok and err or code)..'\n')end grabbing=
+false end)end})row:Expand()tab:Separator()task.spawn(function()local ok,
+serialized=pcall(Data2Code.Convert,info.value,true)Editor:ClearText()Editor:
+AppendText(ok and SafeString(serialized)or('-- Convert failed: '..tostring(
+serialized)))end)if window.SetActiveTab then pcall(function()window:
+SetActiveTab(tabName)end)end return tab end local buildGcTablesTab=function(
+window,parentClass,scriptRef,entries)local tab=window:CreateTab({Name=
+'GC Tables'})local headerLabel=tab:Label({Text='Collecting GC tables...',
+TextColor3=COLORS.gray,TextXAlignment=Enum.TextXAlignment.Left})local listLabels
+={}local clearList=function()for _,obj in listLabels do pcall(function()obj:
+Destroy()end)end listLabels={}end local run tab:Button({Text='Rescan GC',
+Callback=function()Tables.Reset()GcShared.Reset()clearList()run()end})tab:
+Separator()run=function()headerLabel.Text='Collecting GC tables...'headerLabel.
+TextColor3=COLORS.gray task.spawn(function()local ok,tables=pcall(Tables.
+CollectForScript,scriptRef,entries,function(n)headerLabel.Text=(
+'Scanning GC... %d objects'):format(n)end)if not ok or type(tables)~='table'then
+headerLabel.Text='GC table collection failed: '..tostring(tables)headerLabel.
+TextColor3=COLORS.red return end headerLabel.Text=(
 "%d table(s) containing this script's functions"):format(#tables)headerLabel.
 TextColor3=Color3.fromRGB(200,200,200)local BATCH=15 local DELAY=0.03 for i,info
 in tables do local label=tab:Label({Text=('[%d entries] %s  (%s)'):format(info.

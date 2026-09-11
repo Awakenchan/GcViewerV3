@@ -1,4 +1,4 @@
-getgenv()["__GcViewSource"] = [=[
+getgenv()["__GcViewSource"] = [==[
 local __DARKLUA_BUNDLE_MODULES={cache={}}do do local __modImpl=function()local
 Trace={}local PATH='GcViewCrash.log'local HAS_APPEND=type(appendfile)==
 'function'local HAS_WRITE=type(writefile)=='function'local Started=os.clock()
@@ -93,7 +93,7 @@ All()Values[Key]=Value Config.Save()for _,Listener in Listeners do pcall(
 Listener,Key,Value)end return true end function Config.Apply(Table)if type(Table
 )~='table'then return false,'expected a table'end local Changed=0 for Key,Value
 in Table do if Config.Set(Key,Value)then Changed=Changed+1 end end return true,
-Changed end function Config.OnChange(Listener)if HasFunction(Listener)then
+Changed end function Config.OnChange(Listener)if type(Listener)=='function'then
 Listeners[#Listeners+1]=Listener end end function Config.Path()return
 CONFIG_FILE end return Config end function __DARKLUA_BUNDLE_MODULES.e()local v=
 __DARKLUA_BUNDLE_MODULES.cache.e if not v then v={c=__modImpl()}
@@ -215,8 +215,10 @@ Body end return nil end function Executor.Get(Url,Headers)local Request=Executor
 ,Method='GET',Headers=Headers})end return Executor end function
 __DARKLUA_BUNDLE_MODULES.i()local v=__DARKLUA_BUNDLE_MODULES.cache.i if not v
 then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.i=v end return v.c end end
-do local __modImpl=function()local GcShared={}local Globals=type(getgenv)==
-'function'and getgenv()or{}local HAS_GETGC=type(getgc)=='function'local
+do local __modImpl=function()local Services=__DARKLUA_BUNDLE_MODULES.c()local
+GcShared={}local Globals=type(getgenv)=='function'and getgenv()or{}local
+Heartbeat=Services.RunService.Heartbeat local FRAME_BUDGET=8.333333333333334E-3
+local sliceStart=os.clock()local HAS_GETGC=type(getgc)=='function'local
 HAS_ISEXEC=type(isexecutorclosure)=='function'local HAS_HASH=type(
 getfunctionhash)=='function'and Globals.gcview_no_hash~=true local HAS_FENV=
 Globals.gcview_no_fenv~=true local snapshot local snapshotOk=false local
@@ -240,22 +242,23 @@ GcShared.Hash(fn)if type(fn)~='function'or not HAS_HASH then return nil end
 local cached=hashCache[fn]if cached~=nil then if cached==false then return nil
 end return cached end local ok,h=pcall(getfunctionhash,fn)if ok and type(h)==
 'string'and h~=''then hashCache[fn]=h return h end hashCache[fn]=false return
-nil end function GcShared.Version()return snapshotVersion end function GcShared.
-Reset()snapshot=nil snapshotOk=false snapshotVersion=snapshotVersion+1 execCache
-=setmetatable({},{__mode='k'})fenvCache=setmetatable({},{__mode='k'})hashCache=
-setmetatable({},{__mode='k'})end function GcShared.Release()snapshot=nil
-snapshotOk=false end return GcShared end function __DARKLUA_BUNDLE_MODULES.j()
-local v=__DARKLUA_BUNDLE_MODULES.cache.j if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.j=v end return v.c end end do local __modImpl=
-function()local Services=__DARKLUA_BUNDLE_MODULES.c()local Executor=
-__DARKLUA_BUNDLE_MODULES.i()local GcShared=__DARKLUA_BUNDLE_MODULES.j()local
-HttpService=Services.HttpService local Source={}local DECOMPILE_API=
-'https://api.lua.expert/decompile'local KONSTANT_API='http://api.plusgiant5.com'
-local DECOMPILE_COOLDOWN=0.12 local KONSTANT_COOLDOWN=0.5 local NativeDecompile=
-Executor.Decompile()local LastDecompile=0 local LastKonstant=0 local
-CACHE_BUDGET=50331648 local CACHE_MAX_ENTRY=4194304 local BytecodeCache=GcShared
-.Own({})local SourceCache=GcShared.Own({})local CachedBytes=0 local B64_CHARS={}
-do local Alphabet=
+nil end function GcShared.Step()if os.clock()-sliceStart>=FRAME_BUDGET then
+Heartbeat:Wait()sliceStart=os.clock()end end function GcShared.Version()return
+snapshotVersion end function GcShared.Reset()snapshot=nil snapshotOk=false
+snapshotVersion=snapshotVersion+1 execCache=setmetatable({},{__mode='k'})
+fenvCache=setmetatable({},{__mode='k'})hashCache=setmetatable({},{__mode='k'})
+end function GcShared.Release()snapshot=nil snapshotOk=false end return GcShared
+end function __DARKLUA_BUNDLE_MODULES.j()local v=__DARKLUA_BUNDLE_MODULES.cache.
+j if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.j=v end return v
+.c end end do local __modImpl=function()local Services=__DARKLUA_BUNDLE_MODULES.
+c()local Executor=__DARKLUA_BUNDLE_MODULES.i()local GcShared=
+__DARKLUA_BUNDLE_MODULES.j()local HttpService=Services.HttpService local Source=
+{}local DECOMPILE_API='https://api.lua.expert/decompile'local KONSTANT_API=
+'http://api.plusgiant5.com'local DECOMPILE_COOLDOWN=0.12 local KONSTANT_COOLDOWN
+=0.5 local NativeDecompile=Executor.Decompile()local LastDecompile=0 local
+LastKonstant=0 local CACHE_BUDGET=50331648 local CACHE_MAX_ENTRY=4194304 local
+BytecodeCache=GcShared.Own({})local SourceCache=GcShared.Own({})local
+CachedBytes=0 local B64_CHARS={}do local Alphabet=
 [[ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/]]for Index=1,
 64 do B64_CHARS[Index-1]=string.sub(Alphabet,Index,Index)end end local
 FallbackEncode=function(Data)local Length=#Data local Out={}local OutLength=0
@@ -562,52 +565,50 @@ do local __modImpl=function()return
 '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8" />\n<meta name="viewport" content="width=device-width, initial-scale=1" />\n<title>GcView offline export</title>\n<style>\n:root {\n  --v-accent: #c7c7c7; --v-accent-soft: rgba(255,255,255,.09);\n  --v-bg: #111111; --v-surface: #171717; --v-raised: #242424; --v-hover: #292929;\n  --v-border: #262626; --v-border-strong: #363636; --v-border-subtle: rgba(255,255,255,.06);\n  --v-text: #cccccc; --v-text-2: #a3a3a3; --v-text-muted: #737373;\n  --v-success: #10b981; --v-error: #ef4444;\n  --v-mono: "JetBrains Mono", "SF Mono", "Cascadia Code", ui-monospace, Consolas, monospace;\n  --v-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, system-ui, sans-serif;\n  --tk-kw: #c586c0; --tk-var: #9cdcfe; --tk-fn: #dcdcaa; --tk-str: #ce9178;\n  --tk-com: #5e6878; --tk-cl: #569cd6; --tk-num: #b5cea8;\n}\n* { box-sizing: border-box; }\nhtml, body { margin: 0; height: 100%; background: var(--v-bg); color: var(--v-text);\n  font-family: var(--v-sans); font-size: 13px; -webkit-font-smoothing: antialiased; }\nbody { display: flex; flex-direction: column; overflow: hidden; }\n\n.top { display: flex; align-items: center; gap: 10px; padding: 0 12px; height: 38px;\n  background: var(--v-surface); border-bottom: 1px solid var(--v-border); flex: 0 0 auto; }\n.top .brand { font-weight: 600; letter-spacing: .2px; }\n.top .meta { color: var(--v-text-muted); font-size: 12px; }\n.top .right { margin-left: auto; color: var(--v-text-muted); font-size: 12px; }\n\n.main { flex: 1 1 auto; display: flex; min-height: 0; }\n\n.side { width: 300px; flex: 0 0 auto; background: var(--v-surface);\n  border-right: 1px solid var(--v-border); display: flex; flex-direction: column; min-height: 0; }\n.cats { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px; border-bottom: 1px solid var(--v-border-subtle); }\n.chip { background: var(--v-raised); color: var(--v-text-2); border: 1px solid var(--v-border);\n  border-radius: 6px; padding: 4px 10px; cursor: pointer; font: inherit; font-size: 12px; }\n.chip:hover { background: var(--v-hover); color: var(--v-text); }\n.chip.on { color: var(--v-text); border-color: var(--v-border-strong); background: var(--v-hover); }\n.chip .n { color: var(--v-text-muted); margin-left: 6px; }\n\n.searchwrap { padding: 8px 10px; }\n#q { width: 100%; padding: 7px 10px; background: var(--v-raised); color: var(--v-text);\n  border: 1px solid var(--v-border); border-radius: 6px; font: inherit; outline: none; }\n#q:focus { border-color: var(--v-border-strong); }\n#q::placeholder { color: var(--v-text-muted); }\n\n#list { flex: 1 1 auto; overflow: auto; min-height: 0; padding-bottom: 8px; }\n#list .it { padding: 6px 12px; cursor: pointer; border-left: 2px solid transparent; }\n#list .it:hover { background: var(--v-hover); }\n#list .it.on { background: var(--v-hover); border-left-color: var(--v-accent); }\n#list .it .nm { display: flex; align-items: baseline; gap: 8px; }\n#list .it .nm b { font-weight: 500; }\n#list .it .badge { margin-left: auto; color: var(--v-text-muted); font-size: 11px;\n  font-family: var(--v-mono); flex: 0 0 auto; }\n#list .it .pth { color: var(--v-text-muted); font-size: 11px; font-family: var(--v-mono);\n  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }\n#list .empty { padding: 14px 12px; color: var(--v-text-muted); }\n\n.doc { flex: 1 1 auto; display: flex; flex-direction: column; min-width: 0; min-height: 0; }\n.crumbs { display: flex; align-items: center; gap: 6px; padding: 8px 12px; flex-wrap: wrap;\n  border-bottom: 1px solid var(--v-border); background: var(--v-surface); color: var(--v-text-muted);\n  font-family: var(--v-mono); font-size: 12px; }\n.crumbs .seg { background: transparent; border: 1px solid transparent; color: var(--v-text-2);\n  border-radius: 5px; padding: 2px 7px; cursor: pointer; font: inherit; }\n.crumbs .seg:hover { background: var(--v-accent-soft); color: var(--v-text); }\n.crumbs .cur { color: var(--v-text); }\n.crumbs .sp { color: var(--v-text-muted); opacity: .6; }\n.crumbs .tabs { margin-left: auto; display: flex; gap: 4px; }\n.crumbs .tabs .seg { border-color: var(--v-border); background: var(--v-raised); }\n.crumbs .tabs .seg.on { color: var(--v-text); border-color: var(--v-border-strong); background: var(--v-hover); }\n\n.view { flex: 1 1 auto; overflow: auto; min-height: 0; }\n.code { display: flex; font-family: var(--v-mono); font-size: 12.5px; line-height: 1.55; }\n.code .gut { flex: 0 0 auto; text-align: right; padding: 12px 12px 12px 16px; color: var(--v-text-muted);\n  user-select: none; background: var(--v-surface); border-right: 1px solid var(--v-border-subtle); }\n.code pre { margin: 0; padding: 12px 16px; white-space: pre; tab-size: 4; }\n.pane { padding: 14px 16px; }\nh2 { font-size: 12px; text-transform: uppercase; letter-spacing: .6px;\n  color: var(--v-text-muted); margin: 18px 0 8px; font-weight: 600; }\nh2:first-child { margin-top: 0; }\ntable { border-collapse: collapse; width: 100%; font-family: var(--v-mono); font-size: 12px; }\nth { text-align: left; padding: 7px 10px; color: var(--v-text-muted); font-weight: 500;\n  border-bottom: 1px solid var(--v-border); position: sticky; top: 0; background: var(--v-bg); }\ntd { padding: 7px 10px; border-bottom: 1px solid var(--v-border-subtle); vertical-align: top; }\ntr.fn { cursor: pointer; }\ntr.fn:hover td { background: var(--v-hover); }\ntd pre { margin: 0; max-height: 380px; overflow: auto; background: var(--v-surface);\n  padding: 9px 11px; border-radius: 6px; border: 1px solid var(--v-border-subtle); white-space: pre-wrap; }\n.tag { display: inline-block; background: var(--v-raised); border: 1px solid var(--v-border);\n  border-radius: 5px; padding: 2px 8px; margin: 0 6px 6px 0; color: var(--v-text-2);\n  font-family: var(--v-mono); font-size: 11.5px; }\n.back { color: var(--v-accent); cursor: pointer; display: inline-block; margin-bottom: 12px; }\n.back:hover { text-decoration: underline; }\n.muted { color: var(--v-text-muted); }\n.err { color: var(--v-error); }\n.empty-doc { padding: 40px; color: var(--v-text-muted); }\n.tok-kw { color: var(--tk-kw); } .tok-cl { color: var(--tk-cl); }\n.tok-var { color: var(--tk-var); } .tok-fn { color: var(--tk-fn); }\n.tok-str { color: var(--tk-str); } .tok-com { color: var(--tk-com); }\n.tok-num { color: var(--tk-num); }\n::-webkit-scrollbar { width: 10px; height: 10px; }\n::-webkit-scrollbar-thumb { background: var(--v-raised); border-radius: 6px; }\n::-webkit-scrollbar-thumb:hover { background: var(--v-hover); }\n::-webkit-scrollbar-track { background: transparent; }\n</style>\n</head>\n<body>\n<div class="top">\n  <span class="brand">GcView</span>\n  <span class="meta" id="hinfo">loading\u{2026}</span>\n  <span class="right" id="hcount"></span>\n</div>\n<div class="main">\n  <aside class="side">\n    <div class="cats" id="cats"></div>\n    <div class="searchwrap"><input id="q" placeholder="Search name or path" spellcheck="false" /></div>\n    <div id="list"></div>\n  </aside>\n  <section class="doc">\n    <div class="crumbs" id="crumbs"></div>\n    <div class="view" id="view"><div class="empty-doc">Pick a script from the sidebar.</div></div>\n  </section>\n</div>\n<script>\nfunction highlight(src) {\n    let out = "", i = 0;\n    const n = src.length;\n\n    const isName = (c) => /[A-Za-z0-9_]/.test(c);\n    const push = (cls, text) => { out += cls ? \'<span class="\' + cls + \'">\' + esc(text) + "</span>" : esc(text); };\n\n    while (i < n) {\n        const c = src[i];\n\n        if (c === "-" && src[i + 1] === "-") {\n            let j = i + 2;\n            if (src[j] === "[" && src[j + 1] === "[") {\n                const close = src.indexOf("]]", j);\n                j = close === -1 ? n : close + 2;\n            } else {\n                while (j < n && src[j] !== "\\n") j++;\n            }\n            push("tok-com", src.slice(i, j)); i = j; continue;\n        }\n\n        if (c === "[" && (src[i + 1] === "[" || src[i + 1] === "=")) {\n            const m = /^\\[(=*)\\[/.exec(src.slice(i));\n            if (m) {\n                const close = "]" + m[1] + "]";\n                const at = src.indexOf(close, i + m[0].length);\n                const j = at === -1 ? n : at + close.length;\n                push("tok-str", src.slice(i, j)); i = j; continue;\n            }\n        }\n\n        if (c === \'"\' || c === "\'") {\n            let j = i + 1;\n            while (j < n) {\n                if (src[j] === "\\\\") { j += 2; continue; }\n                if (src[j] === c || src[j] === "\\n") { j++; break; }\n                j++;\n            }\n            push("tok-str", src.slice(i, j)); i = j; continue;\n        }\n\n        if (/[0-9]/.test(c) || (c === "." && /[0-9]/.test(src[i + 1] || ""))) {\n            let j = i;\n            while (j < n && /[0-9a-fA-FxX.eE_+-]/.test(src[j])) {\n                if ((src[j] === "+" || src[j] === "-") && !/[eE]/.test(src[j - 1])) break;\n                j++;\n            }\n            push("tok-num", src.slice(i, j)); i = j; continue;\n        }\n\n        if (isName(c) && !/[0-9]/.test(c)) {\n            let j = i;\n            while (j < n && isName(src[j])) j++;\n            const word = src.slice(i, j);\n            let k = j;\n            while (k < n && /\\s/.test(src[k])) k++;\n            if (KEYWORDS.has(word)) push("tok-kw", word);\n            else if (CONSTS.has(word)) push("tok-cl", word);\n            else if (src[k] === "(" || src[k] === "{" || src[k] === \'"\' || src[k] === "\'") push("tok-fn", word);\n            else push("tok-var", word);\n            i = j; continue;\n        }\n\n        push(null, c); i++;\n    }\n    return out;\n}\n\n\nvar MANIFEST = null, REG = {}, PEND = {}, CAT = "scripts", SEL = null, TAB = "Source";\nvar CATS = ["scripts", "anticheat", "actors", "unknown"];\n\nfunction GCV_MANIFEST(m) { MANIFEST = m; boot(); }\nfunction GCV_SCRIPT(d) {\n  REG[d.key] = d;\n  var cb = PEND[d.key];\n  if (cb) { delete PEND[d.key]; cb(d); }\n}\n\nfunction el(id) { return document.getElementById(id); }\nfunction esc(s) {\n  return String(s == null ? "" : s).replace(/[&<>"]/g, function (c) {\n    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", \'"\': "&quot;" }[c];\n  });\n}\nfunction entries() { return (MANIFEST && MANIFEST.categories && MANIFEST.categories[CAT]) || []; }\n\nfunction badge(rec) {\n  var c = String(rec.class || rec.context || "");\n  if (/ModuleScript/i.test(c)) return "ms";\n  if (/LocalScript/i.test(c)) return "ls";\n  if (/Script/i.test(c)) return "s";\n  return rec.parented === false ? "nil" : "";\n}\n\nfunction load(rec, cb) {\n  if (REG[rec.key]) return cb(REG[rec.key]);\n  if (!rec.dataFile) return cb(null);\n\n  PEND[rec.key] = cb;\n\n  var s = document.createElement("script");\n  s.src = rec.dataFile;\n  s.onerror = function () {\n    if (!PEND[rec.key]) return;\n    delete PEND[rec.key];\n    cb(null, "could not load " + rec.dataFile);\n  };\n  s.onload = function () {\n    setTimeout(function () {\n      if (!PEND[rec.key]) return;\n      delete PEND[rec.key];\n      cb(null, "the browser refused to run " + rec.dataFile\n        + " (blocked script MIME). Re-export so it is preloaded, or serve this folder over http.");\n    }, 60);\n  };\n  document.body.appendChild(s);\n}\n\nfunction renderCats() {\n  var h = "";\n  CATS.forEach(function (n) {\n    var list = (MANIFEST.categories && MANIFEST.categories[n]) || [];\n    h += \'<button class="chip\' + (n === CAT ? " on" : "") + \'" data-c="\' + n + \'">\'\n       + n + \'<span class="n">\' + list.length + "</span></button>";\n  });\n  el("cats").innerHTML = h;\n  Array.prototype.forEach.call(el("cats").querySelectorAll("button"), function (b) {\n    b.onclick = function () {\n      CAT = b.getAttribute("data-c"); SEL = null;\n      renderCats(); renderList(); renderCrumbs();\n      el("view").innerHTML = \'<div class="empty-doc">Pick a script from the sidebar.</div>\';\n    };\n  });\n}\n\nfunction renderList() {\n  var q = el("q").value.trim().toLowerCase(), h = "", n = 0, all = entries();\n  all.forEach(function (rec, i) {\n    if (q && (rec.name + " " + rec.path).toLowerCase().indexOf(q) < 0) return;\n    n++;\n    h += \'<div class="it\' + (SEL && SEL.key === rec.key ? " on" : "") + \'" data-i="\' + i + \'">\'\n       + \'<div class="nm"><b>\' + esc(rec.name) + \'</b><span class="badge">\' + badge(rec) + "</span></div>"\n       + \'<div class="pth">\' + esc(rec.path) + "</div></div>";\n  });\n  el("list").innerHTML = h || \'<div class="empty">nothing matches</div>\';\n  el("hcount").textContent = n + " / " + all.length;\n  Array.prototype.forEach.call(el("list").querySelectorAll(".it[data-i]"), function (d) {\n    d.onclick = function () { openRec(all[Number(d.getAttribute("data-i"))]); };\n  });\n}\n\nfunction renderCrumbs() {\n  var h = \'<button class="seg" id="croot">\' + CAT + "</button>";\n  if (SEL) {\n    String(SEL.path || SEL.name).split(".").forEach(function (part, i, all) {\n      h += \'<span class="sp">/</span>\';\n      h += i === all.length - 1\n        ? \'<span class="cur">\' + esc(part) + "</span>"\n        : \'<button class="seg pseg" data-p="\' + esc(part) + \'">\' + esc(part) + "</button>";\n    });\n    h += \'<span class="tabs">\';\n    ["Source", "Functions", "Info"].forEach(function (t) {\n      h += \'<button class="seg\' + (t === TAB ? " on" : "") + \'" data-t="\' + t + \'">\' + t + "</button>";\n    });\n    h += "</span>";\n  }\n  el("crumbs").innerHTML = h;\n\n  el("croot").onclick = function () {\n    SEL = null; renderList(); renderCrumbs();\n    el("view").innerHTML = \'<div class="empty-doc">Pick a script from the sidebar.</div>\';\n  };\n  Array.prototype.forEach.call(el("crumbs").querySelectorAll(".pseg"), function (b) {\n    b.onclick = function () { el("q").value = b.getAttribute("data-p"); SEL = null; renderList(); renderCrumbs(); };\n  });\n  Array.prototype.forEach.call(el("crumbs").querySelectorAll("[data-t]"), function (b) {\n    b.onclick = function () { TAB = b.getAttribute("data-t"); renderCrumbs(); draw(); };\n  });\n}\n\nfunction openRec(rec) { SEL = rec; TAB = "Source"; renderList(); renderCrumbs(); draw(); }\n\nfunction codeBlock(text) {\n  var lines = String(text).split("\\n"), g = "";\n  for (var i = 1; i <= lines.length; i++) g += i + "\\n";\n  return \'<div class="code"><pre class="gut">\' + g + "</pre><pre>" + highlight(String(text)) + "</pre></div>";\n}\n\nfunction valueRows(title, rows) {\n  if (!rows || !rows.length) return "<h2>" + title + \'</h2><div class="muted">none</div>\';\n  var h = "<h2>" + title + " (" + rows.length + ")</h2>"\n        + "<table><thead><tr><th style=\'width:60px\'>#</th><th>value</th></tr></thead><tbody>";\n  rows.forEach(function (r) {\n    h += "<tr><td class=\'muted\'>" + r.index + "</td><td>"\n       + (r.code ? "<pre>" + highlight(String(r.value)) + "</pre>" : highlight(String(r.value)))\n       + "</td></tr>";\n  });\n  return h + "</tbody></table>";\n}\n\nfunction draw() {\n  if (!SEL) return;\n  var v = el("view");\n  v.innerHTML = \'<div class="empty-doc">loading\u{2026}</div>\';\n\n  load(SEL, function (d, why) {\n    if (!d) {\n      v.innerHTML = \'<div class="pane err">\' + esc(why || "missing data file for this script") + "</div>";\n      return;\n    }\n\n    if (TAB === "Info") {\n      var m = d.meta || SEL;\n      var rows = [["path", m.path], ["name", m.name], ["context", m.context],\n        ["class", m.class || "-"], ["parented", String(m.parented)], ["key", m.key],\n        ["functions", (d.functions || []).length],\n        ["source lines", d.source ? String(d.source).split("\\n").length : 0]];\n      var h = \'<div class="pane"><h2>Details</h2><table><tbody>\';\n      rows.forEach(function (r) {\n        h += "<tr><td class=\'muted\' style=\'width:160px\'>" + esc(r[0]) + "</td><td>" + esc(r[1]) + "</td></tr>";\n      });\n      h += "</tbody></table>";\n      if (m.reasons && m.reasons.length) h += "<h2>Anti-cheat reasons</h2><div>" + m.reasons.map(esc).join("<br>") + "</div>";\n      if (m.sourceError) h += "<h2>Source error</h2><div class=\'err\'>" + esc(m.sourceError) + "</div>";\n      v.innerHTML = h + "</div>";\n      return;\n    }\n\n    if (TAB === "Functions") {\n      var fns = d.functions || [];\n      if (!fns.length) { v.innerHTML = \'<div class="pane muted">no functions captured</div>\'; return; }\n      var t = \'<div class="pane"><table><thead><tr><th>name</th><th style="width:80px">line</th>\'\n            + \'<th style="width:90px">params</th><th style="width:80px">vargs</th></tr></thead><tbody>\';\n      fns.forEach(function (f, i) {\n        t += \'<tr class="fn" data-i="\' + i + \'"><td>\' + esc(f.name) + \'</td><td class="muted">\' + f.line\n           + \'</td><td class="muted">\' + f.numparams + \'</td><td class="muted">\' + (f.vargs ? "yes" : "no") + "</td></tr>";\n      });\n      v.innerHTML = t + "</tbody></table></div>";\n      Array.prototype.forEach.call(v.querySelectorAll("tr.fn"), function (tr) {\n        tr.onclick = function () {\n          var f = fns[Number(tr.getAttribute("data-i"))];\n          v.innerHTML = \'<div class="pane"><span class="back" id="fb">&larr; back to functions</span><div>\'\n            + \'<span class="tag">\' + esc(f.name) + \'</span><span class="tag">line \' + f.line\n            + \'</span><span class="tag">params \' + f.numparams + \'</span><span class="tag">vargs \'\n            + (f.vargs ? "yes" : "no") + "</span>"\n            + (f.hash ? \'<span class="tag">\' + esc(String(f.hash).slice(0, 18)) + "</span>" : "")\n            + "</div>" + valueRows("Constants", f.constants) + valueRows("Upvalues", f.upvalues) + "</div>";\n          el("fb").onclick = function () { draw(); };\n        };\n      });\n      return;\n    }\n\n    v.innerHTML = d.source ? codeBlock(d.source)\n      : \'<div class="pane muted">no source captured for this script</div>\';\n  });\n}\n\nfunction boot() {\n  var i = MANIFEST.info || {};\n  el("hinfo").textContent = (i.placeName || "place " + MANIFEST.placeId)\n    + " \u{b7} " + (i.executor || "?")\n    + " \u{b7} exported " + new Date((MANIFEST.exportedAt || 0) * 1000).toLocaleString()\n    + (MANIFEST.partial ? " \u{b7} PARTIAL" : "");\n  renderCats(); renderList(); renderCrumbs();\n}\n\nel("q").oninput = renderList;\ndocument.addEventListener("keydown", function (e) {\n  if (e.key === "/" && document.activeElement !== el("q")) { e.preventDefault(); el("q").focus(); }\n  if (e.key === "Escape") { el("q").blur(); }\n});\n</script>\n<script src="data/manifest.js"></script>\n<!--DATA-->\n<noscript>This viewer needs JavaScript.</noscript>\n</body>\n</html>\n'
 end function __DARKLUA_BUNDLE_MODULES.n()local v=__DARKLUA_BUNDLE_MODULES.cache.
 n if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.n=v end return v
-.c end end do local __modImpl=function()local Services=__DARKLUA_BUNDLE_MODULES.
-c()local Strings=__DARKLUA_BUNDLE_MODULES.g()local Gc=__DARKLUA_BUNDLE_MODULES.
-j()local Executor=__DARKLUA_BUNDLE_MODULES.i()local Trace=
-__DARKLUA_BUNDLE_MODULES.a()local RunService=Services.RunService local
-hasLclosure=type(islclosure)=='function'local hasScriptClosure=type(
-getscriptclosure)=='function'local hasScriptBytecode=type(getscriptbytecode)==
-'function'local Fns={}function Fns.CollectScriptFunctions(scriptRef)local list={
-}local seen={}local scriptName=scriptRef.Name local nameDistinctive=#scriptName
->=8 local fullName do local okFull,fn=pcall(function()return scriptRef:
-GetFullName()end)fullName=okFull and fn or nil end local refId do local okId,id=
-pcall(function()return scriptRef:GetDebugId()end)refId=okId and id or nil end
-local instanceIsRef=function(v)if rawequal(v,scriptRef)then return true end if
-refId and typeof(v)=='Instance'then local okSid,sid=pcall(function()return v:
-GetDebugId()end)return okSid and sid==refId end return false end local add=
-function(fn)if seen[fn]then return end seen[fn]=true local info=Strings.
-FunctionInfo(fn)list[#list+1]=Gc.Own({func=fn,name=(info.name and info.name~='')
-and info.name or'(anonymous)',line=info.line,numparams=info.numparams,vargs=info
-.vargs})end local matches=function(obj)local env=Gc.Fenv(obj)if type(env)==
-'table'then local ok2,s=pcall(rawget,env,'script')if ok2 and instanceIsRef(s)
-then return true end end local okU,ups=pcall(debug.getupvalues,obj)if okU and
-type(ups)=='table'then for _,v in ups do if instanceIsRef(v)then return true end
-end end local okC,consts=pcall(debug.getconstants,obj)if okC and type(consts)==
-'table'then for _,v in consts do if rawequal(v,scriptRef)then return true end
-end end local okSrc,src=pcall(function()return debug.info(obj,'s')end)if okSrc
-and type(src)=='string'and src~=''then if fullName and string.find(src,fullName,
-1,true)then return true end if nameDistinctive and string.find(src,scriptName,1,
-true)then return true end end return false end local gc=Gc.Snapshot()for _,obj
-in gc do if type(obj)=='function'and(not hasLclosure or islclosure(obj))and not
-Gc.IsExec(obj)and matches(obj)then add(obj)end end table.sort(list,function(a,b)
-return(a.line or 0)<(b.line or 0)end)local invalidSource=(#list==0)and(fullName
-==nil or fullName==scriptName)return list,invalidSource end function Fns.
+.c end end do local __modImpl=function()local Strings=__DARKLUA_BUNDLE_MODULES.
+g()local Gc=__DARKLUA_BUNDLE_MODULES.j()local Executor=__DARKLUA_BUNDLE_MODULES.
+i()local Trace=__DARKLUA_BUNDLE_MODULES.a()local hasLclosure=type(islclosure)==
+'function'local hasScriptClosure=type(getscriptclosure)=='function'local
+hasScriptBytecode=type(getscriptbytecode)=='function'local Fns={}function Fns.
+CollectScriptFunctions(scriptRef)local list={}local seen={}local scriptName=
+scriptRef.Name local nameDistinctive=#scriptName>=8 local fullName do local
+okFull,fn=pcall(function()return scriptRef:GetFullName()end)fullName=okFull and
+fn or nil end local refId do local okId,id=pcall(function()return scriptRef:
+GetDebugId()end)refId=okId and id or nil end local instanceIsRef=function(v)if
+rawequal(v,scriptRef)then return true end if refId and typeof(v)=='Instance'then
+local okSid,sid=pcall(function()return v:GetDebugId()end)return okSid and sid==
+refId end return false end local add=function(fn)if seen[fn]then return end seen
+[fn]=true local info=Strings.FunctionInfo(fn)list[#list+1]=Gc.Own({func=fn,name=
+(info.name and info.name~='')and info.name or'(anonymous)',line=info.line,
+numparams=info.numparams,vargs=info.vargs})end local matches=function(obj)local
+env=Gc.Fenv(obj)if type(env)=='table'then local ok2,s=pcall(rawget,env,'script')
+if ok2 and instanceIsRef(s)then return true end end local okU,ups=pcall(debug.
+getupvalues,obj)if okU and type(ups)=='table'then for _,v in ups do if
+instanceIsRef(v)then return true end end end local okC,consts=pcall(debug.
+getconstants,obj)if okC and type(consts)=='table'then for _,v in consts do if
+rawequal(v,scriptRef)then return true end end end local okSrc,src=pcall(function
+()return debug.info(obj,'s')end)if okSrc and type(src)=='string'and src~=''then
+if fullName and string.find(src,fullName,1,true)then return true end if
+nameDistinctive and string.find(src,scriptName,1,true)then return true end end
+return false end local gc=Gc.Snapshot()for _,obj in gc do if type(obj)==
+'function'and(not hasLclosure or islclosure(obj))and not Gc.IsExec(obj)and
+matches(obj)then add(obj)end Gc.Step()end table.sort(list,function(a,b)return(a.
+line or 0)<(b.line or 0)end)local invalidSource=(#list==0)and(fullName==nil or
+fullName==scriptName)return list,invalidSource end function Fns.
 BuildKnownScriptHashSet(knownScripts)local hashes={}if type(knownScripts)~=
-'table'then return hashes end local scriptHash=Executor.ScriptHash()local
-processed=0 for _,entry in knownScripts do local scriptRef=entry.script or entry
-if typeof(scriptRef)=='Instance'then if hasScriptClosure then local okCl,cl=
-pcall(getscriptclosure,scriptRef)if okCl and type(cl)=='function'then local h=Gc
-.Hash(cl)if h then hashes[h]=true end end end if scriptHash then local okSh,sh=
-pcall(scriptHash,scriptRef)if okSh and type(sh)=='string'and sh~=''then hashes[
-'sh:'..sh]=true end elseif hasScriptBytecode then local okBc,bc=pcall(
-getscriptbytecode,scriptRef)if okBc and type(bc)=='string'and bc~=''then hashes[
-'bc:'..bc]=true end end end if type(entry.functions)=='table'then for _,f in
-entry.functions do local target=f.func or f local h=Gc.Hash(target)if h then
-hashes[h]=true end if type(f.hash)=='string'and f.hash~=''then hashes[f.hash]=
-true end end end processed=processed+1 if processed%100==0 then RunService.
-Heartbeat:Wait()end end return hashes end function Fns.BuildKnownScriptSourceSet
-(knownScripts)local sources={}if type(knownScripts)~='table'then return sources
+'table'then return hashes end local scriptHash=Executor.ScriptHash()for _,entry
+in knownScripts do local scriptRef=entry.script or entry if typeof(scriptRef)==
+'Instance'then if hasScriptClosure then local okCl,cl=pcall(getscriptclosure,
+scriptRef)if okCl and type(cl)=='function'then local h=Gc.Hash(cl)if h then
+hashes[h]=true end end end if scriptHash then local okSh,sh=pcall(scriptHash,
+scriptRef)if okSh and type(sh)=='string'and sh~=''then hashes['sh:'..sh]=true
+end elseif hasScriptBytecode then local okBc,bc=pcall(getscriptbytecode,
+scriptRef)if okBc and type(bc)=='string'and bc~=''then hashes['bc:'..bc]=true
+end end end if type(entry.functions)=='table'then for _,f in entry.functions do
+local target=f.func or f local h=Gc.Hash(target)if h then hashes[h]=true end if
+type(f.hash)=='string'and f.hash~=''then hashes[f.hash]=true end Gc.Step()end
+end Gc.Step()end return hashes end function Fns.BuildKnownScriptSourceSet(
+knownScripts)local sources={}if type(knownScripts)~='table'then return sources
 end for _,entry in knownScripts do local scriptRef=entry.script or entry local
 path=type(entry.path)=='string'and entry.path or nil if not path and typeof(
 scriptRef)=='Instance'then local okFull,full=pcall(function()return scriptRef:
@@ -633,16 +634,350 @@ Gc.Hash(obj)if not(h and knownHashes[h])then seen[obj]=true local info=Strings.
 FunctionInfo(obj)table.insert(list,Gc.Own({func=obj,name=(info.name and info.
 name~='')and info.name or'(anonymous)',line=info.line,numparams=info.numparams,
 vargs=info.vargs,source=info.source,hash=h}))end end end processed=processed+1
-if processed%2000==0 then Trace.Mark('orphan: progress',processed..' scanned, '
-..#list..' found')RunService.Heartbeat:Wait()end end Trace.Mark(
-'orphan: loop finished',processed)table.sort(list,function(a,b)return(a.line or
-0)<(b.line or 0)end)return list end return Fns end function
-__DARKLUA_BUNDLE_MODULES.o()local v=__DARKLUA_BUNDLE_MODULES.cache.o if not v
-then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.o=v end return v.c end end
-do local __modImpl=function()local byte=string.byte local sub=string.sub local
-lookupify=function(src,list)list=list or{}if type(src)=='string'then for i=1,#
-src do list[byte(src,i)]=true end elseif type(src)=='table'then for i=1,#src do
-list[src[i] ]=true end end return list end local base_ident=
+if processed%20000==0 then Trace.Mark('orphan: progress',processed..' scanned, '
+..#list..' found')end Gc.Step()end Trace.Mark('orphan: loop finished',processed)
+table.sort(list,function(a,b)return(a.line or 0)<(b.line or 0)end)return list
+end return Fns end function __DARKLUA_BUNDLE_MODULES.o()local v=
+__DARKLUA_BUNDLE_MODULES.cache.o if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.o=v end return v.c end end do local __modImpl=
+function()local Services=__DARKLUA_BUNDLE_MODULES.c()local Gc=
+__DARKLUA_BUNDLE_MODULES.j()local Classify=__DARKLUA_BUNDLE_MODULES.h()local
+RunService=Services.RunService local Actors={}local COLLECTOR=
+[=[    local channelId = ...
+    local ch = get_comm_channel(channelId)
+    if not ch then return end
+
+    local function classify(inst)
+        local ok, cls = pcall(function() return inst.ClassName end)
+        return ok and cls or "Unknown"
+    end
+    local function fullName(inst)
+        local ok, n = pcall(function() return inst:GetFullName() end)
+        return ok and n or inst.Name
+    end
+    local function debugId(inst)
+        local ok, id = pcall(function() return inst:GetDebugId() end)
+        return ok and id or fullName(inst)
+    end
+    local function safeStr(v)
+        local ok, r = pcall(function() return tostring(v) end)
+        return ok and r or "<value>"
+    end
+    local function decode(v)
+        local t = typeof(v)
+        if t == "string" then
+            return string.format("%q", v)
+        elseif t == "number" or t == "boolean" then
+            return safeStr(v)
+        elseif t == "Instance" then
+            local ok, fn = pcall(function() return v:GetFullName() end)
+            return ok and fn or "<instance>"
+        elseif t == "table" then
+            return "<table>"
+        elseif t == "function" then
+            return "<function>"
+        end
+        return "<" .. t .. ">"
+    end
+
+    -- Full table dump for the detail view, built on request inside this VM
+    -- (the main VM can't read these values). Raw next only, capped in size.
+    local MAX_DEPTH, MAX_ITEMS, MAX_CHARS = 6, 300, 200000
+    local function literal(v)
+        local t = typeof(v)
+        if t == "function" then
+            local ok, n, l = pcall(debug.info, v, "nl")
+            local label = ok and n and n ~= "" and n or "anonymous"
+            return ("function() end --[[%s, line %s]]"):format(label, ok and tostring(l) or "?")
+        elseif t == "userdata" then
+            return "<userdata>"
+        elseif t == "string" or t == "number" or t == "boolean" or t == "nil" or t == "Instance" then
+            return decode(v)
+        end
+        local ok, s = pcall(tostring, v)
+        return t .. "(" .. (ok and s or "?") .. ")"
+    end
+    local function dump(tbl, depth, stack, out)
+        if out.size > MAX_CHARS then return end
+        local function emit(s)
+            out[#out + 1] = s
+            out.size += #s
+        end
+        if stack[tbl] then return emit("<cycle>") end
+        if next(tbl) == nil then return emit("{}") end
+        if depth >= MAX_DEPTH then return emit("{ --[[max depth]] }") end
+        stack[tbl] = true
+        local pad = string.rep("    ", depth + 1)
+        emit("{\n")
+        local count = 0
+        local k, v = next(tbl)
+        while k ~= nil do
+            count += 1
+            if count > MAX_ITEMS or out.size > MAX_CHARS then
+                emit(pad .. "-- ...truncated\n")
+                break
+            end
+            local key
+            if type(k) == "string" and string.match(k, "^[%a_][%w_]*$") then
+                key = k
+            elseif type(k) == "table" then
+                key = "[<table>]"
+            else
+                key = "[" .. literal(k) .. "]"
+            end
+            emit(pad .. key .. " = ")
+            if type(v) == "table" then
+                dump(v, depth + 1, stack, out)
+            else
+                emit(literal(v))
+            end
+            emit(",\n")
+            k, v = next(tbl, k)
+        end
+        emit(string.rep("    ", depth) .. "}")
+        stack[tbl] = nil
+    end
+    local function render(v)
+        if type(v) ~= "table" then return literal(v) end
+        local out = { size = 0 }
+        local ok = pcall(dump, v, 0, {}, out)
+        out.size = nil
+        return ok and table.concat(out) or "<table>"
+    end
+
+    local function funcInfo(fn)
+        local ok, s, l, n, np, va = pcall(function()
+            return debug.info(fn, "slna")
+        end)
+        if ok then
+            return s, l, n, np, va
+        end
+        return nil, nil, nil, nil, nil
+    end
+
+    local execFrags = { "GcView", "awakenkn", "Dear-ReGui", "ReGui" }
+    local function isExecScript(inst)
+        local okN, name = pcall(function() return inst.Name end)
+        local okF, full = pcall(function() return inst:GetFullName() end)
+        for _, frag in execFrags do
+            if okN and type(name) == "string" and string.find(name, frag, 1, true) then
+                return true
+            end
+            if okF and type(full) == "string" and string.find(full, frag, 1, true) then
+                return true
+            end
+        end
+        return false
+    end
+
+    local scriptsSeen = {}
+    local scriptList = {}
+    local function consider(inst)
+        if typeof(inst) ~= "Instance" then return end
+        if not inst:IsA("LuaSourceContainer") then return end
+        if isExecScript(inst) then return end
+        local id = debugId(inst)
+        if scriptsSeen[id] then return end
+        scriptsSeen[id] = true
+        scriptList[#scriptList + 1] = { inst = inst, id = id }
+        ch:Fire({
+            kind = "script",
+            script = inst,
+            key = id,
+            name = inst.Name,
+            path = fullName(inst),
+            class = classify(inst),
+        })
+    end
+
+    if type(getscripts) == "function" then
+        local ok, scripts = pcall(getscripts)
+        if ok and type(scripts) == "table" then
+            for _, s in scripts do consider(s) end
+        end
+    end
+    if type(getrunningscripts) == "function" then
+        local ok, rs = pcall(getrunningscripts)
+        if ok and type(rs) == "table" then
+            for _, s in rs do consider(s) end
+        end
+    end
+    if type(getloadedmodules) == "function" then
+        local ok, lm = pcall(getloadedmodules)
+        if ok and type(lm) == "table" then
+            for _, s in lm do consider(s) end
+        end
+    end
+
+    local registry, refCount = {}, 0
+    local token = tostring(registry) .. "@" .. tostring(os.clock())
+
+    local function fireFunction(scriptId, fn)
+        refCount += 1
+        local ref = token .. "#" .. refCount
+        registry[ref] = fn
+        local s, l, n, np, va = funcInfo(fn)
+        local consts, ups = {}, {}
+        local okc, c = pcall(function() return debug.getconstants(fn) end)
+        if okc and type(c) == "table" then
+            for i, v in c do consts[i] = decode(v) end
+        end
+        local oku, u = pcall(function() return debug.getupvalues(fn) end)
+        if oku and type(u) == "table" then
+            for i, v in u do ups[i] = decode(v) end
+        end
+        local parts = {}
+        for _, v in consts do parts[#parts + 1] = v end
+        for _, v in ups do parts[#parts + 1] = v end
+        local hash
+        if type(getfunctionhash) == "function" then
+            local okh, h = pcall(getfunctionhash, fn)
+            if okh then hash = h end
+        end
+        ch:Fire({
+            kind = "function",
+            key = scriptId,
+            ref = ref,
+            func = fn,
+            name = (n and n ~= "") and n or "(anonymous)",
+            line = l,
+            numparams = np,
+            vargs = va,
+            hash = hash,
+            constants = consts,
+            upvalues = ups,
+            valueIndex = string.lower(table.concat(parts, " ")),
+        })
+    end
+    for _, obj in getgc(true) do
+        if type(obj) == "function"
+            and (not islclosure or islclosure(obj))
+            and not (isexecutorclosure and isexecutorclosure(obj))
+        then
+            local matchedId
+            local okEnv, env = pcall(getfenv, obj)
+            if okEnv and type(env) == "table" then
+                local s = rawget(env, "script")
+                if typeof(s) == "Instance" then
+                    local id = debugId(s)
+                    if scriptsSeen[id] then
+                        matchedId = id
+                    end
+                end
+            end
+            if not matchedId then
+                local src = funcInfo(obj)
+                if type(src) == "string" then
+                    for _, sc in scriptList do
+                        if string.find(src, sc.inst.Name, 1, true) then
+                            matchedId = sc.id
+                            break
+                        end
+                    end
+                end
+            end
+            if matchedId then
+                fireFunction(matchedId, obj)
+            end
+        end
+    end
+
+    ch.Event:Connect(function(msg)
+        if type(msg) ~= "table" or msg.kind ~= "expand" then return end
+        local fn = registry[msg.ref]
+        if not fn then return end
+        local consts, ups = {}, {}
+        local okc, c = pcall(debug.getconstants, fn)
+        if okc and type(c) == "table" then
+            for i, v in c do consts[i] = render(v) end
+        end
+        local oku, u = pcall(debug.getupvalues, fn)
+        if oku and type(u) == "table" then
+            for i, v in u do ups[i] = render(v) end
+        end
+        ch:Fire({ kind = "expanded", ref = msg.ref, constants = consts, upvalues = ups })
+    end)
+
+    ch:Fire({ kind = "done" })
+]=]
+local Channel function Actors.Collect(timeout)timeout=timeout or 3 local results
+={}local seen={}if type(create_comm_channel)~='function'then return results end
+local canExecuteStates=type(getactorstates)=='function'local canRunOnActor=type(
+getactors)=='function'and type(run_on_actor)=='function'if not canExecuteStates
+and not canRunOnActor then return results end local channelId,channel=
+create_comm_channel()if not channel then return results end Channel=channel
+local pending=0 local byKey={}local queue,head,tail={},1,0 local conn=channel.
+Event:Connect(function(payload)if type(payload)~='table'then return end if
+payload.kind=='done'then pending=pending-1 elseif payload.kind=='script'or
+payload.kind=='function'then tail=tail+1 queue[tail]=payload end end)local
+handle=function(payload)Gc.Own(payload)Gc.Own(payload.constants)Gc.Own(payload.
+upvalues)if payload.kind=='script'then local key=payload.key if key and not seen
+[key]then if Classify.IsExecutorScript(payload.script,payload.path)then seen[key
+]=true return end seen[key]=true local entry=Gc.Own({script=payload.script,path=
+payload.path or payload.name or'ActorScript',context='Actor',name=payload.name,
+class=payload.class,key=key,functions=Gc.Own({})})byKey[key]=entry table.insert(
+results,entry)end return end if payload.kind=='function'then local entry=byKey[
+payload.key]if entry then table.insert(entry.functions,Gc.Own({ref=payload.ref,
+func=payload.func,name=payload.name,line=payload.line,numparams=payload.
+numparams,vargs=payload.vargs,hash=payload.hash,constants=payload.constants,
+upvalues=payload.upvalues,valueIndex=payload.valueIndex}))end end end local
+drain=function()while head<=tail do local payload=queue[head]queue[head]=nil
+head=head+1 pcall(handle,payload)Gc.Step()end end local dispatchedStates={}local
+gameStateId if type(getgamestate)=='function'then local okGame,gameState=pcall(
+getgamestate)if okGame and gameState then local okId,id=pcall(function()return
+gameState.Id end)if okId then gameStateId=id end end end local stateId=function(
+state)local ok,id=pcall(function()return state.Id end)return ok and id or nil
+end local isActorState=function(state)local ok,flag=pcall(function()return state
+.IsActorState end)if ok and flag~=nil then return flag==true end local id=
+stateId(state)return gameStateId==nil or id==nil or id~=gameStateId end local
+dispatchState=function(state)if state==nil or not isActorState(state)then return
+false end local id=stateId(state)if id~=nil then if dispatchedStates[id]then
+return true end dispatchedStates[id]=true end local ok=pcall(function()state:
+Execute(COLLECTOR,channelId)end)if ok then pending=pending+1 return true end
+return false end local actorTargets={}local actorSeen={}local addActor=function(
+actor)if typeof(actor)~='Instance'or actorSeen[actor]then return end actorSeen[
+actor]=true actorTargets[#actorTargets+1]=actor end local states={}if
+canExecuteStates then local okStates,list=pcall(getactorstates)if okStates and
+type(list)=='table'then for _,state in list do states[#states+1]=state end end
+end for _,state in states do dispatchState(state)local okActorsOfState,list=
+pcall(function()return state:GetActors()end)if okActorsOfState and type(list)==
+'table'then for _,actor in list do addActor(actor)end end end if type(getactors)
+=='function'then local okActors,list=pcall(getactors)if okActors and type(list)
+=='table'then for _,actor in list do addActor(actor)end end end if canRunOnActor
+then for _,actor in actorTargets do local covered=false if type(getluastate)==
+'function'then local okState,state=pcall(getluastate,actor)if okState and state
+then local id=stateId(state)if id~=nil and dispatchedStates[id]then covered=true
+end end end if not covered then if pcall(run_on_actor,actor,COLLECTOR,channelId)
+then pending=pending+1 end end end end local start=os.clock()while pending>0 and
+(os.clock()-start)<timeout do drain()RunService.Heartbeat:Wait()end pcall(
+function()conn:Disconnect()end)drain()return results end function Actors.Expand(
+ref,timeout)if not Channel or type(ref)~='string'then return nil end local
+result local conn=Channel.Event:Connect(function(payload)if type(payload)==
+'table'and payload.kind=='expanded'and payload.ref==ref then result=payload end
+end)pcall(function()Channel:Fire({kind='expand',ref=ref})end)local deadline=os.
+clock()+(timeout or 3)while not result and os.clock()<deadline do RunService.
+Heartbeat:Wait()end pcall(function()conn:Disconnect()end)return result end
+function Actors.Keys()local keys={}local actors={}local actorSeen={}local
+addActor=function(actor)if typeof(actor)~='Instance'or actorSeen[actor]then
+return end actorSeen[actor]=true actors[#actors+1]=actor end if type(
+getactorstates)=='function'then local okStates,states=pcall(getactorstates)if
+okStates and type(states)=='table'then for _,state in states do local okList,
+list=pcall(function()return state:GetActors()end)if okList and type(list)==
+'table'then for _,actor in list do addActor(actor)end end end end end if type(
+getactors)=='function'then local okActors,list=pcall(getactors)if okActors and
+type(list)=='table'then for _,actor in list do addActor(actor)end end end for _,
+actor in actors do local okDesc,descendants=pcall(function()return actor:
+GetDescendants()end)if okDesc and type(descendants)=='table'then for _,inst in
+descendants do local okIs,isLsc=pcall(function()return inst:IsA(
+'LuaSourceContainer')end)if okIs and isLsc then keys[Classify.ScriptKey(inst)]=
+true local okName,name=pcall(function()return inst.Name end)if okName and name
+then keys['name:'..name]=true end end end end end return keys end return Actors
+end function __DARKLUA_BUNDLE_MODULES.p()local v=__DARKLUA_BUNDLE_MODULES.cache.
+p if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.p=v end return v
+.c end end do local __modImpl=function()local byte=string.byte local sub=string.
+sub local lookupify=function(src,list)list=list or{}if type(src)=='string'then
+for i=1,#src do list[byte(src,i)]=true end elseif type(src)=='table'then for i=1
+,#src do list[src[i] ]=true end end return list end local base_ident=
 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_'local base_digits=
 '0123456789'local base_operators='+-*/^%#'local chars={whitespace=lookupify(
 ' \n\t\r'),validEscapes=lookupify('abfnrtv"\'\\'),ident=lookupify(base_ident..
@@ -713,11 +1048,11 @@ symbols.equality[char]then if look()==EQUALS then pos=pos+1 end pushToken(
 pushToken('operator')else pushToken('symbol')end else pushToken('unidentified')
 end end lines[#lines+1]=buffer for li=1,#lines do local line=lines[li]for ti=1,#
 line do local tk=line[ti]tk.data=sub(text,tk._s,tk._e)tk._s=nil tk._e=nil end
-end return lines end end function __DARKLUA_BUNDLE_MODULES.p()local v=
-__DARKLUA_BUNDLE_MODULES.cache.p if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.p=v end return v.c end end do local __modImpl=
+end return lines end end function __DARKLUA_BUNDLE_MODULES.q()local v=
+__DARKLUA_BUNDLE_MODULES.cache.q if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.q=v end return v.c end end do local __modImpl=
 function()local Data2Code={}local FunctionLibrary=__DARKLUA_BUNDLE_MODULES.g()
-local Lex=__DARKLUA_BUNDLE_MODULES.p()local INDENT='    'local try=function(fn,
+local Lex=__DARKLUA_BUNDLE_MODULES.q()local INDENT='    'local try=function(fn,
 fallback)local ok,res=xpcall(fn,function()return fallback end)if ok then return
 res end return fallback end local IsIdentifier=function(str)return type(str)==
 'string'and str:match('^[%a_][%w_]*$')~=nil end local ESCAPES={[34]='\\"',[92]=
@@ -892,8 +1227,8 @@ compact end local fok,formatted=pcall(Format,compact)if fok and type(formatted)
 =='string'and formatted~=''then return formatted end local ok2,legacy=xpcall(
 function()return SerializeRoot(data,true)end,errHandler)if ok2 then return
 legacy end return compact end return Data2Code end function
-__DARKLUA_BUNDLE_MODULES.q()local v=__DARKLUA_BUNDLE_MODULES.cache.q if not v
-then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.q=v end return v.c end end
+__DARKLUA_BUNDLE_MODULES.r()local v=__DARKLUA_BUNDLE_MODULES.cache.r if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.r=v end return v.c end end
 do local __modImpl=function()local Constants=__DARKLUA_BUNDLE_MODULES.b()local
 Executor=__DARKLUA_BUNDLE_MODULES.i()local Services=__DARKLUA_BUNDLE_MODULES.c()
 local Fs=__DARKLUA_BUNDLE_MODULES.d()local HttpService=Services.HttpService
@@ -953,10 +1288,10 @@ Updated,', '),BRIDGE_DIR)else Note=('web front-end already current (%d file%s)')
 ' | compared by content ('..tostring(IndexErr)..')'end return true,Note,#Updated
 end function WebUpdate.Auto()if not WebUpdate.Installed()then return false,
 'no local bridge files',0 end return WebUpdate.Sync()end return WebUpdate end
-function __DARKLUA_BUNDLE_MODULES.r()local v=__DARKLUA_BUNDLE_MODULES.cache.r if
-not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.r=v end return v.c
+function __DARKLUA_BUNDLE_MODULES.s()local v=__DARKLUA_BUNDLE_MODULES.cache.s if
+not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.s=v end return v.c
 end end do local __modImpl=function()local Config=__DARKLUA_BUNDLE_MODULES.e()
-local WebUpdate=__DARKLUA_BUNDLE_MODULES.r()local Plugins={}local Registry={{Key
+local WebUpdate=__DARKLUA_BUNDLE_MODULES.s()local Plugins={}local Registry={{Key
 ='ScriptTools',Title='Script tools',Description=
 'Scripts, Anti Cheat, AC Tables and Actor Scripts tabs.'},{Key='Bridge',Title=
 'Web bridge',Description=
@@ -981,118 +1316,118 @@ OnProgress})return Ok,Note end function Plugins.UpdateBridge(OnProgress)return
 WebUpdate.Sync({OnProgress=OnProgress})end function Plugins.AutoUpdateBridge()if
 not Plugins.Enabled('Bridge')or not Plugins.Enabled('AutoWebUpdate')then return
 false,'auto web update disabled',0 end return WebUpdate.Auto()end return Plugins
-end function __DARKLUA_BUNDLE_MODULES.s()local v=__DARKLUA_BUNDLE_MODULES.cache.
-s if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.s=v end return v
+end function __DARKLUA_BUNDLE_MODULES.t()local v=__DARKLUA_BUNDLE_MODULES.cache.
+t if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.t=v end return v
 .c end end do local __modImpl=function()local Constants=__DARKLUA_BUNDLE_MODULES
 .b()local ExportViewer=__DARKLUA_BUNDLE_MODULES.n()local Services=
 __DARKLUA_BUNDLE_MODULES.c()local Strings=__DARKLUA_BUNDLE_MODULES.g()local
 Classify=__DARKLUA_BUNDLE_MODULES.h()local ScanFunctions=
-__DARKLUA_BUNDLE_MODULES.o()local Executor=__DARKLUA_BUNDLE_MODULES.i()local
-GcShared=__DARKLUA_BUNDLE_MODULES.j()local Source=__DARKLUA_BUNDLE_MODULES.k()
-local Data2Code=__DARKLUA_BUNDLE_MODULES.q()local Config=
-__DARKLUA_BUNDLE_MODULES.e()local Plugins=__DARKLUA_BUNDLE_MODULES.s()local
-HttpService=Services.HttpService local WebBridge={}local Socket=nil local
-SocketUrl=nil local Connected=false local LogSink=nil local StatusSink=nil local
-DefaultChunk=262144 local MaxChunk=1048576 local MaxListEntries=5000 local
-Sources=GcShared.Own({scripts=GcShared.Own({}),anticheat=GcShared.Own({}),actors
-=GcShared.Own({}),unknown=GcShared.Own({})})local KeyIndex=GcShared.Own({})local
-Log=function(Message)if LogSink then pcall(LogSink,tostring(Message))end end
-local SetStatus=function(Text)if StatusSink then pcall(StatusSink,tostring(Text)
-)end end local Encode=function(Value)local Ok,Text=pcall(function()return
-HttpService:JSONEncode(Value)end)if Ok and type(Text)=='string'then return Text
-end return nil end local Decode=function(Text)if type(Text)~='string'or Text==''
-then return nil end local Ok,Value=pcall(function()return HttpService:
-JSONDecode(Text)end)if Ok and type(Value)=='table'then return Value end return
-nil end local SafeText=function(Value)if type(Value)=='string'then return Value
-end local Ok,Text=pcall(Strings.SafeString,Value)if Ok and type(Text)=='string'
-then return Text end return''end local EntryKey=function(Entry)if type(Entry.key
-)=='string'and Entry.key~=''then return Entry.key end if typeof(Entry.script)==
-'Instance'then return Classify.ScriptKey(Entry.script)end return nil end local
-RebuildIndex=function()KeyIndex=GcShared.Own({})for _,Name in{'scripts',
-'anticheat','actors'}do local List=Sources[Name]if type(List)=='table'then for _
-,Entry in List do if type(Entry)=='table'then local Key=EntryKey(Entry)if Key
-then KeyIndex[Key]=Entry end end end end end end local FindEntry=function(Key)if
-type(Key)~='string'or Key==''then return nil end local Entry=KeyIndex[Key]if
-Entry then return Entry end RebuildIndex()return KeyIndex[Key]end local
-SerializeReasons=function(Entry)local Out={}if type(Entry.antiCheatReasons)==
-'table'then for _,Reason in Entry.antiCheatReasons do Out[#Out+1]=SafeText(
-Reason)end end return Out end local SerializeEntry=function(Entry)local Name=
-Entry.name if type(Name)~='string'and typeof(Entry.script)=='Instance'then local
-Ok,Value=pcall(function()return Entry.script.Name end)Name=Ok and Value or nil
-end local Parented=false if typeof(Entry.script)=='Instance'then local Ok,Parent
-=pcall(function()return Entry.script.Parent end)Parented=Ok and Parent~=nil end
-return{key=EntryKey(Entry)or'',name=SafeText(Name or'Script'),path=SafeText(
-Entry.path or Name or'Script'),context=SafeText(Entry.context or'Unknown'),class
-=SafeText(Entry.class or''),parented=Parented,isAntiCheat=Entry.isAntiCheat==
-true,reasons=SerializeReasons(Entry)}end local SerializeList=function(List)local
-Out={}if type(List)~='table'then return Out end for _,Entry in List do if type(
-Entry)=='table'then Out[#Out+1]=SerializeEntry(Entry)if#Out>=MaxListEntries then
-break end end end return Out end local FunctionCache=GcShared.Own({})local
-MaxValueChars=300 local MaxTableChars=20000 local SerializeFunction=function(
-Record,Index)return{index=Index or 0,name=SafeText(Record.name or'(anonymous)'),
-line=tonumber(Record.line)or 0,numparams=tonumber(Record.numparams)or 0,vargs=
-Record.vargs==true,hash=SafeText(Record.hash or''),source=SafeText(Record.source
-or'')}end local DecodeValue=function(Value)local Kind=typeof(Value)if Kind==
-'table'then local Ok,Code=pcall(Data2Code.Convert,Value,true)if Ok and type(Code
-)=='string'and Code~=''then if#Code>MaxTableChars then Code=Code:sub(1,
-MaxTableChars)..'\n--[[ truncated ]]'end return Code,true end return'<table>',
-false end local Text if Kind=='string'then Text=string.format('%q',Value)elseif
-Kind=='number'or Kind=='boolean'then Text=tostring(Value)elseif Kind=='nil'then
-Text='nil'elseif Kind=='Instance'then local Ok,Full=pcall(function()return Value
-:GetFullName()end)Text=Ok and Full or'<instance>'elseif Kind=='function'then
-local Ok,Name=pcall(function()return debug.info(Value,'n')end)Text=(Ok and type(
-Name)=='string'and Name~='')and('<function '..Name..'>')or'<function>'else local
-Ok,Code=pcall(Data2Code.Convert,Value,false)if Ok and type(Code)=='string'and
-Code~=''and Code~='nil'then Text=Code else Text='<'..Kind..'>'end end if#Text>
-MaxValueChars then Text=Text:sub(1,MaxValueChars)..'...'end return Text,false
-end local DecodeList=function(Values)local Out={}if type(Values)~='table'then
-return Out end for Index,Value in Values do local Entry={index=tonumber(Index)or
-#Out+1}if type(Value)=='string'then Entry.value=Value Entry.code=false else
-local Text,IsCode=DecodeValue(Value)Entry.value=Text Entry.code=IsCode==true end
-Out[#Out+1]=Entry end return Out end local RecordsFor=function(Entry,Key)local
-Cached=FunctionCache[Key]if Cached then return Cached end local Records=Entry.
-functions if type(Records)~='table'or#Records==0 then if typeof(Entry.script)==
-'Instance'then local Ok,List=pcall(ScanFunctions.CollectScriptFunctions,Entry.
-script)Records=Ok and List or{}else Records={}end end FunctionCache[Key]=Records
-return Records end local CollectFunctions=function(Entry,Key)local Records=
-RecordsFor(Entry,Key)local Out={}for Index,Record in Records do if type(Record)
-=='table'then Out[#Out+1]=SerializeFunction(Record,Index)end end return Out end
-local DecompileEntry=function(Entry)return Source.Decompile(Entry.script)end
-local BytecodeEntry=function(Entry)local Bytecode,Reason=Source.Bytecode(Entry.
-script)if not Bytecode then return nil,Reason end local Encoded=Source.Base64(
-Bytecode)if not Encoded then return nil,'base64 encode failed'end return Encoded
-,nil end local Actions={}Actions.ping=function()return{pong=true,clock=os.clock(
-)}end Actions.info=function()local PlaceName=''local Ok,Info=pcall(function()
-return cloneref(game:GetService('MarketplaceService')):GetProductInfo(game.
-PlaceId)end)if Ok and type(Info)=='table'and type(Info.Name)=='string'then
-PlaceName=Info.Name end local ExecutorName='unknown'if type(identifyexecutor)==
-'function'then local OkName,Name=pcall(identifyexecutor)if OkName and type(Name)
-=='string'then ExecutorName=Name end end return{executor=ExecutorName,placeId=
-game.PlaceId,jobId=game.JobId,placeName=PlaceName,counts={scripts=#Sources.
-scripts,anticheat=#Sources.anticheat,actors=#Sources.actors,unknown=#Sources.
-unknown}}end Actions.config=function()return{config=Config.All(),defaults=Config
-.Defaults(),plugins=Plugins.List()}end Actions.setconfig=function(Request)local
-Values=Request.values if type(Values)~='table'then if type(Request.key)~=
-'string'then return nil,'expected values or key'end Values={[Request.key]=
-Request.value}end local Ok,Changed=Config.Apply(Values)if not Ok then return nil
-,tostring(Changed)end return{changed=Changed,config=Config.All(),plugins=Plugins
-.List()}end Actions.saveall=function(Request)local SafeMode=
-__DARKLUA_BUNDLE_MODULES.m()local Path,Err,Saved,Failed=SafeMode.SaveAll(Request
-.includeCore==true)if not Path then return nil,tostring(Err)end return{path=Path
-,saved=Saved or 0,failed=Failed or 0,folder=SafeMode.GameFolder()}end Actions.
-export=function(Request)if WebBridge.Exporting()then return nil,
-'export already running'end local Options=type(Request.options)=='table'and
-Request.options or{}task.spawn(function()WebBridge.Export(Options)end)local
-Deadline=os.clock()+5 while os.clock()<Deadline and not WebBridge.Exporting()do
-task.wait(0.1)end return{started=true,status=WebBridge.ExportStatus()}end
-Actions.exportstatus=function()return WebBridge.ExportStatus()end Actions.
-sandbox=function()local SafeMode=__DARKLUA_BUNDLE_MODULES.m()local Done,Blocked=
-SafeMode.Sandbox()return{sandboxed=Done,blocked=Blocked}end Actions.
-downloadbridge=function()local Ok,Note=Plugins.DownloadBridge()if not Ok then
+__DARKLUA_BUNDLE_MODULES.o()local Actors=__DARKLUA_BUNDLE_MODULES.p()local
+Executor=__DARKLUA_BUNDLE_MODULES.i()local GcShared=__DARKLUA_BUNDLE_MODULES.j()
+local Source=__DARKLUA_BUNDLE_MODULES.k()local Data2Code=
+__DARKLUA_BUNDLE_MODULES.r()local Config=__DARKLUA_BUNDLE_MODULES.e()local
+Plugins=__DARKLUA_BUNDLE_MODULES.t()local HttpService=Services.HttpService local
+WebBridge={}local Socket=nil local SocketUrl=nil local Connected=false local
+LogSink=nil local StatusSink=nil local DefaultChunk=262144 local MaxChunk=
+1048576 local MaxListEntries=5000 local Sources=GcShared.Own({scripts=GcShared.
+Own({}),anticheat=GcShared.Own({}),actors=GcShared.Own({}),unknown=GcShared.Own(
+{})})local KeyIndex=GcShared.Own({})local Log=function(Message)if LogSink then
+pcall(LogSink,tostring(Message))end end local SetStatus=function(Text)if
+StatusSink then pcall(StatusSink,tostring(Text))end end local Encode=function(
+Value)local Ok,Text=pcall(function()return HttpService:JSONEncode(Value)end)if
+Ok and type(Text)=='string'then return Text end return nil end local Decode=
+function(Text)if type(Text)~='string'or Text==''then return nil end local Ok,
+Value=pcall(function()return HttpService:JSONDecode(Text)end)if Ok and type(
+Value)=='table'then return Value end return nil end local SafeText=function(
+Value)if type(Value)=='string'then return Value end local Ok,Text=pcall(Strings.
+SafeString,Value)if Ok and type(Text)=='string'then return Text end return''end
+local EntryKey=function(Entry)if type(Entry.key)=='string'and Entry.key~=''then
+return Entry.key end if typeof(Entry.script)=='Instance'then return Classify.
+ScriptKey(Entry.script)end return nil end local RebuildIndex=function()KeyIndex=
+GcShared.Own({})for _,Name in{'scripts','anticheat','actors'}do local List=
+Sources[Name]if type(List)=='table'then for _,Entry in List do if type(Entry)==
+'table'then local Key=EntryKey(Entry)if Key then KeyIndex[Key]=Entry end end end
+end end end local FindEntry=function(Key)if type(Key)~='string'or Key==''then
+return nil end local Entry=KeyIndex[Key]if Entry then return Entry end
+RebuildIndex()return KeyIndex[Key]end local SerializeReasons=function(Entry)
+local Out={}if type(Entry.antiCheatReasons)=='table'then for _,Reason in Entry.
+antiCheatReasons do Out[#Out+1]=SafeText(Reason)end end return Out end local
+SerializeEntry=function(Entry)local Name=Entry.name if type(Name)~='string'and
+typeof(Entry.script)=='Instance'then local Ok,Value=pcall(function()return Entry
+.script.Name end)Name=Ok and Value or nil end local Parented=false if typeof(
+Entry.script)=='Instance'then local Ok,Parent=pcall(function()return Entry.
+script.Parent end)Parented=Ok and Parent~=nil end return{key=EntryKey(Entry)or''
+,name=SafeText(Name or'Script'),path=SafeText(Entry.path or Name or'Script'),
+context=SafeText(Entry.context or'Unknown'),class=SafeText(Entry.class or''),
+parented=Parented,isAntiCheat=Entry.isAntiCheat==true,reasons=SerializeReasons(
+Entry)}end local SerializeList=function(List)local Out={}if type(List)~='table'
+then return Out end for _,Entry in List do if type(Entry)=='table'then Out[#Out+
+1]=SerializeEntry(Entry)if#Out>=MaxListEntries then break end end end return Out
+end local FunctionCache=GcShared.Own({})local MaxValueChars=300 local
+MaxTableChars=20000 local SerializeFunction=function(Record,Index)return{index=
+Index or 0,name=SafeText(Record.name or'(anonymous)'),line=tonumber(Record.line)
+or 0,numparams=tonumber(Record.numparams)or 0,vargs=Record.vargs==true,hash=
+SafeText(Record.hash or''),source=SafeText(Record.source or'')}end local
+DecodeValue=function(Value)local Kind=typeof(Value)if Kind=='table'then local Ok
+,Code=pcall(Data2Code.Convert,Value,true)if Ok and type(Code)=='string'and Code
+~=''then if#Code>MaxTableChars then Code=Code:sub(1,MaxTableChars)..
+'\n--[[ truncated ]]'end return Code,true end return'<table>',false end local
+Text if Kind=='string'then Text=string.format('%q',Value)elseif Kind=='number'or
+Kind=='boolean'then Text=tostring(Value)elseif Kind=='nil'then Text='nil'elseif
+Kind=='Instance'then local Ok,Full=pcall(function()return Value:GetFullName()end
+)Text=Ok and Full or'<instance>'elseif Kind=='function'then local Ok,Name=pcall(
+function()return debug.info(Value,'n')end)Text=(Ok and type(Name)=='string'and
+Name~='')and('<function '..Name..'>')or'<function>'else local Ok,Code=pcall(
+Data2Code.Convert,Value,false)if Ok and type(Code)=='string'and Code~=''and Code
+~='nil'then Text=Code else Text='<'..Kind..'>'end end if#Text>MaxValueChars then
+Text=Text:sub(1,MaxValueChars)..'...'end return Text,false end local DecodeList=
+function(Values)local Out={}if type(Values)~='table'then return Out end for
+Index,Value in Values do local Entry={index=tonumber(Index)or#Out+1}if type(
+Value)=='string'then Entry.value=Value Entry.code=false else local Text,IsCode=
+DecodeValue(Value)Entry.value=Text Entry.code=IsCode==true end Out[#Out+1]=Entry
+end return Out end local RecordsFor=function(Entry,Key)local Cached=
+FunctionCache[Key]if Cached then return Cached end local Records=Entry.functions
+if type(Records)~='table'or#Records==0 then if typeof(Entry.script)=='Instance'
+then local Ok,List=pcall(ScanFunctions.CollectScriptFunctions,Entry.script)
+Records=Ok and List or{}else Records={}end end FunctionCache[Key]=Records return
+Records end local CollectFunctions=function(Entry,Key)local Records=RecordsFor(
+Entry,Key)local Out={}for Index,Record in Records do if type(Record)=='table'
+then Out[#Out+1]=SerializeFunction(Record,Index)end end return Out end local
+DecompileEntry=function(Entry)return Source.Decompile(Entry.script)end local
+BytecodeEntry=function(Entry)local Bytecode,Reason=Source.Bytecode(Entry.script)
+if not Bytecode then return nil,Reason end local Encoded=Source.Base64(Bytecode)
+if not Encoded then return nil,'base64 encode failed'end return Encoded,nil end
+local Actions={}Actions.ping=function()return{pong=true,clock=os.clock()}end
+Actions.info=function()local PlaceName=''local Ok,Info=pcall(function()return
+cloneref(game:GetService('MarketplaceService')):GetProductInfo(game.PlaceId)end)
+if Ok and type(Info)=='table'and type(Info.Name)=='string'then PlaceName=Info.
+Name end local ExecutorName='unknown'if type(identifyexecutor)=='function'then
+local OkName,Name=pcall(identifyexecutor)if OkName and type(Name)=='string'then
+ExecutorName=Name end end return{executor=ExecutorName,placeId=game.PlaceId,
+jobId=game.JobId,placeName=PlaceName,counts={scripts=#Sources.scripts,anticheat=
+#Sources.anticheat,actors=#Sources.actors,unknown=#Sources.unknown}}end Actions.
+config=function()return{config=Config.All(),defaults=Config.Defaults(),plugins=
+Plugins.List()}end Actions.setconfig=function(Request)local Values=Request.
+values if type(Values)~='table'then if type(Request.key)~='string'then return
+nil,'expected values or key'end Values={[Request.key]=Request.value}end local Ok
+,Changed=Config.Apply(Values)if not Ok then return nil,tostring(Changed)end
+return{changed=Changed,config=Config.All(),plugins=Plugins.List()}end Actions.
+saveall=function(Request)local SafeMode=__DARKLUA_BUNDLE_MODULES.m()local Path,
+Err,Saved,Failed=SafeMode.SaveAll(Request.includeCore==true)if not Path then
+return nil,tostring(Err)end return{path=Path,saved=Saved or 0,failed=Failed or 0
+,folder=SafeMode.GameFolder()}end Actions.export=function(Request)if WebBridge.
+Exporting()then return nil,'export already running'end local Options=type(
+Request.options)=='table'and Request.options or{}task.spawn(function()WebBridge.
+Export(Options)end)local Deadline=os.clock()+5 while os.clock()<Deadline and not
+WebBridge.Exporting()do task.wait(0.1)end return{started=true,status=WebBridge.
+ExportStatus()}end Actions.exportstatus=function()return WebBridge.ExportStatus(
+)end Actions.sandbox=function()local SafeMode=__DARKLUA_BUNDLE_MODULES.m()local
+Done,Blocked=SafeMode.Sandbox()return{sandboxed=Done,blocked=Blocked}end Actions
+.downloadbridge=function()local Ok,Note=Plugins.DownloadBridge()if not Ok then
 return nil,tostring(Note)end return{note=tostring(Note),folder=Plugins.
 BridgeDir()}end Actions.webupdate=function(Request)local Ok,Note,Updated if
 Request.force==true then Ok,Note=Plugins.DownloadBridge()Updated=Ok and#
-__DARKLUA_BUNDLE_MODULES.r().Files()or 0 else Ok,Note,Updated=Plugins.
+__DARKLUA_BUNDLE_MODULES.s().Files()or 0 else Ok,Note,Updated=Plugins.
 UpdateBridge()end if not Ok then return nil,tostring(Note)end return{note=
 tostring(Note),updated=Updated or 0,folder=Plugins.BridgeDir()}end Actions.
 scripts=function()return{entries=SerializeList(Sources.scripts)}end Actions.
@@ -1129,58 +1464,62 @@ key=Request.key,index=tonumber(Request.index)or 0,kind=Kind,slot=Slot,value=Text
 Entry=FindEntry(Request.key)if not Entry then return nil,'unknown script key'end
 local Records=RecordsFor(Entry,Request.key)local Record=Records[tonumber(Request
 .index)or 0]if type(Record)~='table'then return nil,'unknown function index'end
-local Constants,Upvalues if type(Record.constants)=='table'then Constants=
-DecodeList(Record.constants)end if type(Record.upvalues)=='table'then Upvalues=
-DecodeList(Record.upvalues)end local Fn=Record.func if type(Fn)=='function'then
-if not Constants then local Ok,Values=pcall(debug.getconstants,Fn)Constants=Ok
-and DecodeList(Values)or{}end if not Upvalues then local Ok,Values=pcall(debug.
-getupvalues,Fn)Upvalues=Ok and DecodeList(Values)or{}end end return{key=Request.
-key,info=SerializeFunction(Record,tonumber(Request.index)or 0),constants=
-Constants or{},upvalues=Upvalues or{}}end local Chunked=function(Key,Text,
-Request)local Total=#Text local Offset=tonumber(Request.offset)or 1 if Offset<1
-then Offset=1 end local Limit=tonumber(Request.limit)or DefaultChunk if Limit<1
-then Limit=DefaultChunk elseif Limit>MaxChunk then Limit=MaxChunk end local
-Chunk=Text:sub(Offset,Offset+Limit-1)local NextOffset=Offset+#Chunk return{key=
-Key,offset=Offset,total=Total,nextOffset=NextOffset,done=NextOffset>Total,chunk=
-Chunk}end Actions.source=function(Request)local Entry=FindEntry(Request.key)if
-not Entry then return nil,'unknown script key'end local Text,Reason=
-DecompileEntry(Entry)if not Text then return nil,Reason or'decompile failed'end
-local Payload=Chunked(Request.key,Text,Request)Payload.source=Payload.chunk
-return Payload end Actions.bytecode=function(Request)local Entry=FindEntry(
-Request.key)if not Entry then return nil,'unknown script key'end local Encoded,
-Note=BytecodeEntry(Entry)if not Encoded then return nil,Note or'no bytecode'end
-local Payload=Chunked(Request.key,Encoded,Request)Payload.base64=Payload.chunk
-return Payload end local Send=function(Payload)if not Socket or not Connected
-then return false end local Text=Encode(Payload)if not Text then return false
-end local Ok=pcall(function()Socket:Send(Text)end)return Ok end local
-HandleRequest=function(Request)local Action=Actions[Request.action]if not Action
-then Send({type='response',id=Request.id,ok=false,error='unknown action'})return
-end local Ok,Data,Err=pcall(Action,Request)if not Ok then Send({type='response',
-id=Request.id,ok=false,error=SafeText(Data)})return end if Data==nil then Send({
-type='response',id=Request.id,ok=false,error=SafeText(Err or'failed')})return
-end Send({type='response',id=Request.id,ok=true,action=Request.action,data=Data}
-)end function WebBridge.Handle(RawMessage)local Message=Decode(RawMessage)if not
-Message then return end if Message.type=='request'then Log(('request: %s'):
-format(SafeText(Message.action)))task.spawn(HandleRequest,Message)return end if
-Message.type=='hello'then Log('peer connected')return end end function WebBridge
-.Publish(Name,List)if type(Name)~='string'or type(List)~='table'then return end
-Sources[Name]=List RebuildIndex()end function WebBridge.SetLogSink(Sink)LogSink=
-Sink end function WebBridge.SetStatusSink(Sink)StatusSink=Sink end function
-WebBridge.IsConnected()return Connected end function WebBridge.Url()return
-SocketUrl end function WebBridge.Supported()return Executor.WebSocketConnect()~=
-nil end function WebBridge.Connect(Url)if Connected then return false,
-'already connected'end local ConnectFn=Executor.WebSocketConnect()if not
-ConnectFn then return false,'this executor has no WebSocket support'end if type(
-Url)~='string'then return false,'enter a relay url'end Url=Url:match(
-'^%s*(.-)%s*$')or''if Url==''then return false,'enter a relay url'end if Url:
-sub(1,7)=='http://'then Url='ws://'..Url:sub(8)elseif Url:sub(1,8)=='https://'
-then Url='wss://'..Url:sub(9)elseif not Url:match('^wss?://')then if Url:match(
-'^%a[%w+.-]*://')then return false,'url must be ws:// or wss://'end Url='ws://'
-..Url end SetStatus('connecting to '..Url)local Ok,Result=pcall(ConnectFn,Url)if
-not Ok then local Reason=SafeText(Result)SetStatus('connect failed')Log(
-'connect failed: '..Reason)return false,Reason end if Result==nil or Result==
-false then SetStatus('connect failed')Log('connect returned no socket')return
-false,'connect returned no socket'end Socket=Result SocketUrl=Url Connected=true
+local Constants,Upvalues local Expanded=Record.ref and Actors.Expand(Record.ref)
+if Expanded then Constants=DecodeList(Expanded.constants or{})Upvalues=
+DecodeList(Expanded.upvalues or{})end if not Constants and type(Record.constants
+)=='table'then Constants=DecodeList(Record.constants)end if not Upvalues and
+type(Record.upvalues)=='table'then Upvalues=DecodeList(Record.upvalues)end local
+Fn=Record.func if type(Fn)=='function'then if not Constants then local Ok,Values
+=pcall(debug.getconstants,Fn)Constants=Ok and DecodeList(Values)or{}end if not
+Upvalues then local Ok,Values=pcall(debug.getupvalues,Fn)Upvalues=Ok and
+DecodeList(Values)or{}end end return{key=Request.key,info=SerializeFunction(
+Record,tonumber(Request.index)or 0),constants=Constants or{},upvalues=Upvalues
+or{}}end local Chunked=function(Key,Text,Request)local Total=#Text local Offset=
+tonumber(Request.offset)or 1 if Offset<1 then Offset=1 end local Limit=tonumber(
+Request.limit)or DefaultChunk if Limit<1 then Limit=DefaultChunk elseif Limit>
+MaxChunk then Limit=MaxChunk end local Chunk=Text:sub(Offset,Offset+Limit-1)
+local NextOffset=Offset+#Chunk return{key=Key,offset=Offset,total=Total,
+nextOffset=NextOffset,done=NextOffset>Total,chunk=Chunk}end Actions.source=
+function(Request)local Entry=FindEntry(Request.key)if not Entry then return nil,
+'unknown script key'end local Text,Reason=DecompileEntry(Entry)if not Text then
+return nil,Reason or'decompile failed'end local Payload=Chunked(Request.key,Text
+,Request)Payload.source=Payload.chunk return Payload end Actions.bytecode=
+function(Request)local Entry=FindEntry(Request.key)if not Entry then return nil,
+'unknown script key'end local Encoded,Note=BytecodeEntry(Entry)if not Encoded
+then return nil,Note or'no bytecode'end local Payload=Chunked(Request.key,
+Encoded,Request)Payload.base64=Payload.chunk return Payload end local Send=
+function(Payload)if not Socket or not Connected then return false end local Text
+=Encode(Payload)if not Text then return false end local Ok=pcall(function()
+Socket:Send(Text)end)return Ok end local HandleRequest=function(Request)local
+Action=Actions[Request.action]if not Action then Send({type='response',id=
+Request.id,ok=false,error='unknown action'})return end local Ok,Data,Err=pcall(
+Action,Request)if not Ok then Send({type='response',id=Request.id,ok=false,error
+=SafeText(Data)})return end if Data==nil then Send({type='response',id=Request.
+id,ok=false,error=SafeText(Err or'failed')})return end Send({type='response',id=
+Request.id,ok=true,action=Request.action,data=Data})end function WebBridge.
+Handle(RawMessage)local Message=Decode(RawMessage)if not Message then return end
+if Message.type=='request'then Log(('request: %s'):format(SafeText(Message.
+action)))task.spawn(HandleRequest,Message)return end if Message.type=='hello'
+then Log('peer connected')return end end function WebBridge.Publish(Name,List)if
+type(Name)~='string'or type(List)~='table'then return end Sources[Name]=List
+RebuildIndex()end function WebBridge.SetLogSink(Sink)LogSink=Sink end function
+WebBridge.SetStatusSink(Sink)StatusSink=Sink end function WebBridge.IsConnected(
+)return Connected end function WebBridge.Url()return SocketUrl end function
+WebBridge.Supported()return Executor.WebSocketConnect()~=nil end function
+WebBridge.Connect(Url)if Connected then return false,'already connected'end
+local ConnectFn=Executor.WebSocketConnect()if not ConnectFn then return false,
+'this executor has no WebSocket support'end if type(Url)~='string'then return
+false,'enter a relay url'end Url=Url:match('^%s*(.-)%s*$')or''if Url==''then
+return false,'enter a relay url'end if Url:sub(1,7)=='http://'then Url='ws://'..
+Url:sub(8)elseif Url:sub(1,8)=='https://'then Url='wss://'..Url:sub(9)elseif not
+Url:match('^wss?://')then if Url:match('^%a[%w+.-]*://')then return false,
+'url must be ws:// or wss://'end Url='ws://'..Url end SetStatus('connecting to '
+..Url)local Ok,Result=pcall(ConnectFn,Url)if not Ok then local Reason=SafeText(
+Result)SetStatus('connect failed')Log('connect failed: '..Reason)return false,
+Reason end if Result==nil or Result==false then SetStatus('connect failed')Log(
+'connect returned no socket')return false,'connect returned no socket'end Socket
+=Result SocketUrl=Url Connected=true task.spawn(function()while task.wait(30)and
+Connected and Socket==Result do pcall(function()Result:Send('ping')end)end end)
 pcall(function()Socket.OnMessage:Connect(function(Message,IsBinary)if IsBinary
 then return end WebBridge.Handle(Message)end)end)pcall(function()Socket.OnClose:
 Connect(function()Connected=false SetStatus('disconnected')Log('socket closed')
@@ -1321,106 +1660,103 @@ false local ManifestText=Encode(Manifest)if ManifestText then WriteText(Base..
 '/manifest.json',ManifestText)WriteText(Base..'/data/manifest'..DataExt,
 'GCV_MANIFEST('..ManifestText..');')end WriteViewer()pcall(delfile,CurrentPath)
 ExportState.viewer=ViewerFile ExportRunning=false Report('done')return Base,Done
-,Failed end return WebBridge end function __DARKLUA_BUNDLE_MODULES.t()local v=
-__DARKLUA_BUNDLE_MODULES.cache.t if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.t=v end return v.c end end do local __modImpl=
-function()local Services=__DARKLUA_BUNDLE_MODULES.c()local Gc=
-__DARKLUA_BUNDLE_MODULES.j()local Source=__DARKLUA_BUNDLE_MODULES.k()local
-RunService=Services.RunService local hasLclosure=type(islclosure)=='function'
-local AntiCheat={}local LURAPH_MARKERS={{find='LPH_',token='LPH_[%w_]*'},{find=
-'lph_',token='lph_[%w_]*'},{find='URAPH',token='[%w_]*URAPH[%w_]*'},{find=
-'uraph',token='[%w_]*uraph[%w_]*'}}local LURAPH_MIN_LEN=4 local TOKEN_LOOKBACK=
-16 local OBF_MIN_STRING_LEN=4096 local OBF_MIN_BYTECODE=200000 local
-BLOB_SAMPLE_LIMIT=2048 local BLOB_BINARY_RATIO=0.1 local findLuraphMarker=
-function(haystack)if type(haystack)~='string'or#haystack<LURAPH_MIN_LEN then
-return nil end for _,marker in LURAPH_MARKERS do local at=string.find(haystack,
-marker.find,1,true)if at then local from=math.max(1,at-TOKEN_LOOKBACK)return
-string.match(haystack,marker.token,from)or marker.find end end return nil end
-local looksBinary=function(s)local len=#s local step=len>BLOB_SAMPLE_LIMIT and(
-math.floor(len/BLOB_SAMPLE_LIMIT))or 1 local sampled,binary=0,0 for i=1,len,step
-do local b=string.byte(s,i)sampled=sampled+1 if b<9 or(b>13 and b<32)or b>126
-then binary=binary+1 end end return sampled>0 and(binary/sampled)>=
-BLOB_BINARY_RATIO end function AntiCheat.Detect(scriptRef)local bc=Source.
-Bytecode(scriptRef)if type(bc)~='string'or bc==''then return false,nil end local
-marker=findLuraphMarker(bc)if marker then return true,('bytecode contains %q'):
-format(marker)end if#bc>=OBF_MIN_BYTECODE then return true,(
-'unusually large bytecode (%d bytes)'):format(#bc)end return false,nil end local
-keywordInString=function(s)local len=#s if len<LURAPH_MIN_LEN then return false
-end if len>=OBF_MIN_STRING_LEN and looksBinary(s)then return(
-'luraph payload (%d byte binary blob)'):format(len)end local marker=
-findLuraphMarker(s)if marker then return('contains %q'):format(marker)end return
-false end local scanFlat=function(tbl)if type(tbl)~='table'then return false end
-for _,v in tbl do if type(v)=='string'then local hit=keywordInString(v)if hit
-then return hit end end end return false end local keywordMapCache=nil local
-keywordMapVersion=-1 function AntiCheat.KeywordMap(onYield)local gc=Gc.Snapshot(
-)local version=Gc.Version()if keywordMapCache and keywordMapVersion==version
-then return keywordMapCache end local hits={}local processed=0 for _,obj in gc
-do if type(obj)=='function'and(not hasLclosure or islclosure(obj))and not Gc.
-IsExec(obj)then local reason=false local okC,consts=pcall(debug.getconstants,obj
-)if okC then reason=scanFlat(consts)end if not reason then local okU,ups=pcall(
-debug.getupvalues,obj)if okU then reason=scanFlat(ups)end end if reason then
-local env=Gc.Fenv(obj)if type(env)=='table'then local ok2,s=pcall(rawget,env,
-'script')if ok2 and typeof(s)=='Instance'then if hits[s]==nil then hits[s]=
-reason end local okId,id=pcall(function()return s:GetDebugId()end)if okId and id
-and not hits[id]then hits[id]=reason end end end end end processed=processed+1
-if processed%300==0 then if onYield then onYield()else RunService.Heartbeat:
-Wait()end end end keywordMapCache=hits keywordMapVersion=version return hits end
-return AntiCheat end function __DARKLUA_BUNDLE_MODULES.u()local v=
+,Failed end return WebBridge end function __DARKLUA_BUNDLE_MODULES.u()local v=
 __DARKLUA_BUNDLE_MODULES.cache.u if not v then v={c=__modImpl()}
 __DARKLUA_BUNDLE_MODULES.cache.u=v end return v.c end end do local __modImpl=
+function()local Gc=__DARKLUA_BUNDLE_MODULES.j()local Source=
+__DARKLUA_BUNDLE_MODULES.k()local hasLclosure=type(islclosure)=='function'local
+AntiCheat={}local LURAPH_MARKERS={{find='LPH_',token='LPH_[%w_]*'},{find='lph_',
+token='lph_[%w_]*'},{find='URAPH',token='[%w_]*URAPH[%w_]*'},{find='uraph',token
+='[%w_]*uraph[%w_]*'}}local LURAPH_MIN_LEN=4 local TOKEN_LOOKBACK=16 local
+OBF_MIN_STRING_LEN=4096 local OBF_MIN_BYTECODE=200000 local BLOB_SAMPLE_LIMIT=
+2048 local BLOB_BINARY_RATIO=0.1 local findLuraphMarker=function(haystack)if
+type(haystack)~='string'or#haystack<LURAPH_MIN_LEN then return nil end for _,
+marker in LURAPH_MARKERS do local at=string.find(haystack,marker.find,1,true)if
+at then local from=math.max(1,at-TOKEN_LOOKBACK)return string.match(haystack,
+marker.token,from)or marker.find end end return nil end local looksBinary=
+function(s)local len=#s local step=len>BLOB_SAMPLE_LIMIT and(math.floor(len/
+BLOB_SAMPLE_LIMIT))or 1 local sampled,binary=0,0 for i=1,len,step do local b=
+string.byte(s,i)sampled=sampled+1 if b<9 or(b>13 and b<32)or b>126 then binary=
+binary+1 end end return sampled>0 and(binary/sampled)>=BLOB_BINARY_RATIO end
+function AntiCheat.Detect(scriptRef)local bc=Source.Bytecode(scriptRef)if type(
+bc)~='string'or bc==''then return false,nil end local marker=findLuraphMarker(bc
+)if marker then return true,('bytecode contains %q'):format(marker)end if#bc>=
+OBF_MIN_BYTECODE then return true,('unusually large bytecode (%d bytes)'):
+format(#bc)end return false,nil end local keywordInString=function(s)local len=#
+s if len<LURAPH_MIN_LEN then return false end if len>=OBF_MIN_STRING_LEN and
+looksBinary(s)then return('luraph payload (%d byte binary blob)'):format(len)end
+local marker=findLuraphMarker(s)if marker then return('contains %q'):format(
+marker)end return false end local scanFlat=function(tbl)if type(tbl)~='table'
+then return false end for _,v in tbl do if type(v)=='string'then local hit=
+keywordInString(v)if hit then return hit end end end return false end local
+keywordMapCache=nil local keywordMapVersion=-1 function AntiCheat.KeywordMap()
+local gc=Gc.Snapshot()local version=Gc.Version()if keywordMapCache and
+keywordMapVersion==version then return keywordMapCache end local hits={}for _,
+obj in gc do if type(obj)=='function'and(not hasLclosure or islclosure(obj))and
+not Gc.IsExec(obj)then local reason=false local okC,consts=pcall(debug.
+getconstants,obj)if okC then reason=scanFlat(consts)end if not reason then local
+okU,ups=pcall(debug.getupvalues,obj)if okU then reason=scanFlat(ups)end end if
+reason then local env=Gc.Fenv(obj)if type(env)=='table'then local ok2,s=pcall(
+rawget,env,'script')if ok2 and typeof(s)=='Instance'then if hits[s]==nil then
+hits[s]=reason end local okId,id=pcall(function()return s:GetDebugId()end)if
+okId and id and not hits[id]then hits[id]=reason end end end end end Gc.Step()
+end keywordMapCache=hits keywordMapVersion=version return hits end return
+AntiCheat end function __DARKLUA_BUNDLE_MODULES.v()local v=
+__DARKLUA_BUNDLE_MODULES.cache.v if not v then v={c=__modImpl()}
+__DARKLUA_BUNDLE_MODULES.cache.v=v end return v.c end end do local __modImpl=
 function()local Services=__DARKLUA_BUNDLE_MODULES.c()local PlayerRefs=
 __DARKLUA_BUNDLE_MODULES.f()local Gc=__DARKLUA_BUNDLE_MODULES.j()local Executor=
 __DARKLUA_BUNDLE_MODULES.i()local Source=__DARKLUA_BUNDLE_MODULES.k()local
-Classify=__DARKLUA_BUNDLE_MODULES.h()local AntiCheat=__DARKLUA_BUNDLE_MODULES.u(
-)local RunService=Services.RunService local LocalPlayer=PlayerRefs.LocalPlayer
-local Caps={getscripts=type(getscripts)=='function',getrunningscripts=type(
-getrunningscripts)=='function',getloadedmodules=type(getloadedmodules)==
-'function',getmodules=type(getmodules)=='function',getnilinstances=type(
-getnilinstances)=='function',getscriptfromthread=type(getscriptfromthread)==
-'function',getallthreads=type(getallthreads)=='function',compareinstances=type(
-compareinstances)=='function',getscriptbytecode=type(getscriptbytecode)==
-'function',getscriptclosure=type(getscriptclosure)=='function'}local
-SCRIPT_CONTAINERS={'ReplicatedStorage','ReplicatedFirst','StarterGui',
-'StarterPack','Lighting','SoundService','TextChatService','MaterialService',
-'Chat'}local YIELD_EVERY=2000 local safeName=function(inst)local ok,name=pcall(
-function()return inst.Name end)return(ok and type(name)=='string')and name or
-nil end local fullNameOf=function(inst,knownName)local ok,path=pcall(function()
-return inst:GetFullName()end)if ok and type(path)=='string'and path~=''then
-return path end return knownName or'?'end local isReachable=function(inst)local
-ok,reachable=pcall(function()return inst:IsDescendantOf(game)end)return ok and
-reachable==true end local scriptFingerprint=function(inst,hashFn)if hashFn then
-local ok,h=pcall(hashFn,inst)if ok and type(h)=='string'and h~=''then return h
-end end if Caps.getscriptbytecode then local ok,bc=pcall(getscriptbytecode,inst)
-if ok and type(bc)=='string'and bc~=''then return bc end end return nil end
-local scriptChunkName=function(inst)if not Caps.getscriptclosure then return nil
-end local okCl,cl=pcall(getscriptclosure,inst)if not okCl or type(cl)~=
-'function'then return nil end local okSrc,src=pcall(function()return debug.info(
-cl,'s')end)if okSrc and type(src)=='string'and src~=''then return src end return
-nil end local dropUnparentedDuplicates=function(results)local names={}local
-reachable={}local reachableNames={}local reachablePaths={}local orphanCount=0
-for index,entry in results do local inst=entry.script local live=isReachable(
-inst)local name=safeName(inst)names[index]=name reachable[index]=live if live
-then if name then reachableNames[name]=true end if type(entry.path)=='string'and
-entry.path~=''then reachablePaths[entry.path]=true end else orphanCount=
-orphanCount+1 end end if orphanCount==0 then return results end local hashFn=
-Executor.ScriptHash()local prints={}local printsBuilt=false local buildPrints=
-function()if printsBuilt then return end printsBuilt=true for index,entry in
-results do local name=names[index]if reachable[index]and name and reachableNames
-[name]then local fp=scriptFingerprint(entry.script,hashFn)if fp then prints[fp]=
-true end end end end local filtered={}for index,entry in results do local keep=
-true if not reachable[index]then local chunk=scriptChunkName(entry.script)if
-chunk and reachablePaths[chunk]then keep=false else local name=names[index]if
-name and reachableNames[name]then buildPrints()local fp=scriptFingerprint(entry.
-script,hashFn)if fp and prints[fp]then keep=false end end end end if keep then
-filtered[#filtered+1]=entry end end return filtered end local GetScripts=
-function(_reason,actorKeys)actorKeys=actorKeys or{}local keywordHits=AntiCheat.
+Classify=__DARKLUA_BUNDLE_MODULES.h()local AntiCheat=__DARKLUA_BUNDLE_MODULES.v(
+)local LocalPlayer=PlayerRefs.LocalPlayer local Caps={getscripts=type(getscripts
+)=='function',getrunningscripts=type(getrunningscripts)=='function',
+getloadedmodules=type(getloadedmodules)=='function',getmodules=type(getmodules)
+=='function',getnilinstances=type(getnilinstances)=='function',
+getscriptfromthread=type(getscriptfromthread)=='function',getallthreads=type(
+getallthreads)=='function',compareinstances=type(compareinstances)=='function',
+getscriptbytecode=type(getscriptbytecode)=='function',getscriptclosure=type(
+getscriptclosure)=='function'}local SCRIPT_CONTAINERS={'ReplicatedStorage',
+'ReplicatedFirst','StarterGui','StarterPack','Lighting','SoundService',
+'TextChatService','MaterialService','Chat'}local safeName=function(inst)local ok
+,name=pcall(function()return inst.Name end)return(ok and type(name)=='string')
+and name or nil end local fullNameOf=function(inst,knownName)local ok,path=
+pcall(function()return inst:GetFullName()end)if ok and type(path)=='string'and
+path~=''then return path end return knownName or'?'end local isReachable=
+function(inst)local ok,reachable=pcall(function()return inst:IsDescendantOf(game
+)end)return ok and reachable==true end local scriptFingerprint=function(inst,
+hashFn)if hashFn then local ok,h=pcall(hashFn,inst)if ok and type(h)=='string'
+and h~=''then return h end end if Caps.getscriptbytecode then local ok,bc=pcall(
+getscriptbytecode,inst)if ok and type(bc)=='string'and bc~=''then return bc end
+end return nil end local scriptChunkName=function(inst)if not Caps.
+getscriptclosure then return nil end local okCl,cl=pcall(getscriptclosure,inst)
+if not okCl or type(cl)~='function'then return nil end local okSrc,src=pcall(
+function()return debug.info(cl,'s')end)if okSrc and type(src)=='string'and src~=
+''then return src end return nil end local dropUnparentedDuplicates=function(
+results)local names={}local reachable={}local reachableNames={}local
+reachablePaths={}local orphanCount=0 for index,entry in results do Gc.Step()
+local inst=entry.script local live=isReachable(inst)local name=safeName(inst)
+names[index]=name reachable[index]=live if live then if name then reachableNames
+[name]=true end if type(entry.path)=='string'and entry.path~=''then
+reachablePaths[entry.path]=true end else orphanCount=orphanCount+1 end end if
+orphanCount==0 then return results end local hashFn=Executor.ScriptHash()local
+prints={}local printsBuilt=false local buildPrints=function()if printsBuilt then
+return end printsBuilt=true for index,entry in results do Gc.Step()local name=
+names[index]if reachable[index]and name and reachableNames[name]then local fp=
+scriptFingerprint(entry.script,hashFn)if fp then prints[fp]=true end end end end
+local filtered={}for index,entry in results do Gc.Step()local keep=true if not
+reachable[index]then local chunk=scriptChunkName(entry.script)if chunk and
+reachablePaths[chunk]then keep=false else local name=names[index]if name and
+reachableNames[name]then buildPrints()local fp=scriptFingerprint(entry.script,
+hashFn)if fp and prints[fp]then keep=false end end end end if keep then filtered
+[#filtered+1]=entry end end return filtered end local GetScripts=function(
+_reason,actorKeys)actorKeys=actorKeys or{}local keywordHits=AntiCheat.
 KeywordMap()local clientContext=function(inst)local ok,context=pcall(function()
 if inst:IsA('LocalScript')then return'LocalScript'elseif inst:IsA('ModuleScript'
 )then return'ModuleScript'elseif inst:IsA('Script')and inst.RunContext==Enum.
 RunContext.Client then return'Script(Client)'end return nil end)return ok and
-context or nil end local results={}local seen={}local seenRef={}local processed=
-0 local isLocalPlayer=function(plr)if plr==LocalPlayer then return true end if
-Caps.compareinstances then local ok,same=pcall(compareinstances,plr,LocalPlayer)
+context or nil end local results={}local seen={}local seenRef={}local
+isLocalPlayer=function(plr)if plr==LocalPlayer then return true end if Caps.
+compareinstances then local ok,same=pcall(compareinstances,plr,LocalPlayer)
 return ok and same==true end return false end local isOtherPlayerScript=function
 (inst)local ok,plr=pcall(function()return inst:FindFirstAncestorWhichIsA(
 'Player')end)return ok and plr~=nil and not isLocalPlayer(plr)end local
@@ -1443,8 +1779,7 @@ detected then isAnti=true antiReasons[1]=reason end end results[#results+1]=Gc.
 Own({script=inst,path=fullPath,context=context,key=key,isAntiCheat=isAnti,
 antiCheatReasons=antiReasons})end local drain=function(list)if type(list)~=
 'table'then return 0 end local count=0 for _,inst in list do count=count+1
-consider(inst)processed=processed+1 if processed%YIELD_EVERY==0 then RunService.
-Heartbeat:Wait()end end return count end local enumerated=0 for _,getter in{
+consider(inst)Gc.Step()end return count end local enumerated=0 for _,getter in{
 getscripts,getrunningscripts,getloadedmodules,getmodules}do if type(getter)==
 'function'then local ok,list=pcall(getter)if ok then enumerated=enumerated+
 drain(list)end end end if Caps.getnilinstances then local ok,list=pcall(
@@ -1452,8 +1787,7 @@ getnilinstances)if ok then drain(list)end end if Caps.getscriptfromthread and
 Caps.getallthreads then local okThreads,threads=pcall(getallthreads)if okThreads
 and type(threads)=='table'then for _,thread in threads do local okScr,scr=pcall(
 getscriptfromthread,thread)if okScr and typeof(scr)=='Instance'and isReachable(
-scr)then consider(scr)processed=processed+1 if processed%YIELD_EVERY==0 then
-RunService.Heartbeat:Wait()end end end end end for _,serviceName in
+scr)then consider(scr)end Gc.Step()end end end for _,serviceName in
 SCRIPT_CONTAINERS do local okService,service=pcall(function()return Services[
 serviceName]end)if okService and service then local okDesc,descendants=pcall(
 function()return service:GetDescendants()end)if okDesc then drain(descendants)
@@ -1466,249 +1800,13 @@ GetDescendants()end)if okDesc then drain(descendants)end end end end if
 enumerated==0 then local okWs,descendants=pcall(function()return Services.
 Workspace:GetDescendants()end)if okWs then drain(descendants)end end return
 dropUnparentedDuplicates(results)end return GetScripts end function
-__DARKLUA_BUNDLE_MODULES.v()local v=__DARKLUA_BUNDLE_MODULES.cache.v if not v
-then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.v=v end return v.c end end
-do local __modImpl=function()local Services=__DARKLUA_BUNDLE_MODULES.c()local Gc
-=__DARKLUA_BUNDLE_MODULES.j()local Classify=__DARKLUA_BUNDLE_MODULES.h()local
-RunService=Services.RunService local Actors={}local COLLECTOR=
-[[    local channelId = ...
-    local ch = get_comm_channel(channelId)
-    if not ch then return end
-
-    local function classify(inst)
-        local ok, cls = pcall(function() return inst.ClassName end)
-        return ok and cls or "Unknown"
-    end
-    local function fullName(inst)
-        local ok, n = pcall(function() return inst:GetFullName() end)
-        return ok and n or inst.Name
-    end
-    local function debugId(inst)
-        local ok, id = pcall(function() return inst:GetDebugId() end)
-        return ok and id or fullName(inst)
-    end
-    local function safeStr(v)
-        local ok, r = pcall(function() return tostring(v) end)
-        return ok and r or "<value>"
-    end
-    local function decode(v)
-        local t = typeof(v)
-        if t == "string" then
-            return string.format("%q", v)
-        elseif t == "number" or t == "boolean" then
-            return safeStr(v)
-        elseif t == "Instance" then
-            local ok, fn = pcall(function() return v:GetFullName() end)
-            return ok and fn or "<instance>"
-        elseif t == "table" then
-            return "<table>"
-        elseif t == "function" then
-            return "<function>"
-        end
-        return "<" .. t .. ">"
-    end
-    local function funcInfo(fn)
-        local ok, s, l, n, np, va = pcall(function()
-            return debug.info(fn, "slna")
-        end)
-        if ok then
-            return s, l, n, np, va
-        end
-        return nil, nil, nil, nil, nil
-    end
-
-    local execFrags = { "GcView", "awakenkn", "Dear-ReGui", "ReGui" }
-    local function isExecScript(inst)
-        local okN, name = pcall(function() return inst.Name end)
-        local okF, full = pcall(function() return inst:GetFullName() end)
-        for _, frag in execFrags do
-            if okN and type(name) == "string" and string.find(name, frag, 1, true) then
-                return true
-            end
-            if okF and type(full) == "string" and string.find(full, frag, 1, true) then
-                return true
-            end
-        end
-        return false
-    end
-
-    local scriptsSeen = {}
-    local scriptList = {}
-    local function consider(inst)
-        if typeof(inst) ~= "Instance" then return end
-        if not inst:IsA("LuaSourceContainer") then return end
-        if isExecScript(inst) then return end
-        local id = debugId(inst)
-        if scriptsSeen[id] then return end
-        scriptsSeen[id] = true
-        scriptList[#scriptList + 1] = { inst = inst, id = id }
-        ch:Fire({
-            kind = "script",
-            script = inst,
-            key = id,
-            name = inst.Name,
-            path = fullName(inst),
-            class = classify(inst),
-        })
-    end
-
-    if type(getscripts) == "function" then
-        local ok, scripts = pcall(getscripts)
-        if ok and type(scripts) == "table" then
-            for _, s in scripts do consider(s) end
-        end
-    end
-    if type(getrunningscripts) == "function" then
-        local ok, rs = pcall(getrunningscripts)
-        if ok and type(rs) == "table" then
-            for _, s in rs do consider(s) end
-        end
-    end
-    if type(getloadedmodules) == "function" then
-        local ok, lm = pcall(getloadedmodules)
-        if ok and type(lm) == "table" then
-            for _, s in lm do consider(s) end
-        end
-    end
-
-    local function fireFunction(scriptId, fn)
-        local s, l, n, np, va = funcInfo(fn)
-        local consts, ups = {}, {}
-        local okc, c = pcall(function() return debug.getconstants(fn) end)
-        if okc and type(c) == "table" then
-            for i, v in c do consts[i] = decode(v) end
-        end
-        local oku, u = pcall(function() return debug.getupvalues(fn) end)
-        if oku and type(u) == "table" then
-            for i, v in u do ups[i] = decode(v) end
-        end
-        local parts = {}
-        for _, v in consts do parts[#parts + 1] = v end
-        for _, v in ups do parts[#parts + 1] = v end
-        local hash
-        if type(getfunctionhash) == "function" then
-            local okh, h = pcall(getfunctionhash, fn)
-            if okh then hash = h end
-        end
-        ch:Fire({
-            kind = "function",
-            key = scriptId,
-            func = fn,
-            name = (n and n ~= "") and n or "(anonymous)",
-            line = l,
-            numparams = np,
-            vargs = va,
-            hash = hash,
-            constants = consts,
-            upvalues = ups,
-            valueIndex = string.lower(table.concat(parts, " ")),
-        })
-    end
-    for _, obj in getgc(true) do
-        if type(obj) == "function"
-            and (not islclosure or islclosure(obj))
-            and not (isexecutorclosure and isexecutorclosure(obj))
-        then
-            local matchedId
-            local okEnv, env = pcall(getfenv, obj)
-            if okEnv and type(env) == "table" then
-                local s = rawget(env, "script")
-                if typeof(s) == "Instance" then
-                    local id = debugId(s)
-                    if scriptsSeen[id] then
-                        matchedId = id
-                    end
-                end
-            end
-            if not matchedId then
-                local src = funcInfo(obj)
-                if type(src) == "string" then
-                    for _, sc in scriptList do
-                        if string.find(src, sc.inst.Name, 1, true) then
-                            matchedId = sc.id
-                            break
-                        end
-                    end
-                end
-            end
-            if matchedId then
-                fireFunction(matchedId, obj)
-            end
-        end
-    end
-
-    ch:Fire({ kind = "done" })
-]]
-function Actors.Collect(timeout)timeout=timeout or 3 local results={}local seen=
-{}if type(create_comm_channel)~='function'then return results end local
-canExecuteStates=type(getactorstates)=='function'local canRunOnActor=type(
-getactors)=='function'and type(run_on_actor)=='function'if not canExecuteStates
-and not canRunOnActor then return results end local channelId,channel=
-create_comm_channel()if not channel then return results end local pending=0
-local byKey={}local conn conn=channel.Event:Connect(function(payload)if type(
-payload)~='table'then return end if payload.kind=='done'then pending=pending-1
-return end Gc.Own(payload)Gc.Own(payload.constants)Gc.Own(payload.upvalues)if
-payload.kind=='script'then local key=payload.key if key and not seen[key]then if
-Classify.IsExecutorScript(payload.script,payload.path)then seen[key]=true return
-end seen[key]=true local entry=Gc.Own({script=payload.script,path=payload.path
-or payload.name or'ActorScript',context='Actor',name=payload.name,class=payload.
-class,key=key,functions=Gc.Own({})})byKey[key]=entry table.insert(results,entry)
-end return end if payload.kind=='function'then local entry=byKey[payload.key]if
-entry then table.insert(entry.functions,Gc.Own({func=payload.func,name=payload.
-name,line=payload.line,numparams=payload.numparams,vargs=payload.vargs,hash=
-payload.hash,constants=payload.constants,upvalues=payload.upvalues,valueIndex=
-payload.valueIndex}))end end end)local dispatchedStates={}local gameStateId if
-type(getgamestate)=='function'then local okGame,gameState=pcall(getgamestate)if
-okGame and gameState then local okId,id=pcall(function()return gameState.Id end)
-if okId then gameStateId=id end end end local stateId=function(state)local ok,id
-=pcall(function()return state.Id end)return ok and id or nil end local
-isActorState=function(state)local ok,flag=pcall(function()return state.
-IsActorState end)if ok and flag~=nil then return flag==true end local id=
-stateId(state)return gameStateId==nil or id==nil or id~=gameStateId end local
-dispatchState=function(state)if state==nil or not isActorState(state)then return
-false end local id=stateId(state)if id~=nil then if dispatchedStates[id]then
-return true end dispatchedStates[id]=true end local ok=pcall(function()state:
-Execute(COLLECTOR,channelId)end)if ok then pending=pending+1 return true end
-return false end local actorTargets={}local actorSeen={}local addActor=function(
-actor)if typeof(actor)~='Instance'or actorSeen[actor]then return end actorSeen[
-actor]=true actorTargets[#actorTargets+1]=actor end local states={}if
-canExecuteStates then local okStates,list=pcall(getactorstates)if okStates and
-type(list)=='table'then for _,state in list do states[#states+1]=state end end
-end for _,state in states do dispatchState(state)local okActorsOfState,list=
-pcall(function()return state:GetActors()end)if okActorsOfState and type(list)==
-'table'then for _,actor in list do addActor(actor)end end end if type(getactors)
-=='function'then local okActors,list=pcall(getactors)if okActors and type(list)
-=='table'then for _,actor in list do addActor(actor)end end end if canRunOnActor
-then for _,actor in actorTargets do local covered=false if type(getluastate)==
-'function'then local okState,state=pcall(getluastate,actor)if okState and state
-then local id=stateId(state)if id~=nil and dispatchedStates[id]then covered=true
-end end end if not covered then if pcall(run_on_actor,actor,COLLECTOR,channelId)
-then pending=pending+1 end end end end if pending==0 then if conn then pcall(
-function()conn:Disconnect()end)end return results end local start=os.clock()
-while pending>0 and(os.clock()-start)<timeout do RunService.Heartbeat:Wait()end
-if conn then pcall(function()conn:Disconnect()end)end return results end
-function Actors.Keys()local keys={}local actors={}local actorSeen={}local
-addActor=function(actor)if typeof(actor)~='Instance'or actorSeen[actor]then
-return end actorSeen[actor]=true actors[#actors+1]=actor end if type(
-getactorstates)=='function'then local okStates,states=pcall(getactorstates)if
-okStates and type(states)=='table'then for _,state in states do local okList,
-list=pcall(function()return state:GetActors()end)if okList and type(list)==
-'table'then for _,actor in list do addActor(actor)end end end end end if type(
-getactors)=='function'then local okActors,list=pcall(getactors)if okActors and
-type(list)=='table'then for _,actor in list do addActor(actor)end end end for _,
-actor in actors do local okDesc,descendants=pcall(function()return actor:
-GetDescendants()end)if okDesc and type(descendants)=='table'then for _,inst in
-descendants do local okIs,isLsc=pcall(function()return inst:IsA(
-'LuaSourceContainer')end)if okIs and isLsc then keys[Classify.ScriptKey(inst)]=
-true local okName,name=pcall(function()return inst.Name end)if okName and name
-then keys['name:'..name]=true end end end end end return keys end return Actors
-end function __DARKLUA_BUNDLE_MODULES.w()local v=__DARKLUA_BUNDLE_MODULES.cache.
-w if not v then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.w=v end return v
-.c end end do local __modImpl=function()local Config=__DARKLUA_BUNDLE_MODULES.e(
-)local WebBridge=__DARKLUA_BUNDLE_MODULES.t()local GetScripts=
-__DARKLUA_BUNDLE_MODULES.v()local Actors=__DARKLUA_BUNDLE_MODULES.w()local
-Headless={}local RETRY_DELAY=3 local MAX_ATTEMPTS=3 function Headless.Start()if
-not WebBridge.Supported()then warn(
+__DARKLUA_BUNDLE_MODULES.w()local v=__DARKLUA_BUNDLE_MODULES.cache.w if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.w=v end return v.c end end
+do local __modImpl=function()local Config=__DARKLUA_BUNDLE_MODULES.e()local
+WebBridge=__DARKLUA_BUNDLE_MODULES.u()local GetScripts=__DARKLUA_BUNDLE_MODULES.
+w()local Actors=__DARKLUA_BUNDLE_MODULES.p()local Headless={}local RETRY_DELAY=3
+local MAX_ATTEMPTS=3 function Headless.Start()if not WebBridge.Supported()then
+warn(
 [[[GcView] Web only mode needs WebSocket support, falling back to the in-game UI.]]
 )return false end WebBridge.SetLogSink(function(line)print('[GcView] bridge: '..
 tostring(line))end)local Url=Config.Get('RelayUrl')for Attempt=1,MAX_ATTEMPTS do
@@ -3717,8 +3815,8 @@ end Grab.Budget=GRAB_BUDGET return Grab end function __DARKLUA_BUNDLE_MODULES.C(
 __DARKLUA_BUNDLE_MODULES.cache.C=v end return v.c end end do local __modImpl=
 function()local Strings=__DARKLUA_BUNDLE_MODULES.g()local Gc=
 __DARKLUA_BUNDLE_MODULES.j()local SafeString=Strings.SafeString local Tables={}
-local MAX_TABLE_SCAN=5000 local MAX_TOTAL_TABLES=200000 local YIELD_EVERY=2000
-local SCORE_MIN=4 local DEFAULT_AC_KEYWORDS={'detection','__namecall'}local
+local MAX_TABLE_SCAN=5000 local MAX_TOTAL_TABLES=200000 local PROGRESS_EVERY=
+2000 local SCORE_MIN=4 local DEFAULT_AC_KEYWORDS={'detection','__namecall'}local
 AC_FIELD_KEYS={source=true,numparams=true,vargs=true,name=true,line=true,protos=
 true,constants=true,upvalues=true}local AC_FIELD_MIN=3 local MAX_AC_RESULTS=800
 local AC_CHILD_SCAN=16 Tables.DefaultKeywords=DEFAULT_AC_KEYWORDS local
@@ -3787,10 +3885,10 @@ _G then skip[_G]=true end if shared then skip[shared]=true end return skip end
 local scanGcTables=function(onProgress)if gcTableBuckets then return end
 gcTableBuckets=Gc.Own({})funcOwnerCache=Gc.Own({})buildHashIndex()local gc=Gc.
 Snapshot()local seen={}local skip=rootSkipSet()local processed=0 for _,tbl in gc
-do processed=processed+1 if processed%YIELD_EVERY==0 then if onProgress then
-onProgress(processed)end task.wait()end if processed>MAX_TOTAL_TABLES then break
-end if type(tbl)~='table'or seen[tbl]or skip[tbl]or Gc.IsOwn(tbl)then continue
-end seen[tbl]=true local okShape,isOwn=pcall(isGcViewTable,tbl)if not okShape or
+do processed=processed+1 if onProgress and processed%PROGRESS_EVERY==0 then
+onProgress(processed)end Gc.Step()if processed>MAX_TOTAL_TABLES then break end
+if type(tbl)~='table'or seen[tbl]or skip[tbl]or Gc.IsOwn(tbl)then continue end
+seen[tbl]=true local okShape,isOwn=pcall(isGcViewTable,tbl)if not okShape or
 isOwn then continue end local funcsInTable={}local scriptRefs={}local nameHits={
 }local count=0 local tainted=false local okWalk=pcall(function()local consider=
 function(x)local tx=type(x)if tx=='function'then if Gc.IsExec(x)then tainted=
@@ -3843,24 +3941,24 @@ kws[#kws+1]=kw end table.sort(kws)reasons[#reasons+1]='kw: '..table.concat(kws,
 origin=table.concat(reasons,' | ')}end function Tables.ScanAntiCheat(keywords,
 matchZero,onProgress)local gc=Gc.Snapshot()local nkw=#keywords local results={}
 local seen={}local skip=rootSkipSet()local processed=0 for _,tbl in gc do
-processed=processed+1 if processed%YIELD_EVERY==0 then if onProgress then
-onProgress(processed,#results)end task.wait()end if processed>MAX_TOTAL_TABLES
-or#results>=MAX_AC_RESULTS then break end if type(tbl)=='table'and not seen[tbl]
-and not skip[tbl]then seen[tbl]=true local ok,err=pcall(tryAcMatch,tbl,keywords,
-nkw,matchZero,results)if not ok then warn(('[GcView/AC] object #%d -> %s'):
-format(processed,tostring(err)))end end end table.sort(results,function(a,b)if a
-.count~=b.count then return a.count>b.count end return a.address<b.address end)
-return results end Tables.MaxResults=MAX_AC_RESULTS return Tables end function
+processed=processed+1 if onProgress and processed%PROGRESS_EVERY==0 then
+onProgress(processed,#results)end Gc.Step()if processed>MAX_TOTAL_TABLES or#
+results>=MAX_AC_RESULTS then break end if type(tbl)=='table'and not seen[tbl]and
+not skip[tbl]then seen[tbl]=true local ok,err=pcall(tryAcMatch,tbl,keywords,nkw,
+matchZero,results)if not ok then warn(('[GcView/AC] object #%d -> %s'):format(
+processed,tostring(err)))end end end table.sort(results,function(a,b)if a.count
+~=b.count then return a.count>b.count end return a.address<b.address end)return
+results end Tables.MaxResults=MAX_AC_RESULTS return Tables end function
 __DARKLUA_BUNDLE_MODULES.D()local v=__DARKLUA_BUNDLE_MODULES.cache.D if not v
 then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.D=v end return v.c end end
 do local __modImpl=function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.B()local
 ReGui=ReGuiTable.ReGui local THEME=ReGuiTable.Theme local Strings=
 __DARKLUA_BUNDLE_MODULES.g()local Theme=__DARKLUA_BUNDLE_MODULES.y()local
 Classify=__DARKLUA_BUNDLE_MODULES.h()local ScanFunctions=
-__DARKLUA_BUNDLE_MODULES.o()local GetScripts=__DARKLUA_BUNDLE_MODULES.v()local
-Actors=__DARKLUA_BUNDLE_MODULES.w()local Data2Code=__DARKLUA_BUNDLE_MODULES.q()
+__DARKLUA_BUNDLE_MODULES.o()local GetScripts=__DARKLUA_BUNDLE_MODULES.w()local
+Actors=__DARKLUA_BUNDLE_MODULES.p()local Data2Code=__DARKLUA_BUNDLE_MODULES.r()
 local GcShared=__DARKLUA_BUNDLE_MODULES.j()local Source=__DARKLUA_BUNDLE_MODULES
-.k()local WebBridge=__DARKLUA_BUNDLE_MODULES.t()local Grab=
+.k()local WebBridge=__DARKLUA_BUNDLE_MODULES.u()local Grab=
 __DARKLUA_BUNDLE_MODULES.C()local Tables=__DARKLUA_BUNDLE_MODULES.D()local Trace
 =__DARKLUA_BUNDLE_MODULES.a()local ORPHAN_SETTLE_FRAMES=45 local
 ORPHAN_SETTLE_FRAMETIME=4E-2 local ORPHAN_SETTLE_TIMEOUT=30 Trace.Mark(
@@ -3974,36 +4072,40 @@ format(entry.name)local tab=window:CreateTab({Name=tabName,Closeable=true})tab:
 Label({Text=('%s  |  line %s  |  params %s%s'):format(entry.name,tostring(entry.
 line or'?'),tostring(entry.numparams or 0),entry.vargs and' +...'or''),
 TextColor3=COLORS.cyan,TextXAlignment=Enum.TextXAlignment.Left})tab:Separator()
-local constLines={}for i,c in constants do local text=preDecoded and tostring(c)
-or Data2Code.Convert(c,true)constLines[#constLines+1]={raw=(preDecoded and
-tostring(c)or SafeString(c)):lower(),text=('  [%s] = %s'):format(tostring(i),
-text)}end local upvalLines={}for i,u in upvalues do local text=preDecoded and
-tostring(u)or Data2Code.Convert(u,true)upvalLines[#upvalLines+1]={raw=(
-preDecoded and tostring(u)or SafeString(u)):lower(),text=('  [%s] = %s'):format(
-tostring(i),text)}end local Editor=IDE.CodeFrame.new({Editable=false,FontSize=13
-,Colors=SyntaxColors,FontFace=TextFont})ReGui:ApplyFlags({Object=Editor.Gui,
-WindowClass=parentClass,Class={Fill=true,Parent=tab:GetObject(),
-BackgroundTransparency=1}})local render=function(query)query=(query or''):lower(
-):match('^%s*(.-)%s*$')Editor:ClearText()local section=function(title,lines)
-local shown={}for _,ln in lines do if query==''or ln.raw:find(query,1,true)then
-shown[#shown+1]=ln.text end end Editor:AppendText(('%s (%d):\n'):format(title,#
-shown))if#shown==0 then Editor:AppendText('  (none)\n')else for _,t in shown do
-Editor:AppendText(t..'\n')end end Editor:AppendText('\n')end section('Constants'
-,constLines)section('Upvalues',upvalLines)end tab:InputText({Label=
-'Search constants / upvalues',PlaceHolder='value to filter...',Value='',Callback
-=function(_,newValue)render(newValue)end})local row=tab:Row()row:Button({Text=
-'Copy All',Callback=function()copyToClipboard(Editor:GetText())end})local
-grabbing=false row:Button({Text='Grab Function',Callback=function()if grabbing
-then return end grabbing=true Editor:ClearText()Editor:AppendText(
+local buildLines=function(values,decoded)local keys={}for i in values do keys[#
+keys+1]=i end table.sort(keys,function(a,b)return(tonumber(a)or 0)<(tonumber(b)
+or 0)end)local lines={}for _,i in keys do local v=values[i]local text=decoded
+and tostring(v)or Data2Code.Convert(v,true)lines[#lines+1]={raw=(decoded and
+tostring(v)or SafeString(v)):lower(),text=('  [%s] = %s'):format(tostring(i),
+text)}end return lines end local constLines=buildLines(constants,preDecoded)
+local upvalLines=buildLines(upvalues,preDecoded)local query=''local Editor=IDE.
+CodeFrame.new({Editable=false,FontSize=13,Colors=SyntaxColors,FontFace=TextFont}
+)ReGui:ApplyFlags({Object=Editor.Gui,WindowClass=parentClass,Class={Fill=true,
+Parent=tab:GetObject(),BackgroundTransparency=1}})local render=function(query)
+query=(query or''):lower():match('^%s*(.-)%s*$')Editor:ClearText()local section=
+function(title,lines)local shown={}for _,ln in lines do if query==''or ln.raw:
+find(query,1,true)then shown[#shown+1]=ln.text end end Editor:AppendText((
+'%s (%d):\n'):format(title,#shown))if#shown==0 then Editor:AppendText(
+'  (none)\n')else for _,t in shown do Editor:AppendText(t..'\n')end end Editor:
+AppendText('\n')end section('Constants',constLines)section('Upvalues',upvalLines
+)end tab:InputText({Label='Search constants / upvalues',PlaceHolder=
+'value to filter...',Value='',Callback=function(_,newValue)query=newValue or''
+render(query)end})local row=tab:Row()row:Button({Text='Copy All',Callback=
+function()copyToClipboard(Editor:GetText())end})local grabbing=false row:Button(
+{Text='Grab Function',Callback=function()if grabbing then return end grabbing=
+true Editor:ClearText()Editor:AppendText(
 '-- Verifying retrieval methods (up to '..Grab.Budget..'s)...\n')task.spawn(
 function()local ok,methods=pcall(Grab.Verify,entry,3)local code=Grab.Format(ok
 and methods or nil)Editor:ClearText()Editor:AppendText(code..'\n')
 copyToClipboard(code)grabbing=false end)end})row:Expand()tab:Separator()render(
-'')if window.SetActiveTab then pcall(function()window:SetActiveTab(tabName)end)
-end return tab end local renderFunctionList=function(tab,window,parentClass,
-functions,headerText,headerColor)tab:Label({Text=headerText,TextColor3=
-headerColor or Color3.fromRGB(200,200,200),TextXAlignment=Enum.TextXAlignment.
-Left})local rows={}local searchInput=tab:InputText({Label=
+'')if entry.ref then task.spawn(function()local expanded=Actors.Expand(entry.ref
+)if not expanded then return end constLines=buildLines(expanded.constants or{},
+true)upvalLines=buildLines(expanded.upvalues or{},true)if not grabbing then
+render(query)end end)end if window.SetActiveTab then pcall(function()window:
+SetActiveTab(tabName)end)end return tab end local renderFunctionList=function(
+tab,window,parentClass,functions,headerText,headerColor)tab:Label({Text=
+headerText,TextColor3=headerColor or Color3.fromRGB(200,200,200),TextXAlignment=
+Enum.TextXAlignment.Left})local rows={}local searchInput=tab:InputText({Label=
 'Search functions (name / values)',PlaceHolder='filter functions...',Value='',
 Callback=function(_,newValue)local q=(newValue or''):lower():match(
 '^%s*(.-)%s*$')for _,r in rows do local visible=q==''or r.nameLower:find(q,1,
@@ -4274,12 +4376,12 @@ OpenScriptWindow=openScriptWindow}end function __DARKLUA_BUNDLE_MODULES.E()local
 v=__DARKLUA_BUNDLE_MODULES.cache.E if not v then v={c=__modImpl()}
 __DARKLUA_BUNDLE_MODULES.cache.E=v end return v.c end end do local __modImpl=
 function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.B()local _=ReGuiTable.ReGui
-local Theme=__DARKLUA_BUNDLE_MODULES.y()local WebBridge=__DARKLUA_BUNDLE_MODULES
-.t()local COLORS=Theme.Colors()local DEFAULT_URL='ws://127.0.0.1:8765'local
-MAX_LOG_LINES=12 local WebTab=getgenv().Window:CreateTab({Name='Web'})local
-supported=WebBridge.Supported()WebTab:Label({Text=supported and
-'Bridge a browser front-end to this session over WebSocket.'or
-[[This executor has no WebSocket support, the bridge is unavailable.]],
+local Theme=__DARKLUA_BUNDLE_MODULES.y()local Config=__DARKLUA_BUNDLE_MODULES.e(
+)local WebBridge=__DARKLUA_BUNDLE_MODULES.u()local COLORS=Theme.Colors()local
+DEFAULT_URL=Config.Get('RelayUrl')local MAX_LOG_LINES=12 local WebTab=getgenv().
+Window:CreateTab({Name='Web'})local supported=WebBridge.Supported()WebTab:Label(
+{Text=supported and'Bridge a browser front-end to this session over WebSocket.'
+or[[This executor has no WebSocket support, the bridge is unavailable.]],
 TextColor3=supported and COLORS.gray or COLORS.red,TextWrapped=true,
 TextXAlignment=Enum.TextXAlignment.Left})local statusLabel=WebTab:Label({Text=
 'Status: idle',TextColor3=COLORS.gray,TextXAlignment=Enum.TextXAlignment.Left})
@@ -4303,15 +4405,15 @@ setStatus('WebSocket unsupported on this executor',COLORS.red)return end if
 connecting then return end if WebBridge.IsConnected()then setStatus(
 'already connected to '..tostring(WebBridge.Url()),COLORS.green)return end
 connecting=true setStatus('connecting...',COLORS.yellow)task.spawn(function()
-local ok,err=WebBridge.Connect(currentUrl())connecting=false if ok then
-setStatus('connected to '..tostring(WebBridge.Url()),COLORS.green)else
-setStatus(tostring(err),COLORS.red)pushLog('error: '..tostring(err))end end)end}
-)buttonRow:Button({Text='Disconnect',Callback=function()local ok,err=WebBridge.
-Disconnect()if ok then setStatus('disconnected',COLORS.gray)else setStatus(
-tostring(err),COLORS.orange)end end})buttonRow:Button({Text='Copy URL',Callback=
-function()local setter=setclipboard or toclipboard if type(setter)=='function'
-then pcall(setter,currentUrl())pushLog('copied relay url')end end})WebTab:
-Separator()WebTab:Label({Text=
+local ok,err=WebBridge.Connect(currentUrl())connecting=false if ok then Config.
+Set('RelayUrl',WebBridge.Url())setStatus('connected to '..tostring(WebBridge.
+Url()),COLORS.green)else setStatus(tostring(err),COLORS.red)pushLog('error: '..
+tostring(err))end end)end})buttonRow:Button({Text='Disconnect',Callback=function
+()local ok,err=WebBridge.Disconnect()if ok then setStatus('disconnected',COLORS.
+gray)else setStatus(tostring(err),COLORS.orange)end end})buttonRow:Button({Text=
+'Copy URL',Callback=function()local setter=setclipboard or toclipboard if type(
+setter)=='function'then pcall(setter,currentUrl())pushLog('copied relay url')end
+end})WebTab:Separator()WebTab:Label({Text=
 [[Save every script, source, function list and constant/upvalue detail to disk so the front-end can read this session offline.]]
 ,TextColor3=COLORS.gray,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left
 })local exportDetails=true local exportSlow=true WebTab:Checkbox({Label=
@@ -4335,12 +4437,12 @@ pushLog('saved to '..tostring(path))end)end})exportRow:Button({Text=
 'Copy export path',Callback=function()local setter=setclipboard or toclipboard
 if type(setter)=='function'then pcall(setter,'GcView@awakenkn/GcViewExport/'..
 tostring(game.PlaceId))pushLog('copied export path')end end})pushLog(
-'run the relay, then Connect')return WebTab end function
+'paste the relay URL from the web page, then Connect')return WebTab end function
 __DARKLUA_BUNDLE_MODULES.F()local v=__DARKLUA_BUNDLE_MODULES.cache.F if not v
 then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.F=v end return v.c end end
 do local __modImpl=function()local ReGuiTable=__DARKLUA_BUNDLE_MODULES.B()local
 _=ReGuiTable.ReGui local Theme=__DARKLUA_BUNDLE_MODULES.y()local Config=
-__DARKLUA_BUNDLE_MODULES.e()local Plugins=__DARKLUA_BUNDLE_MODULES.s()local
+__DARKLUA_BUNDLE_MODULES.e()local Plugins=__DARKLUA_BUNDLE_MODULES.t()local
 SafeMode=__DARKLUA_BUNDLE_MODULES.m()local COLORS=Theme.Colors()local PluginTab=
 getgenv().Window:CreateTab({Name='Plugins'})PluginTab:Label({Text=
 'Changes are saved to '..Config.Path()..' and apply on the next load.',
@@ -4395,14 +4497,14 @@ SafeMode=__DARKLUA_BUNDLE_MODULES.m()local Globals=getgenv()local ForceUi=
 Globals.gcviewui==true local Captured=false if Globals[Constants.
 SAFE_CAPTURE_MARKER]then SafeMode.Hook()local Found=SafeMode.Capture()Captured=
 true if Config.Get('Bridge')and type(Found)=='table'then local Classify=
-__DARKLUA_BUNDLE_MODULES.h()local WebBridge=__DARKLUA_BUNDLE_MODULES.t()local
+__DARKLUA_BUNDLE_MODULES.h()local WebBridge=__DARKLUA_BUNDLE_MODULES.u()local
 Entries={}for _,Entry in Found do Entries[#Entries+1]={script=Entry.Script,path=
 Entry.Path,context='SafeMode',key=Classify.ScriptKey(Entry.Script)}end WebBridge
 .Publish('scripts',Entries)end end if not Captured then local Requested=Globals[
 Constants.SAFE_GLOBAL]==true local Automatic=Config.Get('SafeMode')and Config.
 Get('AutoSafeMode')and not ForceUi if Requested or Automatic then SafeMode.
 Rejoin()return end end if Config.Get('Bridge')and Config.Get('AutoWebUpdate')
-then task.spawn(function()__DARKLUA_BUNDLE_MODULES.s().AutoUpdateBridge()end)end
+then task.spawn(function()__DARKLUA_BUNDLE_MODULES.t().AutoUpdateBridge()end)end
 if Config.Get('WebOnly')and Config.Get('Bridge')and not ForceUi then if
 __DARKLUA_BUNDLE_MODULES.x().Start()then return end end Trace.Mark(
 'init: building window')__DARKLUA_BUNDLE_MODULES.B()Trace.Mark(
@@ -4410,5 +4512,5 @@ __DARKLUA_BUNDLE_MODULES.x().Start()then return end end Trace.Mark(
 'init: building scripts tab')__DARKLUA_BUNDLE_MODULES.E()Trace.Mark(
 'init: scripts tab done')end if Config.Get('Bridge')then
 __DARKLUA_BUNDLE_MODULES.F()end __DARKLUA_BUNDLE_MODULES.G()
-]=]
+]==]
 loadstring(getgenv()["__GcViewSource"], "GcView")()

@@ -642,24 +642,9 @@ __DARKLUA_BUNDLE_MODULES.cache.o if not v then v={c=__modImpl()}
 __DARKLUA_BUNDLE_MODULES.cache.o=v end return v.c end end do local __modImpl=
 function()local Services=__DARKLUA_BUNDLE_MODULES.c()local Gc=
 __DARKLUA_BUNDLE_MODULES.j()local Classify=__DARKLUA_BUNDLE_MODULES.h()local
-RunService=Services.RunService local Actors={}local COLLECTOR=
-[=[    local channelId = ...
-    local ch = get_comm_channel(channelId)
-    if not ch then return end
-
-    local function classify(inst)
-        local ok, cls = pcall(function() return inst.ClassName end)
-        return ok and cls or "Unknown"
-    end
-    local function fullName(inst)
-        local ok, n = pcall(function() return inst:GetFullName() end)
-        return ok and n or inst.Name
-    end
-    local function debugId(inst)
-        local ok, id = pcall(function() return inst:GetDebugId() end)
-        return ok and id or fullName(inst)
-    end
-    local function safeStr(v)
+RunService=Services.RunService local Actors={}local Channel local Targets={}
+local DUMPER=
+[=[    local function safeStr(v)
         local ok, r = pcall(function() return tostring(v) end)
         return ok and r or "<value>"
     end
@@ -680,8 +665,6 @@ RunService=Services.RunService local Actors={}local COLLECTOR=
         return "<" .. t .. ">"
     end
 
-    -- Full table dump for the detail view, built on request inside this VM
-    -- (the main VM can't read these values). Raw next only, capped in size.
     local MAX_DEPTH, MAX_ITEMS, MAX_CHARS = 6, 300, 200000
     local function literal(v)
         local t = typeof(v)
@@ -743,6 +726,36 @@ RunService=Services.RunService local Actors={}local COLLECTOR=
         local ok = pcall(dump, v, 0, {}, out)
         out.size = nil
         return ok and table.concat(out) or "<table>"
+    end
+    local function expandPayload(ref, fn)
+        local consts, ups = {}, {}
+        local okc, c = pcall(debug.getconstants, fn)
+        if okc and type(c) == "table" then
+            for i, v in c do consts[i] = render(v) end
+        end
+        local oku, u = pcall(debug.getupvalues, fn)
+        if oku and type(u) == "table" then
+            for i, v in u do ups[i] = render(v) end
+        end
+        return { kind = "expanded", ref = ref, constants = consts, upvalues = ups }
+    end
+]=]
+local COLLECTOR=DUMPER..
+[[    local channelId = ...
+    local ch = get_comm_channel(channelId)
+    if not ch then return end
+
+    local function classify(inst)
+        local ok, cls = pcall(function() return inst.ClassName end)
+        return ok and cls or "Unknown"
+    end
+    local function fullName(inst)
+        local ok, n = pcall(function() return inst:GetFullName() end)
+        return ok and n or inst.Name
+    end
+    local function debugId(inst)
+        local ok, id = pcall(function() return inst:GetDebugId() end)
+        return ok and id or fullName(inst)
     end
 
     local function funcInfo(fn)
@@ -809,8 +822,13 @@ RunService=Services.RunService local Actors={}local COLLECTOR=
         end
     end
 
-    local registry, refCount = {}, 0
-    local token = tostring(registry) .. "@" .. tostring(os.clock())
+    -- Functions are kept in this VM's executor env so a later expander chunk
+    -- can look them up by ref.
+    local genv = type(getgenv) == "function" and getgenv() or {}
+    local registry = genv.__gcview_actor_fns or {}
+    genv.__gcview_actor_fns = registry
+    local refCount = 0
+    local token = tostring({}) .. "@" .. tostring(os.clock())
 
     local function fireFunction(scriptId, fn)
         refCount += 1
@@ -882,33 +900,35 @@ RunService=Services.RunService local Actors={}local COLLECTOR=
         end
     end
 
-    ch.Event:Connect(function(msg)
-        if type(msg) ~= "table" or msg.kind ~= "expand" then return end
-        local fn = registry[msg.ref]
-        if not fn then return end
-        local consts, ups = {}, {}
-        local okc, c = pcall(debug.getconstants, fn)
-        if okc and type(c) == "table" then
-            for i, v in c do consts[i] = render(v) end
-        end
-        local oku, u = pcall(debug.getupvalues, fn)
-        if oku and type(u) == "table" then
-            for i, v in u do ups[i] = render(v) end
-        end
-        ch:Fire({ kind = "expanded", ref = msg.ref, constants = consts, upvalues = ups })
-    end)
-
     ch:Fire({ kind = "done" })
-]=]
-local Channel function Actors.Collect(timeout)timeout=timeout or 3 local results
-={}local seen={}if type(create_comm_channel)~='function'then return results end
-local canExecuteStates=type(getactorstates)=='function'local canRunOnActor=type(
+
+    -- Fast path when the channel also delivers main -> actor messages.
+    pcall(function()
+        ch.Event:Connect(function(msg)
+            if type(msg) == "table" and msg.kind == "expand" and registry[msg.ref] then
+                ch:Fire(expandPayload(msg.ref, registry[msg.ref]))
+            end
+        end)
+    end)
+]]
+local EXPANDER=DUMPER..
+[[    local channelId = ...
+    local ch = get_comm_channel(channelId)
+    local registry = type(getgenv) == "function" and getgenv().__gcview_actor_fns
+    local fn = registry and registry[REF]
+    if ch and fn then
+        ch:Fire(expandPayload(REF, fn))
+    end
+]]
+function Actors.Collect(timeout)timeout=timeout or 3 local results={}local seen=
+{}if type(create_comm_channel)~='function'then return results end local
+canExecuteStates=type(getactorstates)=='function'local canRunOnActor=type(
 getactors)=='function'and type(run_on_actor)=='function'if not canExecuteStates
 and not canRunOnActor then return results end local channelId,channel=
 create_comm_channel()if not channel then return results end Channel=channel
-local pending=0 local byKey={}local queue,head,tail={},1,0 local conn=channel.
-Event:Connect(function(payload)if type(payload)~='table'then return end if
-payload.kind=='done'then pending=pending-1 elseif payload.kind=='script'or
+Targets={}local pending=0 local byKey={}local queue,head,tail={},1,0 local conn=
+channel.Event:Connect(function(payload)if type(payload)~='table'then return end
+if payload.kind=='done'then pending=pending-1 elseif payload.kind=='script'or
 payload.kind=='function'then tail=tail+1 queue[tail]=payload end end)local
 handle=function(payload)Gc.Own(payload)Gc.Own(payload.constants)Gc.Own(payload.
 upvalues)if payload.kind=='script'then local key=payload.key if key and not seen
@@ -932,30 +952,33 @@ end local isActorState=function(state)local ok,flag=pcall(function()return state
 stateId(state)return gameStateId==nil or id==nil or id~=gameStateId end local
 dispatchState=function(state)if state==nil or not isActorState(state)then return
 false end local id=stateId(state)if id~=nil then if dispatchedStates[id]then
-return true end dispatchedStates[id]=true end local ok=pcall(function()state:
-Execute(COLLECTOR,channelId)end)if ok then pending=pending+1 return true end
-return false end local actorTargets={}local actorSeen={}local addActor=function(
-actor)if typeof(actor)~='Instance'or actorSeen[actor]then return end actorSeen[
-actor]=true actorTargets[#actorTargets+1]=actor end local states={}if
-canExecuteStates then local okStates,list=pcall(getactorstates)if okStates and
-type(list)=='table'then for _,state in list do states[#states+1]=state end end
-end for _,state in states do dispatchState(state)local okActorsOfState,list=
-pcall(function()return state:GetActors()end)if okActorsOfState and type(list)==
-'table'then for _,actor in list do addActor(actor)end end end if type(getactors)
-=='function'then local okActors,list=pcall(getactors)if okActors and type(list)
-=='table'then for _,actor in list do addActor(actor)end end end if canRunOnActor
-then for _,actor in actorTargets do local covered=false if type(getluastate)==
-'function'then local okState,state=pcall(getluastate,actor)if okState and state
-then local id=stateId(state)if id~=nil and dispatchedStates[id]then covered=true
-end end end if not covered then if pcall(run_on_actor,actor,COLLECTOR,channelId)
-then pending=pending+1 end end end end local start=os.clock()while pending>0 and
-(os.clock()-start)<timeout do drain()RunService.Heartbeat:Wait()end pcall(
-function()conn:Disconnect()end)drain()return results end function Actors.Expand(
-ref,timeout)if not Channel or type(ref)~='string'then return nil end local
-result local conn=Channel.Event:Connect(function(payload)if type(payload)==
-'table'and payload.kind=='expanded'and payload.ref==ref then result=payload end
-end)pcall(function()Channel:Fire({kind='expand',ref=ref})end)local deadline=os.
-clock()+(timeout or 3)while not result and os.clock()<deadline do RunService.
+return true end dispatchedStates[id]=true end local run=function(code)state:
+Execute(code,channelId)end if pcall(run,COLLECTOR)then pending=pending+1 Targets
+[#Targets+1]=run return true end return false end local actorTargets={}local
+actorSeen={}local addActor=function(actor)if typeof(actor)~='Instance'or
+actorSeen[actor]then return end actorSeen[actor]=true actorTargets[#actorTargets
++1]=actor end local states={}if canExecuteStates then local okStates,list=pcall(
+getactorstates)if okStates and type(list)=='table'then for _,state in list do
+states[#states+1]=state end end end for _,state in states do dispatchState(state
+)local okActorsOfState,list=pcall(function()return state:GetActors()end)if
+okActorsOfState and type(list)=='table'then for _,actor in list do addActor(
+actor)end end end if type(getactors)=='function'then local okActors,list=pcall(
+getactors)if okActors and type(list)=='table'then for _,actor in list do
+addActor(actor)end end end if canRunOnActor then for _,actor in actorTargets do
+local covered=false if type(getluastate)=='function'then local okState,state=
+pcall(getluastate,actor)if okState and state then local id=stateId(state)if id~=
+nil and dispatchedStates[id]then covered=true end end end if not covered then
+local run=function(code)run_on_actor(actor,code,channelId)end if pcall(run,
+COLLECTOR)then pending=pending+1 Targets[#Targets+1]=run end end end end local
+start=os.clock()while pending>0 and(os.clock()-start)<timeout do drain()
+RunService.Heartbeat:Wait()end pcall(function()conn:Disconnect()end)drain()
+return results end function Actors.Expand(ref,timeout)if not Channel or type(ref
+)~='string'then return nil end local result local conn=Channel.Event:Connect(
+function(payload)if type(payload)=='table'and payload.kind=='expanded'and
+payload.ref==ref then result=payload end end)pcall(function()Channel:Fire({kind=
+'expand',ref=ref})end)local code=('local REF = %q\n'):format(ref)..EXPANDER for
+_,run in Targets do if result then break end pcall(run,code)end local deadline=
+os.clock()+(timeout or 3)while not result and os.clock()<deadline do RunService.
 Heartbeat:Wait()end pcall(function()conn:Disconnect()end)return result end
 function Actors.Keys()local keys={}local actors={}local actorSeen={}local
 addActor=function(actor)if typeof(actor)~='Instance'or actorSeen[actor]then
@@ -4071,11 +4094,13 @@ upvalues or(func and safeGet(getupvalues,func))or{}local tabName=('Fn: %s'):
 format(entry.name)local tab=window:CreateTab({Name=tabName,Closeable=true})tab:
 Label({Text=('%s  |  line %s  |  params %s%s'):format(entry.name,tostring(entry.
 line or'?'),tostring(entry.numparams or 0),entry.vargs and' +...'or''),
-TextColor3=COLORS.cyan,TextXAlignment=Enum.TextXAlignment.Left})tab:Separator()
-local buildLines=function(values,decoded)local keys={}for i in values do keys[#
-keys+1]=i end table.sort(keys,function(a,b)return(tonumber(a)or 0)<(tonumber(b)
-or 0)end)local lines={}for _,i in keys do local v=values[i]local text=decoded
-and tostring(v)or Data2Code.Convert(v,true)lines[#lines+1]={raw=(decoded and
+TextColor3=COLORS.cyan,TextXAlignment=Enum.TextXAlignment.Left})local liveLabel=
+entry.ref and tab:Label({Text='Loading live values from the actor...',TextColor3
+=COLORS.yellow,TextXAlignment=Enum.TextXAlignment.Left})tab:Separator()local
+buildLines=function(values,decoded)local keys={}for i in values do keys[#keys+1]
+=i end table.sort(keys,function(a,b)return(tonumber(a)or 0)<(tonumber(b)or 0)end
+)local lines={}for _,i in keys do local v=values[i]local text=decoded and
+tostring(v)or Data2Code.Convert(v,true)lines[#lines+1]={raw=(decoded and
 tostring(v)or SafeString(v)):lower(),text=('  [%s] = %s'):format(tostring(i),
 text)}end return lines end local constLines=buildLines(constants,preDecoded)
 local upvalLines=buildLines(upvalues,preDecoded)local query=''local Editor=IDE.
@@ -4099,7 +4124,10 @@ function()local ok,methods=pcall(Grab.Verify,entry,3)local code=Grab.Format(ok
 and methods or nil)Editor:ClearText()Editor:AppendText(code..'\n')
 copyToClipboard(code)grabbing=false end)end})row:Expand()tab:Separator()render(
 '')if entry.ref then task.spawn(function()local expanded=Actors.Expand(entry.ref
-)if not expanded then return end constLines=buildLines(expanded.constants or{},
+)if not expanded then liveLabel.Text=
+[[Actor didn't answer, showing the scan snapshot (tables unreadable)]]liveLabel.
+TextColor3=COLORS.orange return end liveLabel.Text='Live values from the actor'
+liveLabel.TextColor3=COLORS.green constLines=buildLines(expanded.constants or{},
 true)upvalLines=buildLines(expanded.upvalues or{},true)if not grabbing then
 render(query)end end)end if window.SetActiveTab then pcall(function()window:
 SetActiveTab(tabName)end)end return tab end local renderFunctionList=function(

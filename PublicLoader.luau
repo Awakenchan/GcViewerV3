@@ -1511,29 +1511,47 @@ return nil,Reason or'decompile failed'end local Payload=Chunked(Request.key,Text
 function(Request)local Entry=FindEntry(Request.key)if not Entry then return nil,
 'unknown script key'end local Encoded,Note=BytecodeEntry(Entry)if not Encoded
 then return nil,Note or'no bytecode'end local Payload=Chunked(Request.key,
-Encoded,Request)Payload.base64=Payload.chunk return Payload end local Send=
+Encoded,Request)Payload.base64=Payload.chunk return Payload end local FIRST_PART
+=32768 local MAX_PART=524288 local ACK_TIMEOUT=5 local PartSeq=0 local Acks={}
+local PartSending=false local SendRaw=function(Text)return pcall(function()
+Socket:Send(Text)end)end local SplitUtf8=function(Text,First,Max)local Pieces={}
+local Start,Total,Size=1,#Text,First while Start<=Total do local Stop=math.min(
+Start+Size-1,Total)while Stop<Total and Stop>Start do local Next=string.byte(
+Text,Stop+1)if Next<0x80 or Next>=0xc0 then break end Stop=Stop-1 end Pieces[#
+Pieces+1]=string.sub(Text,Start,Stop)Start=Stop+1 Size=math.min(Size*2,Max)end
+return Pieces end local SendParts=function(Text)while PartSending do task.wait()
+end PartSending=true PartSeq=PartSeq+1 local Id,Current=PartSeq,Socket local
+Pieces=SplitUtf8(Text,FIRST_PART,MAX_PART)local Acked={}Acks[Id]=Acked local Ok=
+true for Index,Piece in Pieces do local Part=Encode({type='part',id=Id,i=Index,n
+=#Pieces,data=Piece})if Socket~=Current or not Connected or not Part or not
+SendRaw(Part)then Ok=false break end local Deadline=os.clock()+ACK_TIMEOUT while
+not Acked[Index]and Socket==Current and Connected and os.clock()<Deadline do
+task.wait()end end Acks[Id]=nil PartSending=false return Ok end local Send=
 function(Payload)if not Socket or not Connected then return false end local Text
-=Encode(Payload)if not Text then return false end local Ok=pcall(function()
-Socket:Send(Text)end)return Ok end local HandleRequest=function(Request)local
-Action=Actions[Request.action]if not Action then Send({type='response',id=
-Request.id,ok=false,error='unknown action'})return end local Ok,Data,Err=pcall(
-Action,Request)if not Ok then Send({type='response',id=Request.id,ok=false,error
-=SafeText(Data)})return end if Data==nil then Send({type='response',id=Request.
-id,ok=false,error=SafeText(Err or'failed')})return end Send({type='response',id=
-Request.id,ok=true,action=Request.action,data=Data})end function WebBridge.
-Handle(RawMessage)local Message=Decode(RawMessage)if not Message then return end
-if Message.type=='request'then Log(('request: %s'):format(SafeText(Message.
-action)))task.spawn(HandleRequest,Message)return end if Message.type=='hello'
-then Log('peer connected')return end if Message.type=='peer'and Message.event==
-'superseded'then Log('another GcView took over this room, disconnecting')
-WebBridge.Disconnect()end end function WebBridge.Publish(Name,List)if type(Name)
-~='string'or type(List)~='table'then return end Sources[Name]=List RebuildIndex(
-)end function WebBridge.SetLogSink(Sink)LogSink=Sink end function WebBridge.
-SetStatusSink(Sink)StatusSink=Sink end function WebBridge.IsConnected()return
-Connected end function WebBridge.Url()return SocketUrl end function WebBridge.
-Supported()return Executor.WebSocketConnect()~=nil end function WebBridge.
-Connect(Url)if Connected then return false,'already connected'end local
-ConnectFn=Executor.WebSocketConnect()if not ConnectFn then return false,
+=Encode(Payload)if not Text then return false end if#Text<=FIRST_PART then
+return SendRaw(Text)end return SendParts(Text)end local HandleRequest=function(
+Request)local Action=Actions[Request.action]if not Action then Send({type=
+'response',id=Request.id,ok=false,error='unknown action'})return end local Ok,
+Data,Err=pcall(Action,Request)if not Ok then Send({type='response',id=Request.id
+,ok=false,error=SafeText(Data)})return end if Data==nil then Send({type=
+'response',id=Request.id,ok=false,error=SafeText(Err or'failed')})return end
+Send({type='response',id=Request.id,ok=true,action=Request.action,data=Data})end
+function WebBridge.Handle(RawMessage)local Message=Decode(RawMessage)if not
+Message then return end if Message.type=='ack'then local Acked=Acks[tonumber(
+Message.id)]local Index=tonumber(Message.i)if Acked and Index then Acked[Index]=
+true end return end if Message.type=='request'then Log(('request: %s'):format(
+SafeText(Message.action)))task.spawn(HandleRequest,Message)return end if Message
+.type=='hello'then Log('peer connected')return end if Message.type=='peer'and
+Message.event=='superseded'then Log(
+'another GcView took over this room, disconnecting')WebBridge.Disconnect()end
+end function WebBridge.Publish(Name,List)if type(Name)~='string'or type(List)~=
+'table'then return end Sources[Name]=List RebuildIndex()end function WebBridge.
+SetLogSink(Sink)LogSink=Sink end function WebBridge.SetStatusSink(Sink)
+StatusSink=Sink end function WebBridge.IsConnected()return Connected end
+function WebBridge.Url()return SocketUrl end function WebBridge.Supported()
+return Executor.WebSocketConnect()~=nil end function WebBridge.Connect(Url)if
+Connected then return false,'already connected'end local ConnectFn=Executor.
+WebSocketConnect()if not ConnectFn then return false,
 'this executor has no WebSocket support'end if type(Url)~='string'then return
 false,'enter a relay url'end Url=Url:match('^%s*(.-)%s*$')or''if Url==''then
 return false,'enter a relay url'end if Url:sub(1,7)=='http://'then Url='ws://'..

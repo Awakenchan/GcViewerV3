@@ -1552,26 +1552,26 @@ Connected and Socket==Result do local Sent=pcall(function()Result:Send(
 '{"type":"keepalive"}')end)if not Sent then break end end end)pcall(function()
 Socket.OnMessage:Connect(function(Message,IsBinary)if IsBinary then return end
 WebBridge.Handle(Message)end)end)pcall(function()Socket.OnClose:Connect(function
-()Connected=false SetStatus('disconnected')Log('socket closed')end)end)
-RebuildIndex()Send({type='hello',role='tool',info=Actions.info()})SetStatus(
-'connected to '..Url)Log('connected')return true end function WebBridge.
-Disconnect()if not Socket then return false,'not connected'end pcall(function()
-Socket:Close()end)Connected=false Socket=nil SetStatus('disconnected')Log(
-'closed by user')return true end local ExportRunning=false local ExportRun=0
-local ExportState={run=0,running=false,done=0,total=0,failed=0,path='',stage=
-'idle',name=''}function WebBridge.ExportStatus()return{run=ExportState.run,
-running=ExportState.running,done=ExportState.done,total=ExportState.total,failed
-=ExportState.failed,path=ExportState.path,stage=ExportState.stage,name=
-ExportState.name,viewer=ExportState.viewer or'index.html',memory=ExportState.
-memory or 0}end local SafeFileName=function(Text)Text=tostring(Text or'unnamed')
-Text=Text:gsub('[^%w%-%._]','_')if#Text>90 then Text=Text:sub(1,90)end if Text==
-''then Text='unnamed'end return Text end local EnsureFolder=function(Path)if
-type(isfolder)=='function'and type(makefolder)=='function'then if not isfolder(
-Path)then pcall(makefolder,Path)end end end local WriteText=function(Path,Text)
-if type(writefile)~='function'then return false end return pcall(writefile,Path,
-Text)==true end function WebBridge.Exporting()return ExportRunning end function
-WebBridge.Export(Options)if ExportRunning then return nil,
-'export already running'end if type(writefile)~='function'then return nil,
+()if Socket~=Result then return end Connected=false SetStatus('disconnected')
+Log('socket closed')end)end)RebuildIndex()Send({type='hello',role='tool',info=
+Actions.info()})SetStatus('connected to '..Url)Log('connected')return true end
+function WebBridge.Disconnect()if not Socket then return false,'not connected'
+end pcall(function()Socket:Close()end)Connected=false Socket=nil SetStatus(
+'disconnected')Log('closed by user')return true end local ExportRunning=false
+local ExportRun=0 local ExportState={run=0,running=false,done=0,total=0,failed=0
+,path='',stage='idle',name=''}function WebBridge.ExportStatus()return{run=
+ExportState.run,running=ExportState.running,done=ExportState.done,total=
+ExportState.total,failed=ExportState.failed,path=ExportState.path,stage=
+ExportState.stage,name=ExportState.name,viewer=ExportState.viewer or'index.html'
+,memory=ExportState.memory or 0}end local SafeFileName=function(Text)Text=
+tostring(Text or'unnamed')Text=Text:gsub('[^%w%-%._]','_')if#Text>90 then Text=
+Text:sub(1,90)end if Text==''then Text='unnamed'end return Text end local
+EnsureFolder=function(Path)if type(isfolder)=='function'and type(makefolder)==
+'function'then if not isfolder(Path)then pcall(makefolder,Path)end end end local
+WriteText=function(Path,Text)if type(writefile)~='function'then return false end
+return pcall(writefile,Path,Text)==true end function WebBridge.Exporting()return
+ExportRunning end function WebBridge.Export(Options)if ExportRunning then return
+nil,'export already running'end if type(writefile)~='function'then return nil,
 'writefile unsupported'end Options=type(Options)=='table'and Options or{}local
 Delay=tonumber(Options.Delay)or 0.15 local DetailDelay=tonumber(Options.
 DetailDelay)or 0.03 local DetailEvery=tonumber(Options.DetailEvery)or 8 local

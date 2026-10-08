@@ -216,10 +216,9 @@ Body end return nil end function Executor.Get(Url,Headers)local Request=Executor
 __DARKLUA_BUNDLE_MODULES.i()local v=__DARKLUA_BUNDLE_MODULES.cache.i if not v
 then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.i=v end return v.c end end
 do local __modImpl=function()local Services=__DARKLUA_BUNDLE_MODULES.c()local
-GcShared={}local Globals=type(getgenv)=='function'and getgenv()or{}local
-Heartbeat=Services.RunService.Heartbeat local FRAME_BUDGET=8.333333333333334E-3
-local sliceStart=os.clock()local HAS_GETGC=type(getgc)=='function'local
-HAS_ISEXEC=type(isexecutorclosure)=='function'local HAS_HASH=type(
+GcShared={}local Globals=type(getgenv)=='function'and getgenv()or{}local _=
+Services.RunService.Heartbeat os.clock()local HAS_GETGC=type(getgc)=='function'
+local HAS_ISEXEC=type(isexecutorclosure)=='function'local HAS_HASH=type(
 getfunctionhash)=='function'and Globals.gcview_no_hash~=true local HAS_FENV=
 Globals.gcview_no_fenv~=true local snapshot local snapshotOk=false local
 snapshotVersion=0 local execCache=setmetatable({},{__mode='k'})local fenvCache=
@@ -242,8 +241,7 @@ GcShared.Hash(fn)if type(fn)~='function'or not HAS_HASH then return nil end
 local cached=hashCache[fn]if cached~=nil then if cached==false then return nil
 end return cached end local ok,h=pcall(getfunctionhash,fn)if ok and type(h)==
 'string'and h~=''then hashCache[fn]=h return h end hashCache[fn]=false return
-nil end function GcShared.Step()if os.clock()-sliceStart>=FRAME_BUDGET then
-Heartbeat:Wait()sliceStart=os.clock()end end function GcShared.Version()return
+nil end function GcShared.Step()end function GcShared.Version()return
 snapshotVersion end function GcShared.Reset()snapshot=nil snapshotOk=false
 snapshotVersion=snapshotVersion+1 execCache=setmetatable({},{__mode='k'})
 fenvCache=setmetatable({},{__mode='k'})hashCache=setmetatable({},{__mode='k'})
@@ -1351,102 +1349,103 @@ local Source=__DARKLUA_BUNDLE_MODULES.k()local Data2Code=
 __DARKLUA_BUNDLE_MODULES.r()local Config=__DARKLUA_BUNDLE_MODULES.e()local
 Plugins=__DARKLUA_BUNDLE_MODULES.t()local HttpService=Services.HttpService local
 WebBridge={}local Socket=nil local SocketUrl=nil local Connected=false local
-LogSink=nil local StatusSink=nil local DefaultChunk=262144 local MaxChunk=
-1048576 local MaxListEntries=5000 local Sources=GcShared.Own({scripts=GcShared.
-Own({}),anticheat=GcShared.Own({}),actors=GcShared.Own({}),unknown=GcShared.Own(
-{})})local KeyIndex=GcShared.Own({})local Log=function(Message)if LogSink then
-pcall(LogSink,tostring(Message))end end local SetStatus=function(Text)if
-StatusSink then pcall(StatusSink,tostring(Text))end end local Encode=function(
-Value)local Ok,Text=pcall(function()return HttpService:JSONEncode(Value)end)if
-Ok and type(Text)=='string'then return Text end return nil end local Decode=
-function(Text)if type(Text)~='string'or Text==''then return nil end local Ok,
-Value=pcall(function()return HttpService:JSONDecode(Text)end)if Ok and type(
-Value)=='table'then return Value end return nil end local SafeText=function(
-Value)if type(Value)=='string'then return Value end local Ok,Text=pcall(Strings.
-SafeString,Value)if Ok and type(Text)=='string'then return Text end return''end
-local EntryKey=function(Entry)if type(Entry.key)=='string'and Entry.key~=''then
-return Entry.key end if typeof(Entry.script)=='Instance'then return Classify.
-ScriptKey(Entry.script)end return nil end local RebuildIndex=function()KeyIndex=
-GcShared.Own({})for _,Name in{'scripts','anticheat','actors'}do local List=
-Sources[Name]if type(List)=='table'then for _,Entry in List do if type(Entry)==
-'table'then local Key=EntryKey(Entry)if Key then KeyIndex[Key]=Entry end end end
-end end end local FindEntry=function(Key)if type(Key)~='string'or Key==''then
-return nil end local Entry=KeyIndex[Key]if Entry then return Entry end
-RebuildIndex()return KeyIndex[Key]end local SerializeReasons=function(Entry)
-local Out={}if type(Entry.antiCheatReasons)=='table'then for _,Reason in Entry.
-antiCheatReasons do Out[#Out+1]=SafeText(Reason)end end return Out end local
-SerializeEntry=function(Entry)local Name=Entry.name if type(Name)~='string'and
-typeof(Entry.script)=='Instance'then local Ok,Value=pcall(function()return Entry
-.script.Name end)Name=Ok and Value or nil end local Parented=false if typeof(
-Entry.script)=='Instance'then local Ok,Parent=pcall(function()return Entry.
-script.Parent end)Parented=Ok and Parent~=nil end return{key=EntryKey(Entry)or''
-,name=SafeText(Name or'Script'),path=SafeText(Entry.path or Name or'Script'),
-context=SafeText(Entry.context or'Unknown'),class=SafeText(Entry.class or''),
-parented=Parented,isAntiCheat=Entry.isAntiCheat==true,reasons=SerializeReasons(
-Entry)}end local SerializeList=function(List)local Out={}if type(List)~='table'
-then return Out end for _,Entry in List do if type(Entry)=='table'then Out[#Out+
-1]=SerializeEntry(Entry)if#Out>=MaxListEntries then break end end end return Out
-end local FunctionCache=GcShared.Own({})local MaxValueChars=300 local
-MaxTableChars=20000 local SerializeFunction=function(Record,Index)return{index=
-Index or 0,name=SafeText(Record.name or'(anonymous)'),line=tonumber(Record.line)
-or 0,numparams=tonumber(Record.numparams)or 0,vargs=Record.vargs==true,hash=
-SafeText(Record.hash or''),source=SafeText(Record.source or'')}end local
-DecodeValue=function(Value)local Kind=typeof(Value)if Kind=='table'then local Ok
-,Code=pcall(Data2Code.Convert,Value,true)if Ok and type(Code)=='string'and Code
-~=''then if#Code>MaxTableChars then Code=Code:sub(1,MaxTableChars)..
-'\n--[[ truncated ]]'end return Code,true end return'<table>',false end local
-Text if Kind=='string'then Text=string.format('%q',Value)elseif Kind=='number'or
-Kind=='boolean'then Text=tostring(Value)elseif Kind=='nil'then Text='nil'elseif
-Kind=='Instance'then local Ok,Full=pcall(function()return Value:GetFullName()end
-)Text=Ok and Full or'<instance>'elseif Kind=='function'then local Ok,Name=pcall(
-function()return debug.info(Value,'n')end)Text=(Ok and type(Name)=='string'and
-Name~='')and('<function '..Name..'>')or'<function>'else local Ok,Code=pcall(
-Data2Code.Convert,Value,false)if Ok and type(Code)=='string'and Code~=''and Code
-~='nil'then Text=Code else Text='<'..Kind..'>'end end if#Text>MaxValueChars then
-Text=Text:sub(1,MaxValueChars)..'...'end return Text,false end local DecodeList=
-function(Values)local Out={}if type(Values)~='table'then return Out end for
-Index,Value in Values do local Entry={index=tonumber(Index)or#Out+1}if type(
-Value)=='string'then Entry.value=Value Entry.code=false else local Text,IsCode=
-DecodeValue(Value)Entry.value=Text Entry.code=IsCode==true end Out[#Out+1]=Entry
-end return Out end local RecordsFor=function(Entry,Key)local Cached=
-FunctionCache[Key]if Cached then return Cached end local Records=Entry.functions
-if type(Records)~='table'or#Records==0 then if typeof(Entry.script)=='Instance'
-then local Ok,List=pcall(ScanFunctions.CollectScriptFunctions,Entry.script)
-Records=Ok and List or{}else Records={}end end FunctionCache[Key]=Records return
-Records end local CollectFunctions=function(Entry,Key)local Records=RecordsFor(
-Entry,Key)local Out={}for Index,Record in Records do if type(Record)=='table'
-then Out[#Out+1]=SerializeFunction(Record,Index)end end return Out end local
-DecompileEntry=function(Entry)return Source.Decompile(Entry.script)end local
-BytecodeEntry=function(Entry)local Bytecode,Reason=Source.Bytecode(Entry.script)
-if not Bytecode then return nil,Reason end local Encoded=Source.Base64(Bytecode)
-if not Encoded then return nil,'base64 encode failed'end return Encoded,nil end
-local Actions={}Actions.ping=function()return{pong=true,clock=os.clock()}end
-Actions.info=function()local PlaceName=''local Ok,Info=pcall(function()return
-cloneref(game:GetService('MarketplaceService')):GetProductInfo(game.PlaceId)end)
-if Ok and type(Info)=='table'and type(Info.Name)=='string'then PlaceName=Info.
-Name end local ExecutorName='unknown'if type(identifyexecutor)=='function'then
-local OkName,Name=pcall(identifyexecutor)if OkName and type(Name)=='string'then
-ExecutorName=Name end end return{executor=ExecutorName,placeId=game.PlaceId,
-jobId=game.JobId,placeName=PlaceName,counts={scripts=#Sources.scripts,anticheat=
-#Sources.anticheat,actors=#Sources.actors,unknown=#Sources.unknown}}end Actions.
-config=function()return{config=Config.All(),defaults=Config.Defaults(),plugins=
-Plugins.List()}end Actions.setconfig=function(Request)local Values=Request.
-values if type(Values)~='table'then if type(Request.key)~='string'then return
-nil,'expected values or key'end Values={[Request.key]=Request.value}end local Ok
-,Changed=Config.Apply(Values)if not Ok then return nil,tostring(Changed)end
-return{changed=Changed,config=Config.All(),plugins=Plugins.List()}end Actions.
-saveall=function(Request)local SafeMode=__DARKLUA_BUNDLE_MODULES.m()local Path,
-Err,Saved,Failed=SafeMode.SaveAll(Request.includeCore==true)if not Path then
-return nil,tostring(Err)end return{path=Path,saved=Saved or 0,failed=Failed or 0
-,folder=SafeMode.GameFolder()}end Actions.export=function(Request)if WebBridge.
-Exporting()then return nil,'export already running'end local Options=type(
-Request.options)=='table'and Request.options or{}task.spawn(function()WebBridge.
-Export(Options)end)local Deadline=os.clock()+5 while os.clock()<Deadline and not
-WebBridge.Exporting()do task.wait(0.1)end return{started=true,status=WebBridge.
-ExportStatus()}end Actions.exportstatus=function()return WebBridge.ExportStatus(
-)end Actions.sandbox=function()local SafeMode=__DARKLUA_BUNDLE_MODULES.m()local
-Done,Blocked=SafeMode.Sandbox()return{sandboxed=Done,blocked=Blocked}end Actions
-.downloadbridge=function()local Ok,Note=Plugins.DownloadBridge()if not Ok then
+LogSink=nil local StatusSink=nil local PREVIOUS_SOCKET='__GcViewBridgeSocket'
+local DefaultChunk=262144 local MaxChunk=1048576 local MaxListEntries=5000 local
+Sources=GcShared.Own({scripts=GcShared.Own({}),anticheat=GcShared.Own({}),actors
+=GcShared.Own({}),unknown=GcShared.Own({})})local KeyIndex=GcShared.Own({})local
+Log=function(Message)if LogSink then pcall(LogSink,tostring(Message))end end
+local SetStatus=function(Text)if StatusSink then pcall(StatusSink,tostring(Text)
+)end end local Encode=function(Value)local Ok,Text=pcall(function()return
+HttpService:JSONEncode(Value)end)if Ok and type(Text)=='string'then return Text
+end return nil end local Decode=function(Text)if type(Text)~='string'or Text==''
+then return nil end local Ok,Value=pcall(function()return HttpService:
+JSONDecode(Text)end)if Ok and type(Value)=='table'then return Value end return
+nil end local SafeText=function(Value)if type(Value)=='string'then return Value
+end local Ok,Text=pcall(Strings.SafeString,Value)if Ok and type(Text)=='string'
+then return Text end return''end local EntryKey=function(Entry)if type(Entry.key
+)=='string'and Entry.key~=''then return Entry.key end if typeof(Entry.script)==
+'Instance'then return Classify.ScriptKey(Entry.script)end return nil end local
+RebuildIndex=function()KeyIndex=GcShared.Own({})for _,Name in{'scripts',
+'anticheat','actors'}do local List=Sources[Name]if type(List)=='table'then for _
+,Entry in List do if type(Entry)=='table'then local Key=EntryKey(Entry)if Key
+then KeyIndex[Key]=Entry end end end end end end local FindEntry=function(Key)if
+type(Key)~='string'or Key==''then return nil end local Entry=KeyIndex[Key]if
+Entry then return Entry end RebuildIndex()return KeyIndex[Key]end local
+SerializeReasons=function(Entry)local Out={}if type(Entry.antiCheatReasons)==
+'table'then for _,Reason in Entry.antiCheatReasons do Out[#Out+1]=SafeText(
+Reason)end end return Out end local SerializeEntry=function(Entry)local Name=
+Entry.name if type(Name)~='string'and typeof(Entry.script)=='Instance'then local
+Ok,Value=pcall(function()return Entry.script.Name end)Name=Ok and Value or nil
+end local Parented=false if typeof(Entry.script)=='Instance'then local Ok,Parent
+=pcall(function()return Entry.script.Parent end)Parented=Ok and Parent~=nil end
+return{key=EntryKey(Entry)or'',name=SafeText(Name or'Script'),path=SafeText(
+Entry.path or Name or'Script'),context=SafeText(Entry.context or'Unknown'),class
+=SafeText(Entry.class or''),parented=Parented,isAntiCheat=Entry.isAntiCheat==
+true,reasons=SerializeReasons(Entry)}end local SerializeList=function(List)local
+Out={}if type(List)~='table'then return Out end for _,Entry in List do if type(
+Entry)=='table'then Out[#Out+1]=SerializeEntry(Entry)if#Out>=MaxListEntries then
+break end end end return Out end local FunctionCache=GcShared.Own({})local
+MaxValueChars=300 local MaxTableChars=20000 local SerializeFunction=function(
+Record,Index)return{index=Index or 0,name=SafeText(Record.name or'(anonymous)'),
+line=tonumber(Record.line)or 0,numparams=tonumber(Record.numparams)or 0,vargs=
+Record.vargs==true,hash=SafeText(Record.hash or''),source=SafeText(Record.source
+or'')}end local DecodeValue=function(Value)local Kind=typeof(Value)if Kind==
+'table'then local Ok,Code=pcall(Data2Code.Convert,Value,true)if Ok and type(Code
+)=='string'and Code~=''then if#Code>MaxTableChars then Code=Code:sub(1,
+MaxTableChars)..'\n--[[ truncated ]]'end return Code,true end return'<table>',
+false end local Text if Kind=='string'then Text=string.format('%q',Value)elseif
+Kind=='number'or Kind=='boolean'then Text=tostring(Value)elseif Kind=='nil'then
+Text='nil'elseif Kind=='Instance'then local Ok,Full=pcall(function()return Value
+:GetFullName()end)Text=Ok and Full or'<instance>'elseif Kind=='function'then
+local Ok,Name=pcall(function()return debug.info(Value,'n')end)Text=(Ok and type(
+Name)=='string'and Name~='')and('<function '..Name..'>')or'<function>'else local
+Ok,Code=pcall(Data2Code.Convert,Value,false)if Ok and type(Code)=='string'and
+Code~=''and Code~='nil'then Text=Code else Text='<'..Kind..'>'end end if#Text>
+MaxValueChars then Text=Text:sub(1,MaxValueChars)..'...'end return Text,false
+end local DecodeList=function(Values)local Out={}if type(Values)~='table'then
+return Out end for Index,Value in Values do local Entry={index=tonumber(Index)or
+#Out+1}if type(Value)=='string'then Entry.value=Value Entry.code=false else
+local Text,IsCode=DecodeValue(Value)Entry.value=Text Entry.code=IsCode==true end
+Out[#Out+1]=Entry end return Out end local RecordsFor=function(Entry,Key)local
+Cached=FunctionCache[Key]if Cached then return Cached end local Records=Entry.
+functions if type(Records)~='table'or#Records==0 then if typeof(Entry.script)==
+'Instance'then local Ok,List=pcall(ScanFunctions.CollectScriptFunctions,Entry.
+script)Records=Ok and List or{}else Records={}end end FunctionCache[Key]=Records
+return Records end local CollectFunctions=function(Entry,Key)local Records=
+RecordsFor(Entry,Key)local Out={}for Index,Record in Records do if type(Record)
+=='table'then Out[#Out+1]=SerializeFunction(Record,Index)end end return Out end
+local DecompileEntry=function(Entry)return Source.Decompile(Entry.script)end
+local BytecodeEntry=function(Entry)local Bytecode,Reason=Source.Bytecode(Entry.
+script)if not Bytecode then return nil,Reason end local Encoded=Source.Base64(
+Bytecode)if not Encoded then return nil,'base64 encode failed'end return Encoded
+,nil end local Actions={}Actions.ping=function()return{pong=true,clock=os.clock(
+)}end Actions.info=function()local PlaceName=''local Ok,Info=pcall(function()
+return cloneref(game:GetService('MarketplaceService')):GetProductInfo(game.
+PlaceId)end)if Ok and type(Info)=='table'and type(Info.Name)=='string'then
+PlaceName=Info.Name end local ExecutorName='unknown'if type(identifyexecutor)==
+'function'then local OkName,Name=pcall(identifyexecutor)if OkName and type(Name)
+=='string'then ExecutorName=Name end end return{executor=ExecutorName,placeId=
+game.PlaceId,jobId=game.JobId,placeName=PlaceName,counts={scripts=#Sources.
+scripts,anticheat=#Sources.anticheat,actors=#Sources.actors,unknown=#Sources.
+unknown}}end Actions.config=function()return{config=Config.All(),defaults=Config
+.Defaults(),plugins=Plugins.List()}end Actions.setconfig=function(Request)local
+Values=Request.values if type(Values)~='table'then if type(Request.key)~=
+'string'then return nil,'expected values or key'end Values={[Request.key]=
+Request.value}end local Ok,Changed=Config.Apply(Values)if not Ok then return nil
+,tostring(Changed)end return{changed=Changed,config=Config.All(),plugins=Plugins
+.List()}end Actions.saveall=function(Request)local SafeMode=
+__DARKLUA_BUNDLE_MODULES.m()local Path,Err,Saved,Failed=SafeMode.SaveAll(Request
+.includeCore==true)if not Path then return nil,tostring(Err)end return{path=Path
+,saved=Saved or 0,failed=Failed or 0,folder=SafeMode.GameFolder()}end Actions.
+export=function(Request)if WebBridge.Exporting()then return nil,
+'export already running'end local Options=type(Request.options)=='table'and
+Request.options or{}task.spawn(function()WebBridge.Export(Options)end)local
+Deadline=os.clock()+5 while os.clock()<Deadline and not WebBridge.Exporting()do
+task.wait(0.1)end return{started=true,status=WebBridge.ExportStatus()}end
+Actions.exportstatus=function()return WebBridge.ExportStatus()end Actions.
+sandbox=function()local SafeMode=__DARKLUA_BUNDLE_MODULES.m()local Done,Blocked=
+SafeMode.Sandbox()return{sandboxed=Done,blocked=Blocked}end Actions.
+downloadbridge=function()local Ok,Note=Plugins.DownloadBridge()if not Ok then
 return nil,tostring(Note)end return{note=tostring(Note),folder=Plugins.
 BridgeDir()}end Actions.webupdate=function(Request)local Ok,Note,Updated if
 Request.force==true then Ok,Note=Plugins.DownloadBridge()Updated=Ok and#
@@ -1510,61 +1509,85 @@ return nil,Reason or'decompile failed'end local Payload=Chunked(Request.key,Text
 function(Request)local Entry=FindEntry(Request.key)if not Entry then return nil,
 'unknown script key'end local Encoded,Note=BytecodeEntry(Entry)if not Encoded
 then return nil,Note or'no bytecode'end local Payload=Chunked(Request.key,
-Encoded,Request)Payload.base64=Payload.chunk return Payload end local Send=
+Encoded,Request)Payload.base64=Payload.chunk return Payload end local FIRST_PART
+=32768 local MAX_PART=524288 local ACK_TIMEOUT=5 local PartSeq=0 local Acks={}
+local PartSending=false local SendRaw=function(Text)return pcall(function()
+Socket:Send(Text)end)end local SplitUtf8=function(Text,First,Max)local Pieces={}
+local Start,Total,Size=1,#Text,First while Start<=Total do local Stop=math.min(
+Start+Size-1,Total)while Stop<Total and Stop>Start do local Next=string.byte(
+Text,Stop+1)if Next<0x80 or Next>=0xc0 then break end Stop=Stop-1 end Pieces[#
+Pieces+1]=string.sub(Text,Start,Stop)Start=Stop+1 Size=math.min(Size*2,Max)end
+return Pieces end local SendParts=function(Text)while PartSending do task.wait()
+end PartSending=true PartSeq=PartSeq+1 local Id,Current=PartSeq,Socket local
+Pieces=SplitUtf8(Text,FIRST_PART,MAX_PART)local Acked={}Acks[Id]=Acked local Ok=
+true for Index,Piece in Pieces do local Part=Encode({type='part',id=Id,i=Index,n
+=#Pieces,data=Piece})if Socket~=Current or not Connected or not Part or not
+SendRaw(Part)then Ok=false break end local Deadline=os.clock()+ACK_TIMEOUT while
+not Acked[Index]and Socket==Current and Connected and os.clock()<Deadline do
+task.wait()end end Acks[Id]=nil PartSending=false return Ok end local Send=
 function(Payload)if not Socket or not Connected then return false end local Text
-=Encode(Payload)if not Text then return false end local Ok=pcall(function()
-Socket:Send(Text)end)return Ok end local HandleRequest=function(Request)local
-Action=Actions[Request.action]if not Action then Send({type='response',id=
-Request.id,ok=false,error='unknown action'})return end local Ok,Data,Err=pcall(
-Action,Request)if not Ok then Send({type='response',id=Request.id,ok=false,error
-=SafeText(Data)})return end if Data==nil then Send({type='response',id=Request.
-id,ok=false,error=SafeText(Err or'failed')})return end Send({type='response',id=
-Request.id,ok=true,action=Request.action,data=Data})end function WebBridge.
-Handle(RawMessage)local Message=Decode(RawMessage)if not Message then return end
-if Message.type=='request'then Log(('request: %s'):format(SafeText(Message.
-action)))task.spawn(HandleRequest,Message)return end if Message.type=='hello'
-then Log('peer connected')return end end function WebBridge.Publish(Name,List)if
-type(Name)~='string'or type(List)~='table'then return end Sources[Name]=List
-RebuildIndex()end function WebBridge.SetLogSink(Sink)LogSink=Sink end function
-WebBridge.SetStatusSink(Sink)StatusSink=Sink end function WebBridge.IsConnected(
-)return Connected end function WebBridge.Url()return SocketUrl end function
-WebBridge.Supported()return Executor.WebSocketConnect()~=nil end function
-WebBridge.Connect(Url)if Connected then return false,'already connected'end
-local ConnectFn=Executor.WebSocketConnect()if not ConnectFn then return false,
+=Encode(Payload)if not Text then return false end if#Text<=FIRST_PART then
+return SendRaw(Text)end return SendParts(Text)end local HandleRequest=function(
+Request)local Action=Actions[Request.action]if not Action then Send({type=
+'response',id=Request.id,ok=false,error='unknown action'})return end local Ok,
+Data,Err=pcall(Action,Request)if not Ok then Send({type='response',id=Request.id
+,ok=false,error=SafeText(Data)})return end if Data==nil then Send({type=
+'response',id=Request.id,ok=false,error=SafeText(Err or'failed')})return end
+Send({type='response',id=Request.id,ok=true,action=Request.action,data=Data})end
+function WebBridge.Handle(RawMessage)local Message=Decode(RawMessage)if not
+Message then return end if Message.type=='ack'then local Acked=Acks[tonumber(
+Message.id)]local Index=tonumber(Message.i)if Acked and Index then Acked[Index]=
+true end return end if Message.type=='request'then Log(('request: %s'):format(
+SafeText(Message.action)))task.spawn(HandleRequest,Message)return end if Message
+.type=='hello'then Log('peer connected')return end if Message.type=='peer'and
+Message.event=='superseded'then Log(
+'another GcView took over this room, disconnecting')WebBridge.Disconnect()end
+end function WebBridge.Publish(Name,List)if type(Name)~='string'or type(List)~=
+'table'then return end Sources[Name]=List RebuildIndex()end function WebBridge.
+SetLogSink(Sink)LogSink=Sink end function WebBridge.SetStatusSink(Sink)
+StatusSink=Sink end function WebBridge.IsConnected()return Connected end
+function WebBridge.Url()return SocketUrl end function WebBridge.Supported()
+return Executor.WebSocketConnect()~=nil end function WebBridge.Connect(Url)if
+Connected then return false,'already connected'end local ConnectFn=Executor.
+WebSocketConnect()if not ConnectFn then return false,
 'this executor has no WebSocket support'end if type(Url)~='string'then return
 false,'enter a relay url'end Url=Url:match('^%s*(.-)%s*$')or''if Url==''then
 return false,'enter a relay url'end if Url:sub(1,7)=='http://'then Url='ws://'..
 Url:sub(8)elseif Url:sub(1,8)=='https://'then Url='wss://'..Url:sub(9)elseif not
 Url:match('^wss?://')then if Url:match('^%a[%w+.-]*://')then return false,
 'url must be ws:// or wss://'end Url='ws://'..Url end SetStatus('connecting to '
-..Url)local Ok,Result=pcall(ConnectFn,Url)if not Ok then local Reason=SafeText(
-Result)SetStatus('connect failed')Log('connect failed: '..Reason)return false,
-Reason end if Result==nil or Result==false then SetStatus('connect failed')Log(
-'connect returned no socket')return false,'connect returned no socket'end Socket
-=Result SocketUrl=Url Connected=true task.spawn(function()while task.wait(30)and
-Connected and Socket==Result do pcall(function()Result:Send('ping')end)end end)
-pcall(function()Socket.OnMessage:Connect(function(Message,IsBinary)if IsBinary
-then return end WebBridge.Handle(Message)end)end)pcall(function()Socket.OnClose:
-Connect(function()Connected=false SetStatus('disconnected')Log('socket closed')
-end)end)RebuildIndex()Send({type='hello',role='tool',info=Actions.info()})
-SetStatus('connected to '..Url)Log('connected')return true end function
-WebBridge.Disconnect()if not Socket then return false,'not connected'end pcall(
-function()Socket:Close()end)Connected=false Socket=nil SetStatus('disconnected')
-Log('closed by user')return true end local ExportRunning=false local ExportRun=0
-local ExportState={run=0,running=false,done=0,total=0,failed=0,path='',stage=
-'idle',name=''}function WebBridge.ExportStatus()return{run=ExportState.run,
-running=ExportState.running,done=ExportState.done,total=ExportState.total,failed
-=ExportState.failed,path=ExportState.path,stage=ExportState.stage,name=
-ExportState.name,viewer=ExportState.viewer or'index.html',memory=ExportState.
-memory or 0}end local SafeFileName=function(Text)Text=tostring(Text or'unnamed')
-Text=Text:gsub('[^%w%-%._]','_')if#Text>90 then Text=Text:sub(1,90)end if Text==
-''then Text='unnamed'end return Text end local EnsureFolder=function(Path)if
-type(isfolder)=='function'and type(makefolder)=='function'then if not isfolder(
-Path)then pcall(makefolder,Path)end end end local WriteText=function(Path,Text)
-if type(writefile)~='function'then return false end return pcall(writefile,Path,
-Text)==true end function WebBridge.Exporting()return ExportRunning end function
-WebBridge.Export(Options)if ExportRunning then return nil,
-'export already running'end if type(writefile)~='function'then return nil,
+..Url)local Globals=type(getgenv)=='function'and getgenv()or{}local Previous=
+rawget(Globals,PREVIOUS_SOCKET)if Previous~=nil then pcall(function()Previous:
+Close()end)Globals[PREVIOUS_SOCKET]=nil end local Ok,Result=pcall(ConnectFn,Url)
+if not Ok then local Reason=SafeText(Result)SetStatus('connect failed')Log(
+'connect failed: '..Reason)return false,Reason end if Result==nil or Result==
+false then SetStatus('connect failed')Log('connect returned no socket')return
+false,'connect returned no socket'end Socket=Result SocketUrl=Url Connected=true
+Globals[PREVIOUS_SOCKET]=Result task.spawn(function()while task.wait(30)and
+Connected and Socket==Result do local Sent=pcall(function()Result:Send(
+'{"type":"keepalive"}')end)if not Sent then break end end end)pcall(function()
+Socket.OnMessage:Connect(function(Message,IsBinary)if IsBinary then return end
+WebBridge.Handle(Message)end)end)pcall(function()Socket.OnClose:Connect(function
+()if Socket~=Result then return end Connected=false SetStatus('disconnected')
+Log('socket closed')end)end)RebuildIndex()Send({type='hello',role='tool',info=
+Actions.info()})SetStatus('connected to '..Url)Log('connected')return true end
+function WebBridge.Disconnect()if not Socket then return false,'not connected'
+end pcall(function()Socket:Close()end)Connected=false Socket=nil SetStatus(
+'disconnected')Log('closed by user')return true end local ExportRunning=false
+local ExportRun=0 local ExportState={run=0,running=false,done=0,total=0,failed=0
+,path='',stage='idle',name=''}function WebBridge.ExportStatus()return{run=
+ExportState.run,running=ExportState.running,done=ExportState.done,total=
+ExportState.total,failed=ExportState.failed,path=ExportState.path,stage=
+ExportState.stage,name=ExportState.name,viewer=ExportState.viewer or'index.html'
+,memory=ExportState.memory or 0}end local SafeFileName=function(Text)Text=
+tostring(Text or'unnamed')Text=Text:gsub('[^%w%-%._]','_')if#Text>90 then Text=
+Text:sub(1,90)end if Text==''then Text='unnamed'end return Text end local
+EnsureFolder=function(Path)if type(isfolder)=='function'and type(makefolder)==
+'function'then if not isfolder(Path)then pcall(makefolder,Path)end end end local
+WriteText=function(Path,Text)if type(writefile)~='function'then return false end
+return pcall(writefile,Path,Text)==true end function WebBridge.Exporting()return
+ExportRunning end function WebBridge.Export(Options)if ExportRunning then return
+nil,'export already running'end if type(writefile)~='function'then return nil,
 'writefile unsupported'end Options=type(Options)=='table'and Options or{}local
 Delay=tonumber(Options.Delay)or 0.15 local DetailDelay=tonumber(Options.
 DetailDelay)or 0.03 local DetailEvery=tonumber(Options.DetailEvery)or 8 local

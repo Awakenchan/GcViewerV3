@@ -216,10 +216,9 @@ Body end return nil end function Executor.Get(Url,Headers)local Request=Executor
 __DARKLUA_BUNDLE_MODULES.i()local v=__DARKLUA_BUNDLE_MODULES.cache.i if not v
 then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.i=v end return v.c end end
 do local __modImpl=function()local Services=__DARKLUA_BUNDLE_MODULES.c()local
-GcShared={}local Globals=type(getgenv)=='function'and getgenv()or{}local
-Heartbeat=Services.RunService.Heartbeat local FRAME_BUDGET=8.333333333333334E-3
-local sliceStart=os.clock()local HAS_GETGC=type(getgc)=='function'local
-HAS_ISEXEC=type(isexecutorclosure)=='function'local HAS_HASH=type(
+GcShared={}local Globals=type(getgenv)=='function'and getgenv()or{}local _=
+Services.RunService.Heartbeat os.clock()local HAS_GETGC=type(getgc)=='function'
+local HAS_ISEXEC=type(isexecutorclosure)=='function'local HAS_HASH=type(
 getfunctionhash)=='function'and Globals.gcview_no_hash~=true local HAS_FENV=
 Globals.gcview_no_fenv~=true local snapshot local snapshotOk=false local
 snapshotVersion=0 local execCache=setmetatable({},{__mode='k'})local fenvCache=
@@ -242,8 +241,7 @@ GcShared.Hash(fn)if type(fn)~='function'or not HAS_HASH then return nil end
 local cached=hashCache[fn]if cached~=nil then if cached==false then return nil
 end return cached end local ok,h=pcall(getfunctionhash,fn)if ok and type(h)==
 'string'and h~=''then hashCache[fn]=h return h end hashCache[fn]=false return
-nil end function GcShared.Step()if os.clock()-sliceStart>=FRAME_BUDGET then
-Heartbeat:Wait()sliceStart=os.clock()end end function GcShared.Version()return
+nil end function GcShared.Step()end function GcShared.Version()return
 snapshotVersion end function GcShared.Reset()snapshot=nil snapshotOk=false
 snapshotVersion=snapshotVersion+1 execCache=setmetatable({},{__mode='k'})
 fenvCache=setmetatable({},{__mode='k'})hashCache=setmetatable({},{__mode='k'})

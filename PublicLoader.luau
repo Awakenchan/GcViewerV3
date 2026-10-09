@@ -225,25 +225,34 @@ snapshotVersion=0 local execCache=setmetatable({},{__mode='k'})local fenvCache=
 setmetatable({},{__mode='k'})local hashCache=setmetatable({},{__mode='k'})local
 ownedTables=setmetatable({},{__mode='k'})function GcShared.Own(value)if type(
 value)=='table'then ownedTables[value]=true end return value end function
-GcShared.IsOwn(value)return ownedTables[value]==true end function GcShared.
-Snapshot()if snapshot~=nil then return snapshot,snapshotOk end if not HAS_GETGC
-then snapshot,snapshotOk={},false return snapshot,snapshotOk end local ok,gc=
-pcall(getgc,true)if ok and type(gc)=='table'then snapshot,snapshotOk=gc,true
-else snapshot,snapshotOk={},false end return snapshot,snapshotOk end function
-GcShared.IsExec(fn)if type(fn)~='function'or not HAS_ISEXEC then return false
-end local cached=execCache[fn]if cached~=nil then return cached end local ok,r=
-pcall(isexecutorclosure,fn)r=ok and r==true execCache[fn]=r return r end
-function GcShared.Fenv(fn)if not HAS_FENV then return nil end local cached=
-fenvCache[fn]if cached~=nil then if cached==false then return nil end return
-cached end local ok,env=pcall(getfenv,fn)if ok and type(env)=='table'then
-fenvCache[fn]=env return env end fenvCache[fn]=false return nil end function
-GcShared.Hash(fn)if type(fn)~='function'or not HAS_HASH then return nil end
-local cached=hashCache[fn]if cached~=nil then if cached==false then return nil
-end return cached end local ok,h=pcall(getfunctionhash,fn)if ok and type(h)==
-'string'and h~=''then hashCache[fn]=h return h end hashCache[fn]=false return
-nil end function GcShared.Step()end function GcShared.Version()return
-snapshotVersion end function GcShared.Reset()snapshot=nil snapshotOk=false
-snapshotVersion=snapshotVersion+1 execCache=setmetatable({},{__mode='k'})
+GcShared.IsOwn(value)return ownedTables[value]==true end local weakBox=function(
+value)return setmetatable({value},{__mode='v'})end function GcShared.WeakBox(
+value)return weakBox(value)end local HandleMeta={__index=function(self,key)local
+boxes=rawget(self,'__gcHandles')local box=boxes and boxes[key]if box then return
+box[1]end return nil end}function GcShared.Entry(fields,handleKeys)if type(
+fields)~='table'then return fields end local boxes if type(handleKeys)=='table'
+then for _,key in handleKeys do local value=rawget(fields,key)if value~=nil then
+boxes=boxes or{}boxes[key]=weakBox(value)rawset(fields,key,nil)end end end if
+boxes then rawset(fields,'__gcHandles',boxes)ownedTables[boxes]=true
+setmetatable(fields,HandleMeta)end ownedTables[fields]=true return fields end
+function GcShared.Snapshot()if snapshot~=nil then return snapshot,snapshotOk end
+if not HAS_GETGC then snapshot,snapshotOk={},false return snapshot,snapshotOk
+end local ok,gc=pcall(getgc,true)if ok and type(gc)=='table'then snapshot,
+snapshotOk=gc,true else snapshot,snapshotOk={},false end return snapshot,
+snapshotOk end function GcShared.IsExec(fn)if type(fn)~='function'or not
+HAS_ISEXEC then return false end local cached=execCache[fn]if cached~=nil then
+return cached end local ok,r=pcall(isexecutorclosure,fn)r=ok and r==true
+execCache[fn]=r return r end function GcShared.Fenv(fn)if not HAS_FENV then
+return nil end local cached=fenvCache[fn]if cached~=nil then if cached==false
+then return nil end return cached end local ok,env=pcall(getfenv,fn)if ok and
+type(env)=='table'then fenvCache[fn]=env return env end fenvCache[fn]=false
+return nil end function GcShared.Hash(fn)if type(fn)~='function'or not HAS_HASH
+then return nil end local cached=hashCache[fn]if cached~=nil then if cached==
+false then return nil end return cached end local ok,h=pcall(getfunctionhash,fn)
+if ok and type(h)=='string'and h~=''then hashCache[fn]=h return h end hashCache[
+fn]=false return nil end function GcShared.Step()end function GcShared.Version()
+return snapshotVersion end function GcShared.Reset()snapshot=nil snapshotOk=
+false snapshotVersion=snapshotVersion+1 execCache=setmetatable({},{__mode='k'})
 fenvCache=setmetatable({},{__mode='k'})hashCache=setmetatable({},{__mode='k'})
 end function GcShared.Release()snapshot=nil snapshotOk=false end return GcShared
 end function __DARKLUA_BUNDLE_MODULES.j()local v=__DARKLUA_BUNDLE_MODULES.cache.
@@ -302,8 +311,8 @@ GcShared.IsExec(Object)then local Env=GcShared.Fenv(Object)if type(Env)=='table'
 then local Ok,Owner=pcall(rawget,Env,'script')if Ok and typeof(Owner)==
 'Instance'then local Key=Source.CacheKey(Owner)if Key then local Line=
 FunctionLine(Object)local Current=Index[Key]if not Current or Line<Current.line
-then Index[Key]=GcShared.Own({fn=Object,line=Line})end end end end end end
-ClosureIndex=Index ClosureIndexVersion=Version return Index end local
+then Index[Key]=GcShared.Entry({fn=Object,line=Line},{'fn'})end end end end end
+end ClosureIndex=Index ClosureIndexVersion=Version return Index end local
 ClosureFromThread=function(ScriptRef)local GetThread=Executor.ScriptThread()if
 not GetThread then return nil end local OkThread,Thread=pcall(GetThread,
 ScriptRef)if not OkThread or type(Thread)~='thread'then return nil end for Level
@@ -576,13 +585,13 @@ GetDebugId()end)refId=okId and id or nil end local instanceIsRef=function(v)if
 rawequal(v,scriptRef)then return true end if refId and typeof(v)=='Instance'then
 local okSid,sid=pcall(function()return v:GetDebugId()end)return okSid and sid==
 refId end return false end local add=function(fn)if seen[fn]then return end seen
-[fn]=true local info=Strings.FunctionInfo(fn)list[#list+1]=Gc.Own({func=fn,name=
-(info.name and info.name~='')and info.name or'(anonymous)',line=info.line,
-numparams=info.numparams,vargs=info.vargs})end local matches=function(obj)local
-env=Gc.Fenv(obj)if type(env)=='table'then local ok2,s=pcall(rawget,env,'script')
-if ok2 and instanceIsRef(s)then return true end end local okU,ups=pcall(debug.
-getupvalues,obj)if okU and type(ups)=='table'then for _,v in ups do if
-instanceIsRef(v)then return true end end end local okC,consts=pcall(debug.
+[fn]=true local info=Strings.FunctionInfo(fn)list[#list+1]=Gc.Entry({func=fn,
+name=(info.name and info.name~='')and info.name or'(anonymous)',line=info.line,
+numparams=info.numparams,vargs=info.vargs},{'func'})end local matches=function(
+obj)local env=Gc.Fenv(obj)if type(env)=='table'then local ok2,s=pcall(rawget,env
+,'script')if ok2 and instanceIsRef(s)then return true end end local okU,ups=
+pcall(debug.getupvalues,obj)if okU and type(ups)=='table'then for _,v in ups do
+if instanceIsRef(v)then return true end end end local okC,consts=pcall(debug.
 getconstants,obj)if okC and type(consts)=='table'then for _,v in consts do if
 rawequal(v,scriptRef)then return true end end end local okSrc,src=pcall(function
 ()return debug.info(obj,'s')end)if okSrc and type(src)=='string'and src~=''then
@@ -629,17 +638,17 @@ end return false end local processed=0 for _,obj in gc do if type(obj)==
 'function'and(not hasLclosure or islclosure(obj))and not knownFuncs[obj]and not
 seen[obj]then if not Gc.IsExec(obj)and not belongsToSomeScript(obj)then local h=
 Gc.Hash(obj)if not(h and knownHashes[h])then seen[obj]=true local info=Strings.
-FunctionInfo(obj)table.insert(list,Gc.Own({func=obj,name=(info.name and info.
+FunctionInfo(obj)table.insert(list,Gc.Entry({func=obj,name=(info.name and info.
 name~='')and info.name or'(anonymous)',line=info.line,numparams=info.numparams,
-vargs=info.vargs,source=info.source,hash=h}))end end end processed=processed+1
-if processed%20000==0 then Trace.Mark('orphan: progress',processed..' scanned, '
-..#list..' found')end Gc.Step()end Trace.Mark('orphan: loop finished',processed)
-table.sort(list,function(a,b)return(a.line or 0)<(b.line or 0)end)return list
-end return Fns end function __DARKLUA_BUNDLE_MODULES.o()local v=
-__DARKLUA_BUNDLE_MODULES.cache.o if not v then v={c=__modImpl()}
-__DARKLUA_BUNDLE_MODULES.cache.o=v end return v.c end end do local __modImpl=
-function()local Services=__DARKLUA_BUNDLE_MODULES.c()local Gc=
-__DARKLUA_BUNDLE_MODULES.j()local Classify=__DARKLUA_BUNDLE_MODULES.h()local
+vargs=info.vargs,source=info.source,hash=h},{'func'}))end end end processed=
+processed+1 if processed%20000==0 then Trace.Mark('orphan: progress',processed..
+' scanned, '..#list..' found')end Gc.Step()end Trace.Mark(
+'orphan: loop finished',processed)table.sort(list,function(a,b)return(a.line or
+0)<(b.line or 0)end)return list end return Fns end function
+__DARKLUA_BUNDLE_MODULES.o()local v=__DARKLUA_BUNDLE_MODULES.cache.o if not v
+then v={c=__modImpl()}__DARKLUA_BUNDLE_MODULES.cache.o=v end return v.c end end
+do local __modImpl=function()local Services=__DARKLUA_BUNDLE_MODULES.c()local Gc
+=__DARKLUA_BUNDLE_MODULES.j()local Classify=__DARKLUA_BUNDLE_MODULES.h()local
 RunService=Services.RunService local Actors={}local Channel local Targets={}
 local DUMPER=
 [=[    local function safeStr(v)
@@ -931,56 +940,56 @@ payload.kind=='function'then tail=tail+1 queue[tail]=payload end end)local
 handle=function(payload)Gc.Own(payload)Gc.Own(payload.constants)Gc.Own(payload.
 upvalues)if payload.kind=='script'then local key=payload.key if key and not seen
 [key]then if Classify.IsExecutorScript(payload.script,payload.path)then seen[key
-]=true return end seen[key]=true local entry=Gc.Own({script=payload.script,path=
-payload.path or payload.name or'ActorScript',context='Actor',name=payload.name,
-class=payload.class,key=key,functions=Gc.Own({})})byKey[key]=entry table.insert(
-results,entry)end return end if payload.kind=='function'then local entry=byKey[
-payload.key]if entry then table.insert(entry.functions,Gc.Own({ref=payload.ref,
-func=payload.func,name=payload.name,line=payload.line,numparams=payload.
-numparams,vargs=payload.vargs,hash=payload.hash,constants=payload.constants,
-upvalues=payload.upvalues,valueIndex=payload.valueIndex}))end end end local
-drain=function()while head<=tail do local payload=queue[head]queue[head]=nil
-head=head+1 pcall(handle,payload)Gc.Step()end end local dispatchedStates={}local
-gameStateId if type(getgamestate)=='function'then local okGame,gameState=pcall(
-getgamestate)if okGame and gameState then local okId,id=pcall(function()return
-gameState.Id end)if okId then gameStateId=id end end end local stateId=function(
-state)local ok,id=pcall(function()return state.Id end)return ok and id or nil
-end local isActorState=function(state)local ok,flag=pcall(function()return state
-.IsActorState end)if ok and flag~=nil then return flag==true end local id=
-stateId(state)return gameStateId==nil or id==nil or id~=gameStateId end local
-dispatchState=function(state)if state==nil or not isActorState(state)then return
-false end local id=stateId(state)if id~=nil then if dispatchedStates[id]then
-return true end dispatchedStates[id]=true end local run=function(code)state:
-Execute(code,channelId)end if pcall(run,COLLECTOR)then pending=pending+1 Targets
-[#Targets+1]=run return true end return false end local actorTargets={}local
-actorSeen={}local addActor=function(actor)if typeof(actor)~='Instance'or
-actorSeen[actor]then return end actorSeen[actor]=true actorTargets[#actorTargets
-+1]=actor end local states={}if canExecuteStates then local okStates,list=pcall(
-getactorstates)if okStates and type(list)=='table'then for _,state in list do
-states[#states+1]=state end end end for _,state in states do dispatchState(state
-)local okActorsOfState,list=pcall(function()return state:GetActors()end)if
-okActorsOfState and type(list)=='table'then for _,actor in list do addActor(
-actor)end end end if type(getactors)=='function'then local okActors,list=pcall(
-getactors)if okActors and type(list)=='table'then for _,actor in list do
-addActor(actor)end end end if canRunOnActor then for _,actor in actorTargets do
-local covered=false if type(getluastate)=='function'then local okState,state=
-pcall(getluastate,actor)if okState and state then local id=stateId(state)if id~=
-nil and dispatchedStates[id]then covered=true end end end if not covered then
-local run=function(code)run_on_actor(actor,code,channelId)end if pcall(run,
-COLLECTOR)then pending=pending+1 Targets[#Targets+1]=run end end end end local
-start=os.clock()while pending>0 and(os.clock()-start)<timeout do drain()
-RunService.Heartbeat:Wait()end pcall(function()conn:Disconnect()end)drain()
-return results end function Actors.Expand(ref,timeout)if not Channel or type(ref
-)~='string'then return nil end local result local conn=Channel.Event:Connect(
-function(payload)if type(payload)=='table'and payload.kind=='expanded'and
-payload.ref==ref then result=payload end end)pcall(function()Channel:Fire({kind=
-'expand',ref=ref})end)local code=('local REF = %q\n'):format(ref)..EXPANDER for
-_,run in Targets do if result then break end pcall(run,code)end local deadline=
-os.clock()+(timeout or 3)while not result and os.clock()<deadline do RunService.
-Heartbeat:Wait()end pcall(function()conn:Disconnect()end)return result end
-function Actors.Keys()local keys={}local actors={}local actorSeen={}local
-addActor=function(actor)if typeof(actor)~='Instance'or actorSeen[actor]then
-return end actorSeen[actor]=true actors[#actors+1]=actor end if type(
+]=true return end seen[key]=true local entry=Gc.Entry({script=payload.script,
+path=payload.path or payload.name or'ActorScript',context='Actor',name=payload.
+name,class=payload.class,key=key,functions=Gc.Own({})},{'script'})byKey[key]=
+entry table.insert(results,entry)end return end if payload.kind=='function'then
+local entry=byKey[payload.key]if entry then table.insert(entry.functions,Gc.
+Entry({ref=payload.ref,func=payload.func,name=payload.name,line=payload.line,
+numparams=payload.numparams,vargs=payload.vargs,hash=payload.hash,constants=
+payload.constants,upvalues=payload.upvalues,valueIndex=payload.valueIndex},{
+'func'}))end end end local drain=function()while head<=tail do local payload=
+queue[head]queue[head]=nil head=head+1 pcall(handle,payload)Gc.Step()end end
+local dispatchedStates={}local gameStateId if type(getgamestate)=='function'then
+local okGame,gameState=pcall(getgamestate)if okGame and gameState then local
+okId,id=pcall(function()return gameState.Id end)if okId then gameStateId=id end
+end end local stateId=function(state)local ok,id=pcall(function()return state.Id
+end)return ok and id or nil end local isActorState=function(state)local ok,flag=
+pcall(function()return state.IsActorState end)if ok and flag~=nil then return
+flag==true end local id=stateId(state)return gameStateId==nil or id==nil or id~=
+gameStateId end local dispatchState=function(state)if state==nil or not
+isActorState(state)then return false end local id=stateId(state)if id~=nil then
+if dispatchedStates[id]then return true end dispatchedStates[id]=true end local
+run=function(code)state:Execute(code,channelId)end if pcall(run,COLLECTOR)then
+pending=pending+1 Targets[#Targets+1]=run return true end return false end local
+actorTargets={}local actorSeen={}local addActor=function(actor)if typeof(actor)
+~='Instance'or actorSeen[actor]then return end actorSeen[actor]=true
+actorTargets[#actorTargets+1]=actor end local states={}if canExecuteStates then
+local okStates,list=pcall(getactorstates)if okStates and type(list)=='table'then
+for _,state in list do states[#states+1]=state end end end for _,state in states
+do dispatchState(state)local okActorsOfState,list=pcall(function()return state:
+GetActors()end)if okActorsOfState and type(list)=='table'then for _,actor in
+list do addActor(actor)end end end if type(getactors)=='function'then local
+okActors,list=pcall(getactors)if okActors and type(list)=='table'then for _,
+actor in list do addActor(actor)end end end if canRunOnActor then for _,actor in
+actorTargets do local covered=false if type(getluastate)=='function'then local
+okState,state=pcall(getluastate,actor)if okState and state then local id=
+stateId(state)if id~=nil and dispatchedStates[id]then covered=true end end end
+if not covered then local run=function(code)run_on_actor(actor,code,channelId)
+end if pcall(run,COLLECTOR)then pending=pending+1 Targets[#Targets+1]=run end
+end end end local start=os.clock()while pending>0 and(os.clock()-start)<timeout
+do drain()RunService.Heartbeat:Wait()end pcall(function()conn:Disconnect()end)
+drain()return results end function Actors.Expand(ref,timeout)if not Channel or
+type(ref)~='string'then return nil end local result local conn=Channel.Event:
+Connect(function(payload)if type(payload)=='table'and payload.kind=='expanded'
+and payload.ref==ref then result=payload end end)pcall(function()Channel:Fire({
+kind='expand',ref=ref})end)local code=('local REF = %q\n'):format(ref)..EXPANDER
+for _,run in Targets do if result then break end pcall(run,code)end local
+deadline=os.clock()+(timeout or 3)while not result and os.clock()<deadline do
+RunService.Heartbeat:Wait()end pcall(function()conn:Disconnect()end)return
+result end function Actors.Keys()local keys={}local actors={}local actorSeen={}
+local addActor=function(actor)if typeof(actor)~='Instance'or actorSeen[actor]
+then return end actorSeen[actor]=true actors[#actors+1]=actor end if type(
 getactorstates)=='function'then local okStates,states=pcall(getactorstates)if
 okStates and type(states)=='table'then for _,state in states do local okList,
 list=pcall(function()return state:GetActors()end)if okList and type(list)==
@@ -1822,11 +1831,11 @@ context='Actor'end seen[key]=true Source.Capture(inst)local isAnti,antiReasons=
 false,Gc.Own({})local hit=keywordHits[key]or keywordHits[inst]if hit then isAnti
 =true antiReasons[1]=hit else local detected,reason=AntiCheat.Detect(inst)if
 detected then isAnti=true antiReasons[1]=reason end end results[#results+1]=Gc.
-Own({script=inst,path=fullPath,context=context,key=key,isAntiCheat=isAnti,
-antiCheatReasons=antiReasons})end local drain=function(list)if type(list)~=
-'table'then return 0 end local count=0 for _,inst in list do count=count+1
-consider(inst)Gc.Step()end return count end local enumerated=0 for _,getter in{
-getscripts,getrunningscripts,getloadedmodules,getmodules}do if type(getter)==
+Entry({script=inst,path=fullPath,context=context,key=key,isAntiCheat=isAnti,
+antiCheatReasons=antiReasons},{'script'})end local drain=function(list)if type(
+list)~='table'then return 0 end local count=0 for _,inst in list do count=count+
+1 consider(inst)Gc.Step()end return count end local enumerated=0 for _,getter in
+{getscripts,getrunningscripts,getloadedmodules,getmodules}do if type(getter)==
 'function'then local ok,list=pcall(getter)if ok then enumerated=enumerated+
 drain(list)end end end if Caps.getnilinstances then local ok,list=pcall(
 getnilinstances)if ok then drain(list)end end if Caps.getscriptfromthread and
@@ -3963,79 +3972,81 @@ scriptRef:GetFullName()end)if type(path)~='string'then local nm=safeGet(function
 scriptPathCache[scriptRef]=path return path or nil end local getScriptName=
 function(scriptRef)return safeGet(function(s)return s.Name end,scriptRef)end
 local buildHashIndex=function()if scriptHashIndex then return end
-scriptHashIndex=Gc.Own({})scriptPathCache=Gc.Own({})if type(getfunctionhash)~=
-'function'then return end local index=function(entries)if type(entries)~='table'
-then return end for _,entry in entries do local s=entry.script if typeof(s)==
-'Instance'then local h=entry.hash if not h and typeof(entry.func)=='function'
-then h=Gc.Hash(entry.func)end if h and scriptHashIndex[h]==nil then
-scriptHashIndex[h]=s end end end end for _,list in knownScripts do index(list)
-end end local ownerOfFunc=function(fn)local cached=funcOwnerCache[fn]if cached~=
-nil then if cached then return cached[1],cached[2]end return nil end local owner
-=resolveFuncScript(fn)local reason='fenv'if owner==nil and scriptHashIndex then
-local h=Gc.Hash(fn)if h then local hs=scriptHashIndex[h]if hs~=nil then owner=hs
-reason='hash'end end end if owner~=nil then funcOwnerCache[fn]=Gc.Own({owner,
-reason})return owner,reason end funcOwnerCache[fn]=false return nil end local
-funcSourceMatches=function(func,targetPath)if not targetPath then return false
-end local src=safeGet(function(f)return debug.info(f,'s')end,func)if type(src)~=
-'string'then return false end src=src:gsub('^[=@]','')return src==targetPath or
-src:find(targetPath,1,true)~=nil end local scoreTableForScripts=function(
-funcsInTable,scriptRefsInTable,nameHits)local scores={}local reasons={}local
-bump=function(scriptRef,amount,why)if scriptRef==nil then return end scores[
-scriptRef]=(scores[scriptRef]or 0)+amount local r=reasons[scriptRef]if not r
-then r={}reasons[scriptRef]=r end r[why]=true end for _,fn in funcsInTable do
-local owner,why=ownerOfFunc(fn)if owner~=nil then bump(owner,10,why)end end for
-_,ref in scriptRefsInTable do bump(ref,8,'script-ref')end local lead,leadScore
-for scriptRef,sc in scores do if not leadScore or sc>leadScore then lead,
-leadScore=scriptRef,sc end end if lead and funcsInTable[1]then local path=
-getScriptPath(lead)if funcSourceMatches(funcsInTable[1],path)then scores[lead]=
-scores[lead]+5 reasons[lead]['source']=true end end local best,bestScore for
-scriptRef,sc in scores do local nm=getScriptName(scriptRef)if nm and nameHits[nm
-]then sc=sc+2 scores[scriptRef]=sc reasons[scriptRef]['name']=true end if not
-bestScore or sc>bestScore then best,bestScore=scriptRef,sc end end if best and
-bestScore and bestScore>=SCORE_MIN then local why={}for k in reasons[best]do why
-[#why+1]=k end table.sort(why)return best,bestScore,table.concat(why,'+')end
-return nil end local rootSkipSet=function()local skip={}skip[getgenv()]=true if
-_G then skip[_G]=true end if shared then skip[shared]=true end return skip end
-local scanGcTables=function(onProgress)if gcTableBuckets then return end
-gcTableBuckets=Gc.Own({})funcOwnerCache=Gc.Own({})buildHashIndex()local gc=Gc.
-Snapshot()local seen={}local skip=rootSkipSet()local processed=0 for _,tbl in gc
-do processed=processed+1 if onProgress and processed%PROGRESS_EVERY==0 then
-onProgress(processed)end Gc.Step()if processed>MAX_TOTAL_TABLES then break end
-if type(tbl)~='table'or seen[tbl]or skip[tbl]or Gc.IsOwn(tbl)then continue end
-seen[tbl]=true local okShape,isOwn=pcall(isGcViewTable,tbl)if not okShape or
-isOwn then continue end local funcsInTable={}local scriptRefs={}local nameHits={
-}local count=0 local tainted=false local okWalk=pcall(function()local consider=
-function(x)local tx=type(x)if tx=='function'then if Gc.IsExec(x)then tainted=
-true return true end funcsInTable[#funcsInTable+1]=x elseif tx=='string'then
-nameHits[x]=true elseif tx=='userdata'and isLuaSourceContainer(x)then scriptRefs
-[#scriptRefs+1]=x end return false end local k,v=next(tbl)while k~=nil do count=
-count+1 if count>MAX_TABLE_SCAN then return end if consider(v)or consider(k)then
-return end k,v=next(tbl,k)end end)if not okWalk or tainted or(#funcsInTable==0
-and#scriptRefs==0)then continue end pcall(function()local owner,score,why=
-scoreTableForScripts(funcsInTable,scriptRefs,nameHits)if owner==nil then return
-end local info=Gc.Own({value=tbl,count=count,address=SafeString(tbl),funcCount=#
-funcsInTable,origin=('%d fn(s) | score %d | %s'):format(#funcsInTable,score,why)
-})local bucket=gcTableBuckets[owner]if not bucket then bucket=Gc.Own({})
-gcTableBuckets[owner]=bucket end bucket[#bucket+1]=info end)end end function
-Tables.CollectForScript(scriptRef,_entries,onProgress)scanGcTables(onProgress)
-local out={}if typeof(scriptRef)=='Instance'and gcTableBuckets then local bucket
-=gcTableBuckets[scriptRef]if bucket then for _,info in bucket do out[#out+1]=Gc.
-Own({value=info.value,origin=info.origin,count=info.count,address=info.address})
-end end end table.sort(out,function(a,b)if a.count~=b.count then return a.count>
-b.count end return a.address<b.address end)return out end function Tables.
-ParseKeywords(text)local out={}if type(text)~='string'then return out end for
-piece in text:gmatch('[^,]+')do local kw=piece:match('^%s*(.-)%s*$'):lower()if
-kw~=''then out[#out+1]=kw end end return out end function Tables.Guard(where,fn,
-...)local ok,res=xpcall(fn,function(err)warn(('[GcView/AC] %s -> %s'):format(
-where,tostring(err)))return nil end,...)return ok and res or nil end local
-inspectAcLevel=function(tbl,keywords,nkw,acc,children)if rawget(tbl,0)~=nil then
-acc.zero=true end local fieldHits=0 local hasFunc=false local count=0 local
-childCount=children and#children or 0 local k,v=next(tbl)while k~=nil do count=
-count+1 if count>MAX_TABLE_SCAN then break end local tk=type(k)if tk=='string'
-then if AC_FIELD_KEYS[k]then fieldHits=fieldHits+1 end if nkw>0 then local lk=k:
-lower()for i=1,nkw do local kw=keywords[i]if lk:find(kw,1,true)then acc.keywords
-[kw]=true end end end elseif tk=='function'and Gc.IsExec(k)then acc.tainted=true
-end local tv=type(v)if tv=='function'then hasFunc=true if Gc.IsExec(v)then acc.
+scriptHashIndex=Gc.Own(setmetatable({},{__mode='v'}))scriptPathCache=Gc.Own(
+setmetatable({},{__mode='k'}))if type(getfunctionhash)~='function'then return
+end local index=function(entries)if type(entries)~='table'then return end for _,
+entry in entries do local s=entry.script if typeof(s)=='Instance'then local h=
+entry.hash if not h and typeof(entry.func)=='function'then h=Gc.Hash(entry.func)
+end if h and scriptHashIndex[h]==nil then scriptHashIndex[h]=s end end end end
+for _,list in knownScripts do index(list)end end local ownerOfFunc=function(fn)
+local cached=funcOwnerCache[fn]if cached~=nil then if cached then local owner=
+cached[1][1]if owner~=nil then return owner,cached[2]end return nil end return
+nil end local owner=resolveFuncScript(fn)local reason='fenv'if owner==nil and
+scriptHashIndex then local h=Gc.Hash(fn)if h then local hs=scriptHashIndex[h]if
+hs~=nil then owner=hs reason='hash'end end end if owner~=nil then funcOwnerCache
+[fn]=Gc.Own({Gc.WeakBox(owner),reason})return owner,reason end funcOwnerCache[fn
+]=false return nil end local funcSourceMatches=function(func,targetPath)if not
+targetPath then return false end local src=safeGet(function(f)return debug.info(
+f,'s')end,func)if type(src)~='string'then return false end src=src:gsub('^[=@]',
+'')return src==targetPath or src:find(targetPath,1,true)~=nil end local
+scoreTableForScripts=function(funcsInTable,scriptRefsInTable,nameHits)local
+scores={}local reasons={}local bump=function(scriptRef,amount,why)if scriptRef==
+nil then return end scores[scriptRef]=(scores[scriptRef]or 0)+amount local r=
+reasons[scriptRef]if not r then r={}reasons[scriptRef]=r end r[why]=true end for
+_,fn in funcsInTable do local owner,why=ownerOfFunc(fn)if owner~=nil then bump(
+owner,10,why)end end for _,ref in scriptRefsInTable do bump(ref,8,'script-ref')
+end local lead,leadScore for scriptRef,sc in scores do if not leadScore or sc>
+leadScore then lead,leadScore=scriptRef,sc end end if lead and funcsInTable[1]
+then local path=getScriptPath(lead)if funcSourceMatches(funcsInTable[1],path)
+then scores[lead]=scores[lead]+5 reasons[lead]['source']=true end end local best
+,bestScore for scriptRef,sc in scores do local nm=getScriptName(scriptRef)if nm
+and nameHits[nm]then sc=sc+2 scores[scriptRef]=sc reasons[scriptRef]['name']=
+true end if not bestScore or sc>bestScore then best,bestScore=scriptRef,sc end
+end if best and bestScore and bestScore>=SCORE_MIN then local why={}for k in
+reasons[best]do why[#why+1]=k end table.sort(why)return best,bestScore,table.
+concat(why,'+')end return nil end local rootSkipSet=function()local skip={}skip[
+getgenv()]=true if _G then skip[_G]=true end if shared then skip[shared]=true
+end return skip end local scanGcTables=function(onProgress)if gcTableBuckets
+then return end gcTableBuckets=Gc.Own({})funcOwnerCache=Gc.Own({})
+buildHashIndex()local gc=Gc.Snapshot()local seen={}local skip=rootSkipSet()local
+processed=0 for _,tbl in gc do processed=processed+1 if onProgress and processed
+%PROGRESS_EVERY==0 then onProgress(processed)end Gc.Step()if processed>
+MAX_TOTAL_TABLES then break end if type(tbl)~='table'or seen[tbl]or skip[tbl]or
+Gc.IsOwn(tbl)then continue end seen[tbl]=true local okShape,isOwn=pcall(
+isGcViewTable,tbl)if not okShape or isOwn then continue end local funcsInTable={
+}local scriptRefs={}local nameHits={}local count=0 local tainted=false local
+okWalk=pcall(function()local consider=function(x)local tx=type(x)if tx==
+'function'then if Gc.IsExec(x)then tainted=true return true end funcsInTable[#
+funcsInTable+1]=x elseif tx=='string'then nameHits[x]=true elseif tx=='userdata'
+and isLuaSourceContainer(x)then scriptRefs[#scriptRefs+1]=x end return false end
+local k,v=next(tbl)while k~=nil do count=count+1 if count>MAX_TABLE_SCAN then
+return end if consider(v)or consider(k)then return end k,v=next(tbl,k)end end)if
+not okWalk or tainted or(#funcsInTable==0 and#scriptRefs==0)then continue end
+pcall(function()local owner,score,why=scoreTableForScripts(funcsInTable,
+scriptRefs,nameHits)if owner==nil then return end local info=Gc.Own({value=tbl,
+count=count,address=SafeString(tbl),funcCount=#funcsInTable,origin=(
+'%d fn(s) | score %d | %s'):format(#funcsInTable,score,why)})local bucket=
+gcTableBuckets[owner]if not bucket then bucket=Gc.Own({})gcTableBuckets[owner]=
+bucket end bucket[#bucket+1]=info end)end end function Tables.CollectForScript(
+scriptRef,_entries,onProgress)scanGcTables(onProgress)local out={}if typeof(
+scriptRef)=='Instance'and gcTableBuckets then local bucket=gcTableBuckets[
+scriptRef]if bucket then for _,info in bucket do out[#out+1]=Gc.Own({value=info.
+value,origin=info.origin,count=info.count,address=info.address})end end end
+table.sort(out,function(a,b)if a.count~=b.count then return a.count>b.count end
+return a.address<b.address end)return out end function Tables.ParseKeywords(text
+)local out={}if type(text)~='string'then return out end for piece in text:
+gmatch('[^,]+')do local kw=piece:match('^%s*(.-)%s*$'):lower()if kw~=''then out[
+#out+1]=kw end end return out end function Tables.Guard(where,fn,...)local ok,
+res=xpcall(fn,function(err)warn(('[GcView/AC] %s -> %s'):format(where,tostring(
+err)))return nil end,...)return ok and res or nil end local inspectAcLevel=
+function(tbl,keywords,nkw,acc,children)if rawget(tbl,0)~=nil then acc.zero=true
+end local fieldHits=0 local hasFunc=false local count=0 local childCount=
+children and#children or 0 local k,v=next(tbl)while k~=nil do count=count+1 if
+count>MAX_TABLE_SCAN then break end local tk=type(k)if tk=='string'then if
+AC_FIELD_KEYS[k]then fieldHits=fieldHits+1 end if nkw>0 then local lk=k:lower()
+for i=1,nkw do local kw=keywords[i]if lk:find(kw,1,true)then acc.keywords[kw]=
+true end end end elseif tk=='function'and Gc.IsExec(k)then acc.tainted=true end
+local tv=type(v)if tv=='function'then hasFunc=true if Gc.IsExec(v)then acc.
 tainted=true end elseif tv=='string'then if nkw>0 then local lv=v:lower()for i=1
 ,nkw do local kw=keywords[i]if lv:find(kw,1,true)then acc.keywords[kw]=true end
 end end elseif tv=='table'and children and childCount<AC_CHILD_SCAN then
@@ -4082,20 +4093,20 @@ ActorScripts do if entry.key then actorScriptKeys[entry.key]=true end if entry.
 name then actorScriptKeys['name:'..entry.name]=true end end Trace.Mark(
 'tab: GetScripts start')local AllScripts=GetScripts(nil,actorScriptKeys)Trace.
 Mark('tab: GetScripts done',#AllScripts)local Scripts=GcShared.Own({})local
-AntiCheatScripts=GcShared.Own({})local antiSeen=GcShared.Own({})local
-antiSeenName=GcShared.Own({})for _,entry in AllScripts do if entry.isAntiCheat
-then local ref=entry.script local nameKey do local okN,nm=pcall(function()return
-entry.script.Name end)nameKey=(okN and nm or'?')..'|'..tostring(entry.path or'')
-end if not(antiSeen[ref]or antiSeenName[nameKey])then antiSeen[ref]=true
-antiSeenName[nameKey]=true AntiCheatScripts[#AntiCheatScripts+1]=entry end else
-Scripts[#Scripts+1]=entry end end WebBridge.Publish('scripts',Scripts)WebBridge.
-Publish('anticheat',AntiCheatScripts)WebBridge.Publish('actors',ActorScripts)
-Trace.Mark('tab: published, releasing snapshot')Tables.SetKnownScripts(Scripts,
-AntiCheatScripts,ActorScripts)GcShared.Release()local knownHashCache local
-getKnownHashes=function()if knownHashCache then return knownHashCache end local
-merged={}local fold=function(into,from)for k in from do into[k]=true end end
-fold(merged,ScanFunctions.BuildKnownScriptHashSet(Scripts))fold(merged,
-ScanFunctions.BuildKnownScriptHashSet(AntiCheatScripts))fold(merged,
+AntiCheatScripts=GcShared.Own({})local antiSeen=GcShared.Own(setmetatable({},{
+__mode='k'}))local antiSeenName=GcShared.Own({})for _,entry in AllScripts do if
+entry.isAntiCheat then local ref=entry.script local nameKey do local okN,nm=
+pcall(function()return entry.script.Name end)nameKey=(okN and nm or'?')..'|'..
+tostring(entry.path or'')end if not(antiSeen[ref]or antiSeenName[nameKey])then
+antiSeen[ref]=true antiSeenName[nameKey]=true AntiCheatScripts[#AntiCheatScripts
++1]=entry end else Scripts[#Scripts+1]=entry end end WebBridge.Publish('scripts'
+,Scripts)WebBridge.Publish('anticheat',AntiCheatScripts)WebBridge.Publish(
+'actors',ActorScripts)Trace.Mark('tab: published, releasing snapshot')Tables.
+SetKnownScripts(Scripts,AntiCheatScripts,ActorScripts)GcShared.Release()local
+knownHashCache local getKnownHashes=function()if knownHashCache then return
+knownHashCache end local merged={}local fold=function(into,from)for k in from do
+into[k]=true end end fold(merged,ScanFunctions.BuildKnownScriptHashSet(Scripts))
+fold(merged,ScanFunctions.BuildKnownScriptHashSet(AntiCheatScripts))fold(merged,
 ScanFunctions.BuildKnownScriptHashSet(ActorScripts))knownHashCache=merged return
 merged end local knownSourceCache local getKnownSources=function()if
 knownSourceCache then return knownSourceCache end local merged={}local fold=
@@ -4349,35 +4360,36 @@ if classified%50==0 then task.wait()end continue end local displayText if
 scriptType=='nil'then local nm=safeGet(function(s)return s.Name end,scriptRef)or
 entry.path or'nil'displayText='[nil] '..SafeString(nm)else displayText=(
 '[%s] %s'):format(entry.context,entry.path or'?')end prepared[#prepared+1]={
-scriptRef=scriptRef,scriptType=scriptType,displayText=displayText,antiReasons=
-entry.antiCheatReasons}classified=classified+1 if classified%50==0 then task.
-wait()end end table.sort(prepared,function(a,b)local oa=TYPE_ORDER[a.scriptType]
-or 99 local ob=TYPE_ORDER[b.scriptType]or 99 if oa~=ob then return oa<ob end
-return a.displayText:lower()<b.displayText:lower()end)local BATCH=12 local DELAY
-=0.03 local count=0 for _,item in prepared do local scriptRef=item.scriptRef
-local displayText=item.displayText local antiReasons=item.antiReasons local
-label=tab:Label({Text=displayText,TextColor3=typeColor(item.scriptType),
-TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top})
-local sep=tab:Separator()labelStore[#labelStore+1]={label=label,separator=sep,
-type=item.scriptType}label.InputBegan:Connect(function(input)if input.
-UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.
-UserInputType.Touch then openScriptWindow(scriptRef,displayText,antiReasons)end
-end)count=count+1 if count%BATCH==0 then task.wait(DELAY)end end end)end local
-ScriptTab=getgenv().Window:CreateTab({Name='Scripts'})ScriptTab:Label({Text=(
-'%d client script(s)'):format(#Scripts),TextColor3=Color3.fromRGB(200,200,200),
-TextXAlignment=Enum.TextXAlignment.Left})local filters=Classify.Filters()local
-ScriptLabels={}local refreshFilter=function()Classify.UpdateLabelVisibility(
-filters,ScriptLabels)end local filterRow=ScriptTab:Row()filterRow:Checkbox({
-Label='Local',Value=true,Callback=function(_,v)filters.showLocal=v
-refreshFilter()end})filterRow:Checkbox({Label='Module',Value=true,Callback=
-function(_,v)filters.showModule=v refreshFilter()end})filterRow:Checkbox({Label=
-'Nil',Value=true,Callback=function(_,v)filters.showNil=v refreshFilter()end})
-filterRow:Checkbox({Label='Actor Scripts',Value=true,Callback=function(_,v)
-filters.showActor=v refreshFilter()end})filterRow:Checkbox({Label='Other',Value=
-true,Callback=function(_,v)filters.showUnknown=v refreshFilter()end})ScriptTab:
-InputText({Label='Search scripts',PlaceHolder='filter by name / path...',Value=
-'',Callback=function(_,newValue)filters.searchQuery=newValue or''refreshFilter()
-end})ScriptTab:Separator()Trace.Mark('tab: buildScriptList start',#Scripts)
+scriptBox=GcShared.WeakBox(scriptRef),scriptType=scriptType,displayText=
+displayText,antiReasons=entry.antiCheatReasons}classified=classified+1 if
+classified%50==0 then task.wait()end end table.sort(prepared,function(a,b)local
+oa=TYPE_ORDER[a.scriptType]or 99 local ob=TYPE_ORDER[b.scriptType]or 99 if oa~=
+ob then return oa<ob end return a.displayText:lower()<b.displayText:lower()end)
+local BATCH=12 local DELAY=0.03 local count=0 for _,item in prepared do local
+scriptBox=item.scriptBox local displayText=item.displayText local antiReasons=
+item.antiReasons local label=tab:Label({Text=displayText,TextColor3=typeColor(
+item.scriptType),TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.
+TextYAlignment.Top})local sep=tab:Separator()labelStore[#labelStore+1]={label=
+label,separator=sep,type=item.scriptType}label.InputBegan:Connect(function(input
+)if input.UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType
+==Enum.UserInputType.Touch then local scriptRef=scriptBox[1]if scriptRef then
+openScriptWindow(scriptRef,displayText,antiReasons)end end end)count=count+1 if
+count%BATCH==0 then task.wait(DELAY)end end end)end local ScriptTab=getgenv().
+Window:CreateTab({Name='Scripts'})ScriptTab:Label({Text=('%d client script(s)'):
+format(#Scripts),TextColor3=Color3.fromRGB(200,200,200),TextXAlignment=Enum.
+TextXAlignment.Left})local filters=Classify.Filters()local ScriptLabels={}local
+refreshFilter=function()Classify.UpdateLabelVisibility(filters,ScriptLabels)end
+local filterRow=ScriptTab:Row()filterRow:Checkbox({Label='Local',Value=true,
+Callback=function(_,v)filters.showLocal=v refreshFilter()end})filterRow:
+Checkbox({Label='Module',Value=true,Callback=function(_,v)filters.showModule=v
+refreshFilter()end})filterRow:Checkbox({Label='Nil',Value=true,Callback=function
+(_,v)filters.showNil=v refreshFilter()end})filterRow:Checkbox({Label=
+'Actor Scripts',Value=true,Callback=function(_,v)filters.showActor=v
+refreshFilter()end})filterRow:Checkbox({Label='Other',Value=true,Callback=
+function(_,v)filters.showUnknown=v refreshFilter()end})ScriptTab:InputText({
+Label='Search scripts',PlaceHolder='filter by name / path...',Value='',Callback=
+function(_,newValue)filters.searchQuery=newValue or''refreshFilter()end})
+ScriptTab:Separator()Trace.Mark('tab: buildScriptList start',#Scripts)
 buildScriptList(ScriptTab,Scripts,ScriptLabels)Trace.Mark(
 'tab: buildScriptList done')refreshFilter()local AntiCheatTab=getgenv().Window:
 CreateTab({Name='Anti Cheat'})AntiCheatTab:Label({Text=(
@@ -4409,21 +4421,22 @@ UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.Touch then
 openUnknownWindow()end end)refreshAntiFilter()end)do local preparedAnti={}for _,
 entry in AntiCheatScripts do local scriptRef=entry.script local nm=safeGet(
 function(s)return s.Name end,scriptRef)or entry.path or'nil'local displayText=
-'[nil] '..SafeString(nm)preparedAnti[#preparedAnti+1]={scriptRef=scriptRef,
-displayText=displayText,antiReasons=entry.antiCheatReasons}end table.sort(
-preparedAnti,function(a,b)return a.displayText:lower()<b.displayText:lower()end)
-task.spawn(function()local BATCH=12 local DELAY=0.03 local count=0 for _,item in
-preparedAnti do local scriptRef=item.scriptRef local displayText=item.
-displayText local antiReasons=item.antiReasons local label=AntiCheatTab:Label({
-Text=displayText,TextColor3=typeColor('AntiCheat'),TextXAlignment=Enum.
-TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top})local sep=
-AntiCheatTab:Separator()AntiLabels[#AntiLabels+1]={label=label,separator=sep,
-type='AntiCheat'}label.InputBegan:Connect(function(input)if input.UserInputType
-==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.UserInputType.
-Touch then openScriptWindow(scriptRef,displayText,antiReasons)end end)count=
-count+1 if count%BATCH==0 then task.wait(DELAY)end end end)end
-refreshAntiFilter()do local window=getgenv().Window local AcTablesTab=window:
-CreateTab({Name='AC Tables'})local headerLabel=AcTablesTab:Label({Text=
+'[nil] '..SafeString(nm)preparedAnti[#preparedAnti+1]={scriptBox=GcShared.
+WeakBox(scriptRef),displayText=displayText,antiReasons=entry.antiCheatReasons}
+end table.sort(preparedAnti,function(a,b)return a.displayText:lower()<b.
+displayText:lower()end)task.spawn(function()local BATCH=12 local DELAY=0.03
+local count=0 for _,item in preparedAnti do local scriptBox=item.scriptBox local
+displayText=item.displayText local antiReasons=item.antiReasons local label=
+AntiCheatTab:Label({Text=displayText,TextColor3=typeColor('AntiCheat'),
+TextXAlignment=Enum.TextXAlignment.Left,TextYAlignment=Enum.TextYAlignment.Top})
+local sep=AntiCheatTab:Separator()AntiLabels[#AntiLabels+1]={label=label,
+separator=sep,type='AntiCheat'}label.InputBegan:Connect(function(input)if input.
+UserInputType==Enum.UserInputType.MouseButton1 or input.UserInputType==Enum.
+UserInputType.Touch then local scriptRef=scriptBox[1]if scriptRef then
+openScriptWindow(scriptRef,displayText,antiReasons)end end end)count=count+1 if
+count%BATCH==0 then task.wait(DELAY)end end end)end refreshAntiFilter()do local
+window=getgenv().Window local AcTablesTab=window:CreateTab({Name='AC Tables'})
+local headerLabel=AcTablesTab:Label({Text=
 [[Press Scan to sweep the GC for anti-cheat-shaped tables (no script owner needed).]]
 ,TextColor3=COLORS.gold,TextWrapped=true,TextXAlignment=Enum.TextXAlignment.Left
 })local keywords=Tables.ParseKeywords(table.concat(Tables.DefaultKeywords,', '))
